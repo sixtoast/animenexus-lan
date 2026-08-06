@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Navbar } from "@/components/Navbar";
 import "./globals.css";
+import "./card-link.css";
 
 export const metadata: Metadata = {
   title: "AnimeNexus — Lantern",
