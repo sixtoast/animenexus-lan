@@ -20,56 +20,42 @@ Goal: replace the monolithic `index.html` SPA with a maintainable Next.js App Ro
 | **10** | AI & sauce | Night Desk, AI panel, trace.moe sauce |
 | **11** | Polish | Theme toggle, PWA, command palette, ARG/lore (optional) |
 
-Each sprint ends with: working UI on `/`, types covered, and a short note in this file.
-
 ---
 
 ## Sprint 1 — Foundation ✅
 
-**In scope**
-
-- [x] Document multi-sprint plan
-- [x] Design tokens (Lantern palette) in `app/globals.css`
-- [x] Shared `Anime` types
-- [x] AniList GraphQL client + `mapAniListMedia`
-- [x] App shell: navbar, footer strip
-- [x] Home page: fetch trending media, render card grid
-- [x] `AnimeCard` presentational component
-- [x] Loading / empty / error states
-
-**Done when**
-
-- `npm run dev` shows a dark Lantern-styled home with real AniList trending posters and titles.
+Design tokens, types, AniList client, shell, trending grid.
 
 ---
 
 ## Sprint 2 — Browse & filters ✅
 
-**In scope**
-
-- [x] `/browse` route with URL search params
-- [x] Feed tabs: trending / popular / top
-- [x] Search by title
-- [x] Genre, status, format, year, sort filters
-- [x] Apply / reset
-- [x] Load more pagination
-- [x] Navbar active state for Browse
-
-**Done when**
-
-- Filters and search change the grid; URL is shareable; load more appends results.
+`/browse` with URL params, feed tabs, search, filters, load more.
 
 ---
 
-## Sprint 3 — Preview
+## Sprint 3 — Detail experience ✅
 
-Anime detail page (`/anime/[id]`), synopsis, genres, score, external AniList link. Characters / trailer later if time.
+**In scope**
+
+- [x] `/anime/[id]` route + metadata
+- [x] Cover, banner, titles, score, format, status, season
+- [x] Genre chips → browse filter links
+- [x] Synopsis, studios, AniList external link
+- [x] Trailer embed (YouTube when available)
+- [x] Character grid (role + image)
+- [x] Cards link to detail pages
+- [x] `not-found` state
+
+---
+
+## Sprint 4 — Preview
+
+Watchlist with localStorage, status tabs (watching / planning / completed), add/remove from detail.
 
 ---
 
 ## Conventions
 
 - Client components only where needed (`"use client"`).
-- Data fetching: server components preferred for first paint; client for interactive grids if needed.
-- API keys for user AI stay in `localStorage` (never committed).
-- Prefer AniList; Jikan as optional fallback in a later sprint if rate limits bite.
+- Prefer AniList; server fetch for first paint.

@@ -27,6 +27,13 @@ export type WatchStatus =
   | "paused"
   | "dropped";
 
+export type AnimeCharacter = {
+  id: number;
+  name: string;
+  role: string;
+  image?: string;
+};
+
 /** Normalized anime used across the UI */
 export type Anime = {
   id: number;
@@ -34,14 +41,11 @@ export type Anime = {
   titleRomaji?: string;
   titleNative?: string;
   description: string;
-  /** Primary genre label for badges */
   genre: string;
-  /** Full genre list */
   tags: string[];
   status: MediaStatus;
   format: MediaFormat;
   year: number | string;
-  /** 0–10 scale (AniList averageScore / 10) */
   score: number;
   popularity: number;
   image: string;
@@ -53,6 +57,12 @@ export type Anime = {
   studios?: string[];
   source?: string;
   isAdult?: boolean;
+  season?: string;
+  seasonYear?: number;
+  averageScoreRaw?: number;
+  favourites?: number;
+  trailer?: { id?: string; site?: string; thumbnail?: string };
+  characters?: AnimeCharacter[];
 };
 
 export type PageInfo = {
