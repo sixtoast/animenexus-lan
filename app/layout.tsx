@@ -15,10 +15,12 @@ import { ConfettiHost } from "@/components/ConfettiBurst";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 import { LoadingTheater } from "@/components/LoadingTheater";
 import { RoomEnter } from "@/components/RoomEnter";
+import { RouteTune } from "@/components/RouteTune";
 import "./globals.css";
 import "./button.css";
 import "./modal.css";
 import "./quote.css";
+import "./signal-motion.css";
 import "./nav-polish.css";
 import "./sprint-a.css";
 import "./ai-panel.css";
@@ -83,6 +85,7 @@ export default function RootLayout({
                 <ScrollProgress />
                 <SakuraCanvas />
                 <PwaRegister />
+                <RouteTune />
                 <Navbar />
                 <RoomEnter>{children}</RoomEnter>
                 <FabMenu />
