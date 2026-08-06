@@ -7,6 +7,7 @@ const LINKS = [
   { href: "/", label: "Home" },
   { href: "/browse", label: "Browse" },
   { href: "/watchlist", label: "Watchlist" },
+  { href: "/account", label: "Account" },
 ];
 
 export function Navbar() {
@@ -44,7 +45,7 @@ export function Navbar() {
             fontWeight: 600,
           }}
         >
-          Sprint 5
+          Sprint 6
         </span>
       </div>
     </header>

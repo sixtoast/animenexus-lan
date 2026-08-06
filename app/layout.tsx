@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Navbar } from "@/components/Navbar";
 import { WatchlistProvider } from "@/components/WatchlistProvider";
+import { SessionProvider } from "@/components/SessionProvider";
 import "./globals.css";
 import "./card-link.css";
 
@@ -39,16 +40,18 @@ export default function RootLayout({
       </head>
       <body>
         <WatchlistProvider>
-          <Navbar />
-          {children}
-          <footer className="site-footer">
-            <div className="container">
-              AnimeNexus · Lantern · Sprint 5 · moods · Data via{" "}
-              <a href="https://anilist.co" target="_blank" rel="noreferrer">
-                AniList
-              </a>
-            </div>
-          </footer>
+          <SessionProvider>
+            <Navbar />
+            {children}
+            <footer className="site-footer">
+              <div className="container">
+                AnimeNexus · Lantern · Sprint 6 · account · Data via{" "}
+                <a href="https://anilist.co" target="_blank" rel="noreferrer">
+                  AniList
+                </a>
+              </div>
+            </footer>
+          </SessionProvider>
         </WatchlistProvider>
       </body>
     </html>
