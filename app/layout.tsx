@@ -23,6 +23,7 @@ import "./cmdk.css";
 import "./ancestry.css";
 import "./session-tools.css";
 import "./sprint-l.css";
+import "./oracle-vibe.css";
 
 export const metadata: Metadata = {
   title: "AnimeNexus — Lantern",
@@ -30,6 +31,10 @@ export const metadata: Metadata = {
     "Mood-based anime recommendations, a deep taste profile, and AI-powered tools — late-night broadcast console.",
   applicationName: "AnimeNexus",
   manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/icon.svg" }],
+  },
 };
 
 export const viewport: Viewport = {
@@ -57,6 +62,8 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
           rel="stylesheet"
         />
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/icon.svg" />
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('anime_nexus_theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');var v=localStorage.getItem('anime_nexus_view_mode');if(v)document.documentElement.dataset.viewMode=v;}catch(e){}})();`,
