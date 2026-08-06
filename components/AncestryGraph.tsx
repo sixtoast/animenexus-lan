@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { AnimeRelation } from "@/lib/types";
-import { AncestrySpace3D } from "@/components/AncestrySpace3D";
+import { AncestrySpace2D } from "@/components/AncestrySpace2D";
 
 type Props = {
   centerTitle: string;
@@ -190,17 +190,13 @@ export function AncestryGraph({
     <section className="detail-section ancestry-section" id="ancestry">
       <div className="ab-header">
         <div>
-          <p className="ab-kicker">Constellation</p>
-          <h2>Ancestry space</h2>
+          <p className="ab-kicker">Map</p>
+          <h2>Ancestry</h2>
           <p className="ancestry-lead">
             {loading
-              ? "Charting orbits…"
+              ? "Charting links…"
               : relations.length
-                ? `A 3D map of ${officialCount} official link${officialCount === 1 ? "" : "s"}` +
-                  (recommended.length
-                    ? ` and ${recommended.length} similar title${recommended.length === 1 ? "" : "s"}`
-                    : "") +
-                  " — drag, zoom, click."
+                ? `${officialCount} official · ${recommended.length} similar — pan, zoom, tap`
                 : "No linked anime found for this title."}
           </p>
         </div>
@@ -210,13 +206,13 @@ export function AncestryGraph({
             className="btn btn-outline btn-sm"
             onClick={() => setShowFlat((v) => !v)}
           >
-            {showFlat ? "Hide list view" : "List view"}
+            {showFlat ? "Hide list" : "List view"}
           </button>
         ) : null}
       </div>
 
       {relations.length > 0 ? (
-        <AncestrySpace3D
+        <AncestrySpace2D
           center={{
             id: centerId,
             title: centerTitle,
@@ -239,7 +235,11 @@ export function AncestryGraph({
                   <div key={`${n.id}-${i}`} className="ab-timeline-item">
                     {i > 0 ? <div className="ab-connector" aria-hidden /> : null}
                     <PosterCard
-                      href={"current" in n && n.current ? undefined : `/anime/${n.id}`}
+                      href={
+                        "current" in n && n.current
+                          ? undefined
+                          : `/anime/${n.id}`
+                      }
                       title={n.title}
                       image={n.image}
                       current={"current" in n && n.current}
@@ -262,7 +262,7 @@ export function AncestryGraph({
 
           {sideOrbit.length > 0 ? (
             <div className="ab-block">
-              <h3 className="ab-block-title">Side stories &amp; variants</h3>
+              <h3 className="ab-block-title">Side stories</h3>
               <div className="ab-grid">
                 {sideOrbit.map((r) => (
                   <PosterCard
@@ -306,8 +306,7 @@ export function AncestryGraph({
 
       {!loading && !relations.length ? (
         <p className="tools-hint" style={{ marginTop: 8 }}>
-          Try a multi-season franchise (e.g. Attack on Titan, Fate) for a full
-          constellation.
+          Try a multi-season franchise for a fuller map.
         </p>
       ) : null}
     </section>
