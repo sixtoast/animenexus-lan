@@ -45,9 +45,37 @@ export function TasteClient() {
   const s = computeTaste(entries);
   const maxStatus = Math.max(...STATUS_ORDER.map((k) => s.byStatus[k]), 1);
   const maxFormat = Math.max(...s.byFormat.map((f) => f.count), 1);
+  const top = s.topRated[0];
+  const decadeLead = s.byDecade[0];
+  const portraitLine = [
+    s.total >= 50 ? "Deep catalog" : s.total >= 20 ? "Growing shelf" : "Early signal",
+    s.completionRate >= 0.5 ? "finisher" : "explorer",
+    decadeLead ? `${decadeLead.decade}s lean` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <div className="taste">
+      <div className="taste-portrait">
+        <p className="taste-portrait-kicker">Taste portrait</p>
+        <h2 className="taste-portrait-title">{portraitLine}</h2>
+        <p className="taste-portrait-body">
+          {s.hoursLogged} hours on the desk · {s.episodesLogged} episodes tracked
+          {s.avgUserRating != null
+            ? ` · avg score ${s.avgUserRating.toFixed(1)}`
+            : ""}
+          {top ? ` · peak: ${top.title}` : ""}
+        </p>
+        {top ? (
+          <Link href={`/anime/${top.id}`} className="taste-portrait-peak">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={top.image} alt="" />
+            <span>Highest rated on your list</span>
+          </Link>
+        ) : null}
+      </div>
+
       <div className="taste-grid">
         <div className="taste-stat">
           <div className="taste-stat-value">{s.total}</div>

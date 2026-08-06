@@ -31,6 +31,7 @@ export function RadarClient() {
   const [items, setItems] = useState<Anime[]>([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [scanned, setScanned] = useState(false);
 
   useEffect(() => {
     try {
@@ -45,6 +46,7 @@ export function RadarClient() {
   async function scan() {
     setLoading(true);
     setErr(null);
+    setScanned(false);
     try {
       localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
       const q = prefs.genre
@@ -61,6 +63,7 @@ export function RadarClient() {
         );
       }
       setItems(list);
+      setScanned(true);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Scan failed");
       setItems([]);
@@ -78,6 +81,10 @@ export function RadarClient() {
   return (
     <div>
       <div className="radar-prefs">
+        <div className={"radar-dish" + (loading ? " scanning" : "")} aria-hidden>
+          <div className="radar-sweep" />
+          <div className="radar-core" />
+        </div>
         <label className="filter-label">Genre filter</label>
         <select
           className="filter-input"
@@ -124,8 +131,13 @@ export function RadarClient() {
 
       {items.length > 0 ? (
         <div className="radar-upcoming-grid" style={{ marginTop: 20 }}>
-          {items.map((a) => (
-            <Link key={a.id} href={`/anime/${a.id}`} className="radar-item">
+          {items.map((a, i) => (
+            <Link
+              key={a.id}
+              href={`/anime/${a.id}`}
+              className={"radar-item" + (scanned ? " radar-ping" : "")}
+              style={{ "--i": i } as React.CSSProperties}
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={a.image} alt="" />
               <div className="radar-title">{a.title}</div>
