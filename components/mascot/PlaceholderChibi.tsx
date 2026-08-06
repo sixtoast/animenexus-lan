@@ -5,17 +5,19 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { useMascotStore } from "@/lib/mascot/store";
 import { distXZ } from "@/lib/mascot/navigation";
-
-const WALK_SPEED = 0.55;
+import { motionFromEmotions } from "@/lib/mascot/emotions";
 
 export function PlaceholderChibi() {
   const root = useRef<THREE.Group>(null);
   const pose = useRef<THREE.Group>(null);
   const head = useRef<THREE.Group>(null);
+  const tip = useRef<THREE.Mesh>(null);
   const leftEye = useRef<THREE.Mesh>(null);
   const rightEye = useRef<THREE.Mesh>(null);
   const leftArm = useRef<THREE.Mesh>(null);
   const rightArm = useRef<THREE.Mesh>(null);
+  const cheekL = useRef<THREE.Mesh>(null);
+  const cheekR = useRef<THREE.Mesh>(null);
   const pointer = useRef({ x: 0, y: 0 });
   const facing = useRef(0);
   const decayAcc = useRef(0);
@@ -36,7 +38,8 @@ export function PlaceholderChibi() {
       dispatch,
     } = store;
 
-    // Emotion decay + ambient tick (~1Hz)
+    const motion = motionFromEmotions(emotions);
+
     decayAcc.current += dt;
     if (decayAcc.current > 1) {
       decayEmotions(decayAcc.current);
@@ -58,7 +61,7 @@ export function PlaceholderChibi() {
       } else {
         moving = true;
         if (anim !== "walk" && anim !== "surprised") setAnim("walk");
-        const speed = WALK_SPEED * (0.55 + emotions.energy * 0.55);
+        const speed = Math.max(0.2, motion.walkSpeed);
         const nx = position.x + ((target.x - position.x) / d) * speed * dt;
         const nz = position.z + ((target.z - position.z) / d) * speed * dt;
         setPosition({ x: nx, z: nz });
@@ -69,7 +72,8 @@ export function PlaceholderChibi() {
       }
     }
 
-    g.position.x = position.x;
+    const jit = motion.jitter;
+    g.position.x = position.x + (jit ? Math.sin(t * 20) * jit : 0);
     g.position.z = position.z;
     g.position.y = -0.15;
     g.rotation.y = THREE.MathUtils.lerp(
@@ -78,36 +82,37 @@ export function PlaceholderChibi() {
       1 - Math.pow(0.001, dt),
     );
 
-    const breathe = Math.sin(t * 2.2) * 0.02;
-    let bob = Math.sin(t * 1.6) * 0.025;
-    let scale = 1;
+    const breathe = Math.sin(t * (1.8 + emotions.energy)) * 0.02;
+    let bob = Math.sin(t * 1.6) * 0.02 * motion.bobAmp;
+    let scale = 0.96 + motion.poseOpenness * 0.08;
     let rotZ = 0;
     let armSwing = 0;
-    let headPitch = 0;
+    let headPitch = motion.headDroop;
 
     switch (anim) {
       case "walk": {
-        const gait = t * 10;
-        bob = Math.abs(Math.sin(gait)) * 0.06;
-        armSwing = Math.sin(gait) * 0.45;
-        rotZ = Math.sin(gait) * 0.04;
+        const gait = t * (8 + emotions.energy * 4);
+        bob = Math.abs(Math.sin(gait)) * 0.055 * motion.bobAmp;
+        armSwing = Math.sin(gait) * 0.4 * motion.armAmp;
+        rotZ = Math.sin(gait) * 0.035;
         break;
       }
       case "happy":
-        scale = 1 + Math.sin(t * 14) * 0.04;
-        bob = Math.abs(Math.sin(t * 10)) * 0.12;
+        scale *= 1 + Math.sin(t * 14) * 0.045;
+        bob = Math.abs(Math.sin(t * 10)) * 0.11 * motion.bobAmp;
         rotZ = Math.sin(t * 12) * 0.08;
-        armSwing = Math.sin(t * 14) * 0.6;
+        armSwing = Math.sin(t * 14) * 0.55 * motion.armAmp;
+        headPitch = -0.05;
         break;
       case "wave":
         bob = 0.04 + breathe;
-        armSwing = 0.25 + Math.sin(t * 9) * 0.95;
+        armSwing = 0.25 + Math.sin(t * 9) * 0.9;
         rotZ = Math.sin(t * 6) * 0.1;
         break;
       case "think":
         bob = breathe;
-        headPitch = -0.25 + Math.sin(t * 1.2) * 0.05;
-        armSwing = 0.15;
+        headPitch = -0.22 + Math.sin(t * 1.2) * 0.05 + motion.headDroop;
+        armSwing = 0.12;
         rotZ = 0.06;
         break;
       case "sleep":
@@ -116,17 +121,17 @@ export function PlaceholderChibi() {
         headPitch = 0.35;
         break;
       case "surprised":
-        scale = 1.06;
+        scale *= 1.06;
         bob = 0.08;
-        headPitch = -0.1;
+        headPitch = -0.12;
         armSwing = 0.5;
         break;
       default:
         bob = bob + breathe * 0.5;
         if (moving) {
           const gait = t * 10;
-          bob = Math.abs(Math.sin(gait)) * 0.06;
-          armSwing = Math.sin(gait) * 0.4;
+          bob = Math.abs(Math.sin(gait)) * 0.05 * motion.bobAmp;
+          armSwing = Math.sin(gait) * 0.35 * motion.armAmp;
         }
     }
 
@@ -136,8 +141,7 @@ export function PlaceholderChibi() {
 
     if (leftArm.current) leftArm.current.rotation.x = armSwing;
     if (rightArm.current) {
-      rightArm.current.rotation.x =
-        anim === "wave" ? -0.2 : -armSwing;
+      rightArm.current.rotation.x = anim === "wave" ? -0.2 : -armSwing;
       rightArm.current.rotation.z =
         anim === "wave" ? -0.5 + Math.sin(t * 9) * 0.55 : -0.4;
     }
@@ -155,6 +159,21 @@ export function PlaceholderChibi() {
         lookX,
         0.08,
       );
+    }
+
+    // Lantern tip glow tracks happiness/attention
+    if (tip.current) {
+      const mat = tip.current.material as THREE.MeshStandardMaterial;
+      mat.emissiveIntensity = 0.2 + motion.glow * 0.7;
+    }
+
+    // Cheek flush with happiness
+    const cheekOp = 0.35 + emotions.happiness * 0.4;
+    if (cheekL.current) {
+      (cheekL.current.material as THREE.MeshStandardMaterial).opacity = cheekOp;
+    }
+    if (cheekR.current) {
+      (cheekR.current.material as THREE.MeshStandardMaterial).opacity = cheekOp;
     }
 
     const blink =
@@ -186,11 +205,11 @@ export function PlaceholderChibi() {
             <sphereGeometry args={[0.42, 32, 32]} />
             <meshStandardMaterial color="#f5d0c8" roughness={0.4} />
           </mesh>
-          <mesh position={[-0.22, -0.08, 0.32]}>
+          <mesh ref={cheekL} position={[-0.22, -0.08, 0.32]}>
             <sphereGeometry args={[0.08, 12, 12]} />
             <meshStandardMaterial color="#f0a090" transparent opacity={0.55} />
           </mesh>
-          <mesh position={[0.22, -0.08, 0.32]}>
+          <mesh ref={cheekR} position={[0.22, -0.08, 0.32]}>
             <sphereGeometry args={[0.08, 12, 12]} />
             <meshStandardMaterial color="#f0a090" transparent opacity={0.55} />
           </mesh>
@@ -214,7 +233,7 @@ export function PlaceholderChibi() {
             <torusGeometry args={[0.06, 0.012, 8, 16, Math.PI]} />
             <meshStandardMaterial color="#c4786a" />
           </mesh>
-          <mesh position={[0, 0.48, 0]}>
+          <mesh ref={tip} position={[0, 0.48, 0]}>
             <sphereGeometry args={[0.08, 12, 12]} />
             <meshStandardMaterial
               color="#f0a090"

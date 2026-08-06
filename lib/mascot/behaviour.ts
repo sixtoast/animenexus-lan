@@ -1,9 +1,5 @@
 import type { MascotEmotions } from "./types";
 
-/**
- * High-level goals the companion pursues.
- * Emotion → Behaviour (goal) → Animation (handled by store/machine).
- */
 export type MascotGoal =
   | "idle"
   | "wander"
@@ -14,16 +10,10 @@ export type MascotGoal =
 
 export type BehaviourDecision = {
   goal: MascotGoal;
-  /** Why this was chosen (debug / future speech) */
   reason: string;
-  /** Suggested cooldown before re-evaluate (ms) */
   cooldownMs: number;
 };
 
-/**
- * Pure decision function — easy to unit-test and extend.
- * Does not mutate state; callers apply the goal.
- */
 export function chooseBehaviour(
   emotions: MascotEmotions,
   opts: {
@@ -34,15 +24,30 @@ export function chooseBehaviour(
 ): BehaviourDecision | null {
   if (opts.busy) return null;
 
-  const { curiosity, energy, happiness, boredom, sleepiness, attention } =
-    emotions;
+  const {
+    curiosity,
+    energy,
+    happiness,
+    boredom,
+    sleepiness,
+    attention,
+    confidence,
+    stress,
+  } = emotions;
 
-  // Hard drives first
   if (sleepiness > 0.75 && energy < 0.4) {
     return {
       goal: "nap",
       reason: "sleepiness high, energy low",
       cooldownMs: 12_000,
+    };
+  }
+
+  if (stress > 0.7) {
+    return {
+      goal: "ponder",
+      reason: "stressed — settle",
+      cooldownMs: 8_000,
     };
   }
 
@@ -54,7 +59,7 @@ export function chooseBehaviour(
     };
   }
 
-  if (boredom > 0.55 && curiosity > 0.45) {
+  if (boredom > 0.55 && curiosity > 0.45 && confidence > 0.35) {
     return {
       goal: "wander",
       reason: "bored but curious",
@@ -79,7 +84,6 @@ export function chooseBehaviour(
   }
 
   if (happiness > 0.75 && opts.msSinceInteract < 8_000) {
-    // residual glow — stay soft idle, don't spam
     return {
       goal: "idle",
       reason: "content after interaction",
@@ -87,7 +91,6 @@ export function chooseBehaviour(
     };
   }
 
-  // Default soft idle / light wander mix
   if (opts.currentGoal === "idle" && Math.random() < 0.4) {
     return {
       goal: "wander",

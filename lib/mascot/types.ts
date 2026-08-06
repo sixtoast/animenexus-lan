@@ -9,6 +9,7 @@ export type MascotAnim =
   | "sleep"
   | "surprised";
 
+/** All internal drives (0–1). */
 export type MascotEmotions = {
   curiosity: number;
   energy: number;
@@ -16,6 +17,8 @@ export type MascotEmotions = {
   boredom: number;
   sleepiness: number;
   attention: number;
+  confidence: number;
+  stress: number;
 };
 
 export type MascotEvent =

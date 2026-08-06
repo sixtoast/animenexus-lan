@@ -4,28 +4,17 @@
 
 | # | Goal | Status |
 |---|------|--------|
-| 1 | Placeholder + habitat | Done |
-| 2 | Walk / wander | Done |
-| 3 | Animation state machine | Done |
-| 4 | Behaviour system (goals) | **Done** |
-| 5 | Richer emotion coupling | Next |
-| 6+ | UI terrain / physics | Planned |
+| 1–4 | Render, walk, anim machine, behaviour | Done |
+| 5 | Emotion system (drives + motion profile) | **Done** |
+| 6 | UI awareness | Next |
+| 7+ | Physics / polish | Planned |
 
-## M4 — behaviour
+## M5 — emotions
 
-`lib/mascot/behaviour.ts` — pure `chooseBehaviour(emotions, context)`.
+`lib/mascot/emotions.ts`
 
-Goals:
+Drives (0–1): curiosity, energy, happiness, boredom, sleepiness, attention, **confidence**, **stress**.
 
-| Goal | Meaning |
-|------|--------|
-| `idle` | Baseline |
-| `wander` | Roam habitat |
-| `nap` | Sleep pose |
-| `ponder` | Think |
-| `seek-attention` | Walk forward + wave |
-| `celebrate` | User-driven joy |
+`motionFromEmotions()` → walk speed, bob/arm amplitude, openness, tip glow, head droop, stress jitter.
 
-Pipeline: **Emotion → Goal → Animation**
-
-`runBehaviourTick()` every ~3s (and on `tick` / idle-long). Cooldowns prevent thrashing.
+Renderer samples profile every frame so tired = slower/smaller gait; happy = brighter lantern tip + stronger blush.

@@ -11,10 +11,13 @@ import {
   shouldWake,
   type AnimRequest,
 } from "./anim-machine";
+import { chooseBehaviour, type MascotGoal } from "./behaviour";
 import {
-  chooseBehaviour,
-  type MascotGoal,
-} from "./behaviour";
+  decayEmotions as decayFn,
+  defaultEmotions,
+  motionFromEmotions,
+  type MotionProfile,
+} from "./emotions";
 
 type MascotState = {
   enabled: boolean;
@@ -33,6 +36,7 @@ type MascotState = {
   setTarget: (t: NavTarget | null) => void;
   bumpEmotion: (key: keyof MascotEmotions, delta: number) => void;
   decayEmotions: (dtSec: number) => void;
+  motionProfile: () => MotionProfile;
   dispatch: (e: MascotEvent) => void;
   requestWander: () => void;
   applyGoal: (goal: MascotGoal) => void;
@@ -40,15 +44,6 @@ type MascotState = {
 };
 
 const clamp = (n: number) => Math.max(0, Math.min(1, n));
-
-const defaultEmotions = (): MascotEmotions => ({
-  curiosity: 0.55,
-  energy: 0.6,
-  happiness: 0.55,
-  boredom: 0.2,
-  sleepiness: 0.15,
-  attention: 0.5,
-});
 
 export const useMascotStore = create<MascotState>((set, get) => ({
   enabled: true,
@@ -91,16 +86,9 @@ export const useMascotStore = create<MascotState>((set, get) => ({
       },
     })),
   decayEmotions: (dtSec) => {
-    set((s) => {
-      const e = { ...s.emotions };
-      e.attention = clamp(e.attention - 0.01 * dtSec);
-      e.boredom = clamp(e.boredom + 0.008 * dtSec);
-      e.sleepiness = clamp(e.sleepiness + 0.006 * dtSec);
-      e.energy = clamp(e.energy - 0.004 * dtSec);
-      e.happiness = clamp(e.happiness - 0.003 * dtSec);
-      return { emotions: e };
-    });
+    set((s) => ({ emotions: decayFn(s.emotions, dtSec) }));
   },
+  motionProfile: () => motionFromEmotions(get().emotions),
   applyGoal: (goal) => {
     const { requestAnim, anim } = get();
     set({ goal });
@@ -120,7 +108,6 @@ export const useMascotStore = create<MascotState>((set, get) => ({
         requestAnim({ anim: "think", holdMs: 5000 });
         break;
       case "seek-attention":
-        // Walk to front and wave once
         set({ target: clampToHabitat(0, 0.18) });
         requestAnim({ anim: "walk", force: true });
         window.setTimeout(() => {
@@ -155,7 +142,6 @@ export const useMascotStore = create<MascotState>((set, get) => ({
       set({ nextThinkAt: Date.now() + 2000 });
       return;
     }
-    // Don't thrash the same goal every tick
     if (decision.goal === s.goal && decision.goal !== "wander") {
       set({ nextThinkAt: Date.now() + decision.cooldownMs });
       return;
@@ -171,7 +157,7 @@ export const useMascotStore = create<MascotState>((set, get) => ({
 
     switch (e.type) {
       case "tick": {
-        const { busyUntil, target, anim, emotions } = get();
+        const { busyUntil, anim, emotions } = get();
         if (Date.now() < busyUntil) break;
         if (anim === "happy" || anim === "wave" || anim === "surprised") break;
         if (anim === "sleep") {
@@ -181,18 +167,19 @@ export const useMascotStore = create<MascotState>((set, get) => ({
           }
           break;
         }
-        // Behaviour system owns ambient choices
         get().runBehaviourTick();
         break;
       }
       case "click":
       case "pet":
         set({ lastInteractionAt: Date.now(), goal: "celebrate" });
-        bumpEmotion("happiness", 0.12);
+        bumpEmotion("happiness", 0.14);
         bumpEmotion("attention", 0.25);
         bumpEmotion("boredom", -0.2);
         bumpEmotion("sleepiness", -0.25);
         bumpEmotion("energy", 0.1);
+        bumpEmotion("confidence", 0.08);
+        bumpEmotion("stress", -0.12);
         set({ target: null });
         if (get().anim === "sleep") {
           requestAnim({ anim: "surprised", holdMs: 600, force: true });
@@ -207,9 +194,11 @@ export const useMascotStore = create<MascotState>((set, get) => ({
       case "seal":
       case "complete":
         set({ lastInteractionAt: Date.now(), goal: "celebrate" });
-        bumpEmotion("happiness", 0.22);
-        bumpEmotion("energy", 0.12);
+        bumpEmotion("happiness", 0.24);
+        bumpEmotion("energy", 0.14);
+        bumpEmotion("confidence", 0.12);
         bumpEmotion("sleepiness", -0.15);
+        bumpEmotion("stress", -0.1);
         set({ target: null });
         requestAnim({ anim: "happy", holdMs: 1000, force: true });
         window.setTimeout(() => {
@@ -224,21 +213,23 @@ export const useMascotStore = create<MascotState>((set, get) => ({
         const t = clampToHabitat(e.x, e.z);
         set({ target: t, goal: "wander" });
         requestAnim({ anim: "walk", force: true });
+        bumpEmotion("curiosity", 0.05);
         break;
       }
       case "idle-long":
         bumpEmotion("sleepiness", 0.1);
         bumpEmotion("boredom", 0.08);
         bumpEmotion("energy", -0.05);
-        // Let behaviour tick resolve nap/ponder
+        bumpEmotion("stress", 0.03);
         set({ nextThinkAt: 0 });
         get().runBehaviourTick();
         break;
       case "route":
         set({ lastInteractionAt: Date.now() });
-        bumpEmotion("curiosity", 0.08);
+        bumpEmotion("curiosity", 0.1);
         bumpEmotion("attention", 0.12);
         bumpEmotion("sleepiness", -0.06);
+        bumpEmotion("stress", 0.04); // mild novelty
         if (get().anim === "sleep") {
           requestAnim({ anim: "wave", holdMs: 800, force: true });
           set({ goal: "seek-attention" });
