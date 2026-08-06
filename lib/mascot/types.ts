@@ -25,9 +25,9 @@ export type MascotEvent =
   | { type: "complete" }
   | { type: "route"; path: string }
   | { type: "idle-long" }
-  | { type: "go-to"; x: number; z: number };
+  | { type: "go-to"; x: number; z: number }
+  | { type: "tick" };
 
-/** Habitat floor bounds (local 3D units) */
 export const HABITAT_BOUNDS = {
   minX: -0.55,
   maxX: 0.55,

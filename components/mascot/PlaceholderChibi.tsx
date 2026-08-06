@@ -8,9 +8,6 @@ import { distXZ } from "@/lib/mascot/navigation";
 
 const WALK_SPEED = 0.55;
 
-/**
- * Procedural placeholder chibi + M2 locomotion on habitat XZ plane.
- */
 export function PlaceholderChibi() {
   const root = useRef<THREE.Group>(null);
   const pose = useRef<THREE.Group>(null);
@@ -21,21 +18,38 @@ export function PlaceholderChibi() {
   const rightArm = useRef<THREE.Mesh>(null);
   const pointer = useRef({ x: 0, y: 0 });
   const facing = useRef(0);
+  const decayAcc = useRef(0);
 
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime;
     const dt = Math.min(delta, 0.05);
     const store = useMascotStore.getState();
-    const { anim, target, position, setPosition, setTarget, setAnim, emotions } =
-      store;
+    const {
+      anim,
+      target,
+      position,
+      setPosition,
+      setTarget,
+      setAnim,
+      emotions,
+      decayEmotions,
+      dispatch,
+    } = store;
+
+    // Emotion decay + ambient tick (~1Hz)
+    decayAcc.current += dt;
+    if (decayAcc.current > 1) {
+      decayEmotions(decayAcc.current);
+      dispatch({ type: "tick" });
+      decayAcc.current = 0;
+    }
 
     const g = root.current;
     const p = pose.current;
     if (!g || !p) return;
 
-    // —— Locomotion ——
     let moving = false;
-    if (target && (anim === "walk" || anim === "idle")) {
+    if (target && anim !== "sleep" && anim !== "happy" && anim !== "wave") {
       const d = distXZ(position.x, position.z, target.x, target.z);
       if (d < 0.04) {
         setPosition(target);
@@ -43,85 +57,108 @@ export function PlaceholderChibi() {
         if (anim === "walk") setAnim("idle");
       } else {
         moving = true;
-        if (anim !== "walk") setAnim("walk");
-        const speed = WALK_SPEED * (0.65 + emotions.energy * 0.5);
+        if (anim !== "walk" && anim !== "surprised") setAnim("walk");
+        const speed = WALK_SPEED * (0.55 + emotions.energy * 0.55);
         const nx = position.x + ((target.x - position.x) / d) * speed * dt;
         const nz = position.z + ((target.z - position.z) / d) * speed * dt;
         setPosition({ x: nx, z: nz });
-        facing.current = Math.atan2(target.x - position.x, target.z - position.z);
+        facing.current = Math.atan2(
+          target.x - position.x,
+          target.z - position.z,
+        );
       }
     }
 
     g.position.x = position.x;
     g.position.z = position.z;
     g.position.y = -0.15;
+    g.rotation.y = THREE.MathUtils.lerp(
+      g.rotation.y,
+      facing.current,
+      1 - Math.pow(0.001, dt),
+    );
 
-    // Smooth yaw
-    const yaw = facing.current;
-    g.rotation.y = THREE.MathUtils.lerp(g.rotation.y, yaw, 1 - Math.pow(0.001, dt));
-
-    // —— Pose / anim layer ——
     const breathe = Math.sin(t * 2.2) * 0.02;
     let bob = Math.sin(t * 1.6) * 0.025;
     let scale = 1;
     let rotZ = 0;
     let armSwing = 0;
+    let headPitch = 0;
 
-    if (anim === "walk" || moving) {
-      const gait = t * 10;
-      bob = Math.abs(Math.sin(gait)) * 0.06;
-      armSwing = Math.sin(gait) * 0.45;
-      rotZ = Math.sin(gait) * 0.04;
-    } else if (anim === "happy") {
-      scale = 1 + Math.sin(t * 14) * 0.04;
-      bob = Math.abs(Math.sin(t * 10)) * 0.12;
-      rotZ = Math.sin(t * 12) * 0.08;
-      armSwing = Math.sin(t * 14) * 0.6;
-    } else if (anim === "wave") {
-      bob = 0.04 + breathe;
-      armSwing = 0.2 + Math.sin(t * 9) * 0.9;
-      rotZ = Math.sin(t * 6) * 0.1;
-    } else if (anim === "sleep") {
-      bob = -0.06 + breathe;
-      rotZ = -0.15;
-    } else {
-      bob = bob + breathe * 0.5;
+    switch (anim) {
+      case "walk": {
+        const gait = t * 10;
+        bob = Math.abs(Math.sin(gait)) * 0.06;
+        armSwing = Math.sin(gait) * 0.45;
+        rotZ = Math.sin(gait) * 0.04;
+        break;
+      }
+      case "happy":
+        scale = 1 + Math.sin(t * 14) * 0.04;
+        bob = Math.abs(Math.sin(t * 10)) * 0.12;
+        rotZ = Math.sin(t * 12) * 0.08;
+        armSwing = Math.sin(t * 14) * 0.6;
+        break;
+      case "wave":
+        bob = 0.04 + breathe;
+        armSwing = 0.25 + Math.sin(t * 9) * 0.95;
+        rotZ = Math.sin(t * 6) * 0.1;
+        break;
+      case "think":
+        bob = breathe;
+        headPitch = -0.25 + Math.sin(t * 1.2) * 0.05;
+        armSwing = 0.15;
+        rotZ = 0.06;
+        break;
+      case "sleep":
+        bob = -0.08 + breathe * 0.5;
+        rotZ = -0.18;
+        headPitch = 0.35;
+        break;
+      case "surprised":
+        scale = 1.06;
+        bob = 0.08;
+        headPitch = -0.1;
+        armSwing = 0.5;
+        break;
+      default:
+        bob = bob + breathe * 0.5;
+        if (moving) {
+          const gait = t * 10;
+          bob = Math.abs(Math.sin(gait)) * 0.06;
+          armSwing = Math.sin(gait) * 0.4;
+        }
     }
 
     p.position.y = bob;
     p.rotation.z = rotZ;
     p.scale.setScalar(scale * (1 + breathe * 0.35));
 
-    if (leftArm.current) {
-      leftArm.current.rotation.x = armSwing;
-    }
+    if (leftArm.current) leftArm.current.rotation.x = armSwing;
     if (rightArm.current) {
-      rightArm.current.rotation.x = -armSwing * (anim === "wave" ? 0.2 : 1);
-      if (anim === "wave") {
-        rightArm.current.rotation.z = -0.5 + Math.sin(t * 9) * 0.5;
-      } else {
-        rightArm.current.rotation.z = -0.4;
-      }
+      rightArm.current.rotation.x =
+        anim === "wave" ? -0.2 : -armSwing;
+      rightArm.current.rotation.z =
+        anim === "wave" ? -0.5 + Math.sin(t * 9) * 0.55 : -0.4;
     }
 
-    // Head look
     if (head.current) {
-      const targetX = pointer.current.x * 0.25;
-      const targetY = pointer.current.y * 0.15;
+      const lookY = pointer.current.x * 0.25;
+      const lookX = -pointer.current.y * 0.15 + headPitch;
       head.current.rotation.y = THREE.MathUtils.lerp(
         head.current.rotation.y,
-        targetX,
+        lookY,
         0.08,
       );
       head.current.rotation.x = THREE.MathUtils.lerp(
         head.current.rotation.x,
-        -targetY,
+        lookX,
         0.08,
       );
     }
 
     const blink =
-      anim === "sleep" ? 0.12 : Math.sin(t * 0.7) > 0.96 ? 0.15 : 1;
+      anim === "sleep" ? 0.1 : Math.sin(t * 0.7) > 0.96 ? 0.15 : 1;
     if (leftEye.current) leftEye.current.scale.y = blink;
     if (rightEye.current) rightEye.current.scale.y = blink;
   });
@@ -191,11 +228,7 @@ export function PlaceholderChibi() {
           </mesh>
         </group>
 
-        <mesh
-          ref={leftArm}
-          position={[-0.32, -0.28, 0]}
-          rotation={[0, 0, 0.4]}
-        >
+        <mesh ref={leftArm} position={[-0.32, -0.28, 0]} rotation={[0, 0, 0.4]}>
           <capsuleGeometry args={[0.07, 0.16, 4, 8]} />
           <meshStandardMaterial color="#e8a598" />
         </mesh>

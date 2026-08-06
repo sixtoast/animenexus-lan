@@ -4,20 +4,20 @@
 
 | # | Goal | Status |
 |---|------|--------|
-| 1 | Placeholder chibi + idle/happy + habitat | Done |
-| 2 | Walking / navigation in habitat | **Done** |
-| 3 | Full animation state machine | Partial |
-| 4–5 | Behaviour + emotion drivers | Stub + wander |
-| 6+ | UI terrain, physics, polish | Planned |
+| 1 | Placeholder + habitat | Done |
+| 2 | Walk / wander in habitat | Done |
+| 3 | Animation state machine | **Done** |
+| 4–5 | Richer behaviour loops | Next |
+| 6+ | UI terrain / physics | Planned |
 
-## M2 navigation
+## M3 — state machine
 
-- XZ movement clamped to `HABITAT_BOUNDS`
-- `go-to` event / click floor → walk to point
-- Autonomous wander every ~4.5s when idle
-- Walk gait: bob + arm swing; speed scales with `energy`
-- Celebrations pause locomotion via `busyUntil`
+`lib/mascot/anim-machine.ts`
 
-## Placeholder
+- **Priority stack**: sleep < idle < walk < think < wave < happy < surprised
+- **`requestAnim({ anim, holdMs, force })`** — gated interrupts
+- **`preferredAmbient(emotions)`** — sleep / think / idle from drives
+- **Emotion decay** each second + `tick` event
+- **Sleep → click** = surprised → happy wake
 
-Still procedural meshes — replace with GLTF without changing navigation API.
+Flow: **Emotion → ambient preference → animation** (reactions still force high priority).
