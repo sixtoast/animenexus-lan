@@ -4,6 +4,7 @@ import type { Anime, WatchStatus } from "@/lib/types";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { useToast } from "@/components/ToastProvider";
 import { Button } from "@/components/ui/Button";
+import { fireSeal } from "@/components/SealMoment";
 
 const STATUSES: { value: WatchStatus; label: string }[] = [
   { value: "planning", label: "Planning" },
@@ -16,11 +17,6 @@ const STATUSES: { value: WatchStatus; label: string }[] = [
 type Props = {
   anime: Anime;
 };
-
-function sealLantern() {
-  if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent("animenexus:lantern-pulse"));
-}
 
 export function AddToWatchlist({ anime }: Props) {
   const { ready, getEntry, add, remove, setStatus } = useWatchlist();
@@ -43,8 +39,8 @@ export function AddToWatchlist({ anime }: Props) {
           size="sm"
           onClick={() => {
             add(anime, "planning");
+            fireSeal(anime.title, "seal");
             showToast("Sealed to your list", "🕯️", true);
-            sealLantern();
           }}
         >
           + Add to watchlist
@@ -54,8 +50,8 @@ export function AddToWatchlist({ anime }: Props) {
           size="sm"
           onClick={() => {
             add(anime, "watching");
+            fireSeal(anime.title, "watching");
             showToast("Now watching", "▶", true);
-            sealLantern();
           }}
         >
           Start watching
