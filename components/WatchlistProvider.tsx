@@ -14,6 +14,8 @@ import {
   readWatchlist,
   writeWatchlist,
 } from "@/lib/watchlist-storage";
+import { fireSeal } from "@/components/SealMoment";
+import { recordCompletion } from "@/lib/lantern-memory";
 
 type Ctx = {
   entries: WatchlistEntry[];
@@ -99,12 +101,26 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
 
   const setStatus = useCallback((id: number, status: WatchStatus) => {
     setEntries((prev) => {
+      const current = prev.find((e) => e.id === id);
       const next = prev.map((e) =>
         e.id === id
           ? { ...e, watchStatus: status, updatedAt: new Date().toISOString() }
           : e,
       );
       writeWatchlist(next);
+
+      // Quiet completion — only when transitioning into completed
+      if (
+        status === "completed" &&
+        current &&
+        current.watchStatus !== "completed"
+      ) {
+        queueMicrotask(() => {
+          fireSeal(current.title, "completed");
+          recordCompletion({ id: current.id, title: current.title });
+        });
+      }
+
       return next;
     });
   }, []);

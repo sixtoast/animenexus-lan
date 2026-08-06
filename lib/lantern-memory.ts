@@ -5,6 +5,7 @@
 
 const KEY = "anime_nexus_lantern_memory_v1";
 const MAX_RECENT = 24;
+const MAX_COMPLETED = 40;
 
 export type RecentView = {
   id: number;
@@ -13,9 +14,16 @@ export type RecentView = {
   at: string; // ISO
 };
 
+export type CompletedLog = {
+  id: number;
+  title: string;
+  at: string;
+};
+
 export type LanternMemory = {
   version: 1;
   recentViews: RecentView[];
+  completedLog: CompletedLog[];
   /** genre string -> count */
   genreCounts: Record<string, number>;
   studioCounts: Record<string, number>;
@@ -29,6 +37,7 @@ function empty(): LanternMemory {
   return {
     version: 1,
     recentViews: [],
+    completedLog: [],
     genreCounts: {},
     studioCounts: {},
     visitDays: [],
@@ -49,6 +58,9 @@ export function readMemory(): LanternMemory {
       ...parsed,
       version: 1,
       recentViews: Array.isArray(parsed.recentViews) ? parsed.recentViews : [],
+      completedLog: Array.isArray(parsed.completedLog)
+        ? parsed.completedLog
+        : [],
       genreCounts: parsed.genreCounts || {},
       studioCounts: parsed.studioCounts || {},
       visitDays: Array.isArray(parsed.visitDays) ? parsed.visitDays : [],
@@ -116,6 +128,18 @@ export function recordView(input: {
   return m;
 }
 
+export function recordCompletion(input: { id: number; title: string }) {
+  const m = readMemory();
+  const at = new Date().toISOString();
+  m.completedLog = [
+    { id: input.id, title: input.title, at },
+    ...m.completedLog.filter((c) => c.id !== input.id),
+  ].slice(0, MAX_COMPLETED);
+  m.lastVisitAt = at;
+  writeMemory(m);
+  return m;
+}
+
 function topKeys(map: Record<string, number>, n = 3): string[] {
   return Object.entries(map)
     .sort((a, b) => b[1] - a[1])
@@ -142,6 +166,7 @@ export function ritualLine(opts?: {
   const topGenres = topKeys(m.genreCounts, 2);
   const recent = m.recentViews[0];
   const days = m.visitDays.length;
+  const lastDone = m.completedLog[0];
 
   const watching = opts?.watchingTitles?.filter(Boolean) || [];
   if (watching.length > 0) {
@@ -150,6 +175,14 @@ export function ritualLine(opts?: {
       return `Still mid-frequency with “${t}”? Lantern kept the seat warm.`;
     }
     return `You’re still tuned to “${t}”. Pick up where the signal left off.`;
+  }
+
+  if (lastDone) {
+    const hours =
+      (Date.now() - new Date(lastDone.at).getTime()) / (1000 * 60 * 60);
+    if (hours < 48) {
+      return `You closed “${lastDone.title}” recently. The shelf feels a little lighter.`;
+    }
   }
 
   if (opts?.planningCount && opts.planningCount > 3 && recent) {
@@ -200,9 +233,14 @@ export function memoryDigestForAI(opts?: {
     .slice(0, 5)
     .map((r) => r.title)
     .join("; ");
+  const done = m.completedLog
+    .slice(0, 5)
+    .map((c) => c.title)
+    .join("; ");
   const lines = [
     "Lantern local memory (user browser, may be incomplete):",
     recent ? `Recently viewed: ${recent}` : "Recently viewed: (none yet)",
+    done ? `Recently completed (logged): ${done}` : null,
     genres.length ? `Genre affinity counts: ${genres.join(", ")}` : null,
     studios.length ? `Studios noticed: ${studios.join(", ")}` : null,
     opts?.watching?.length
