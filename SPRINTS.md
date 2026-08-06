@@ -24,7 +24,7 @@ Each sprint ends with: working UI on `/`, types covered, and a short note in thi
 
 ---
 
-## Sprint 1 — Foundation (this sprint)
+## Sprint 1 — Foundation ✅
 
 **In scope**
 
@@ -37,19 +37,33 @@ Each sprint ends with: working UI on `/`, types covered, and a short note in thi
 - [x] `AnimeCard` presentational component
 - [x] Loading / empty / error states
 
-**Out of scope (later sprints)**
-
-- Filters, search, modal detail, watchlist, mood, auth, AI
-
 **Done when**
 
 - `npm run dev` shows a dark Lantern-styled home with real AniList trending posters and titles.
 
 ---
 
-## Sprint 2 — Preview
+## Sprint 2 — Browse & filters ✅
 
-Filter panel, URL-aware browse state, “Load more”, basic search (AniList `search` query).
+**In scope**
+
+- [x] `/browse` route with URL search params
+- [x] Feed tabs: trending / popular / top
+- [x] Search by title
+- [x] Genre, status, format, year, sort filters
+- [x] Apply / reset
+- [x] Load more pagination
+- [x] Navbar active state for Browse
+
+**Done when**
+
+- Filters and search change the grid; URL is shareable; load more appends results.
+
+---
+
+## Sprint 3 — Preview
+
+Anime detail page (`/anime/[id]`), synopsis, genres, score, external AniList link. Characters / trailer later if time.
 
 ---
 

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AnimeGrid } from "@/components/AnimeGrid";
 import { fetchDiscover } from "@/lib/anilist";
 
@@ -38,8 +39,13 @@ export default async function HomePage() {
           </h1>
           <p>
             Mood-based recommendations and a late-night broadcast console —
-            rebuilt in Next.js, one sprint at a time. Sprint 1 wires the
-            foundation and live trending data.
+            rebuilt in Next.js, one sprint at a time. Browse the full catalog
+            with filters and search.
+          </p>
+          <p style={{ marginTop: 18 }}>
+            <Link href="/browse" className="btn btn-accent btn-sm">
+              Open browse →
+            </Link>
           </p>
         </div>
       </section>
