@@ -15,16 +15,13 @@ import { ConfettiHost } from "@/components/ConfettiBurst";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 import { LoadingTheater } from "@/components/LoadingTheater";
 import "./globals.css";
-import "./card-link.css";
 import "./nav-polish.css";
 import "./sprint-a.css";
 import "./ai-panel.css";
 import "./cmdk.css";
 import "./ancestry.css";
 import "./session-tools.css";
-import "./sprint-l.css";
 import "./oracle-vibe.css";
-import "./sprint-n.css";
 import "./motion.css";
 import "./desk.css";
 

@@ -1,4 +1,4 @@
-/* AnimeNexus — motion language v1 */
+/* AnimeNexus — motion language + view modes + toasts */
 :root {
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -17,10 +17,17 @@
   .anime-card,
   .poster-skel,
   .grid-enter,
-  .fab-toggle.pulse {
+  .fab-toggle.pulse,
+  .anime-toast {
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* Cards as links */
+a.anime-card {
+  text-decoration: none;
+  color: inherit;
 }
 
 /* Staggered grid entrance */
@@ -108,7 +115,31 @@
   view-transition-name: var(--vt-cover, none);
 }
 
-/* Poster skeletons — tuning the frequency */
+/* View modes (grid / poster / shelf) */
+html[data-view-mode="poster"] .anime-grid {
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+}
+html[data-view-mode="poster"] .anime-card .card-body {
+  padding: 8px;
+}
+html[data-view-mode="shelf"] .anime-grid {
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+html[data-view-mode="shelf"] .anime-card {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  align-items: stretch;
+}
+html[data-view-mode="shelf"] .anime-card img {
+  aspect-ratio: 2/3;
+  height: 100%;
+  min-height: 96px;
+  object-fit: cover;
+}
+
+/* Poster skeletons */
 .poster-skel-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -181,10 +212,59 @@
   }
 }
 
-/* Watchlist seal toast emphasis */
+/* Toasts */
+.anime-toast {
+  animation: toastBounce 0.45s var(--ease-spring);
+}
 .anime-toast.seal {
   border-color: var(--color-accent);
   box-shadow: 0 0 24px rgba(240, 160, 144, 0.25);
+}
+.anime-toast.milestone {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px rgba(240, 160, 144, 0.25), var(--shadow-soft);
+}
+@keyframes toastBounce {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.92);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Shortcuts + loading theater */
+.shortcuts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.shortcuts-table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+.shortcuts-table td:first-child {
+  white-space: nowrap;
+  width: 34%;
+}
+.loading-theater {
+  position: fixed;
+  inset: 0;
+  z-index: 1600;
+  background: rgba(12, 10, 9, 0.82);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: var(--color-text-muted);
 }
 
 /* Session environment shifts */
