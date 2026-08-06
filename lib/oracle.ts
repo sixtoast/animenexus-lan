@@ -1,5 +1,6 @@
 import type { WatchlistEntry } from "./types";
 import { MOODS } from "./moods";
+import { readMemory } from "./lantern-memory";
 
 export type OracleReading = {
   headline: string;
@@ -8,13 +9,31 @@ export type OracleReading = {
   moodLabel?: string;
 };
 
-/** Local Night Desk oracle — no external LLM */
+/** Local Lantern reading — on-device, memory-aware */
 export function consultOracle(entries: WatchlistEntry[]): OracleReading {
   const n = entries.length;
+  const mem =
+    typeof window !== "undefined"
+      ? readMemory()
+      : {
+          recentViews: [] as { title: string }[],
+          completedLog: [] as { title: string }[],
+          genreCounts: {} as Record<string, number>,
+        };
+
   if (n === 0) {
+    const recent = mem.recentViews[0];
+    if (recent) {
+      return {
+        headline: "The shelf is empty — the signal isn’t",
+        body: `You were looking at “${recent.title}” but nothing is sealed yet. Open that detail and add it, or accept the daily signal. Lantern needs a list to reflect.`,
+        moodSlug: "chill",
+        moodLabel: "Chill",
+      };
+    }
     return {
       headline: "The desk is quiet",
-      body: "Your list is empty. Open Browse or Seasonal, add a few titles, then return — the signal needs something to reflect.",
+      body: "Your list is empty. Open Browse or Daily, seal a few titles, then return — the signal needs something to reflect.",
       moodSlug: "chill",
       moodLabel: "Chill",
     };
@@ -32,10 +51,19 @@ export function consultOracle(entries: WatchlistEntry[]): OracleReading {
   if (watching.length > 0) {
     const top = [...watching].sort((a, b) => b.progress - a.progress)[0];
     return {
-      headline: "Finish the current arc",
-      body: `You’re mid-frequency on “${top.title}” (${top.progress} ep logged). The desk says: one more session before opening a new channel. You’ve tracked ~${hours.toFixed(1)} hours total.`,
+      headline: "Stay on the current frequency",
+      body: `You’re mid-signal on “${top.title}” (${top.progress} ep logged). Lantern says: one more session before opening a new channel. You’ve tracked ~${hours.toFixed(1)} hours total.`,
       moodSlug: "hype",
       moodLabel: "Hype",
+    };
+  }
+
+  if (mem.completedLog[0] && planning.length === 0) {
+    return {
+      headline: "After the close",
+      body: `You recently finished “${mem.completedLog[0].title}”. The shelf has room again. Browse a mood or accept today’s daily signal before the queue rebuilds.`,
+      moodSlug: "chill",
+      moodLabel: "Chill",
     };
   }
 
@@ -74,6 +102,18 @@ export function consultOracle(entries: WatchlistEntry[]): OracleReading {
       }`,
       moodSlug: avg >= 8 ? "masterpiece" : "mind",
       moodLabel: avg >= 8 ? "Masterpiece" : "Mind-bender",
+    };
+  }
+
+  const topGenre = Object.entries(mem.genreCounts).sort(
+    (a, b) => b[1] - a[1],
+  )[0];
+  if (topGenre) {
+    return {
+      headline: "Genre gravity",
+      body: `Browsing has been pulling toward ${topGenre[0]}. ${n} titles on the list · ~${hours.toFixed(1)} hours logged. Seal scores so Lantern can sharpen the reading.`,
+      moodSlug: "fantasy",
+      moodLabel: "Fantasy",
     };
   }
 

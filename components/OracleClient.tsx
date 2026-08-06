@@ -13,6 +13,8 @@ import {
 } from "@/lib/oracle-cloud";
 import { isAIConfigured } from "@/lib/ai-settings";
 import { useToast } from "@/components/ToastProvider";
+import { Button } from "@/components/ui/Button";
+import { SignalBars } from "@/components/ui/SignalBars";
 import type { Anime } from "@/lib/types";
 
 type ResolvedPick = VibecastPick & {
@@ -112,15 +114,24 @@ export function OracleClient() {
   if (!ready) {
     return (
       <div className="state-box">
-        <div className="spinner" />
-        <p>Opening the desk…</p>
+        <SignalBars level={3} animated />
+        <p style={{ marginTop: 12 }}>Lantern is opening the desk…</p>
       </div>
     );
   }
 
   return (
     <div className={"oracle" + (bandFlash ? " band-flash" : "")}>
-      <div className="feed-tabs oracle-bands" role="tablist" aria-label="Oracle modes">
+      <p className="oracle-host-line">
+        Lantern is listening — local reading uses your shelf and memory; cloud
+        bands need a key.
+      </p>
+
+      <div
+        className="feed-tabs oracle-bands"
+        role="tablist"
+        aria-label="Oracle modes"
+      >
         {ORACLE_MODES.map((m) => (
           <button
             key={m.id}
@@ -135,7 +146,7 @@ export function OracleClient() {
       </div>
 
       <label className="filter-label" htmlFor="oracle-note">
-        Optional note
+        Optional note to Lantern
       </label>
       <input
         id="oracle-note"
@@ -147,17 +158,18 @@ export function OracleClient() {
       />
 
       <div className="daily-actions" style={{ marginBottom: 16 }}>
-        <button
-          type="button"
-          className="btn btn-accent btn-sm"
+        <Button
+          variant="accent"
+          size="sm"
+          loading={busy}
           disabled={busy}
           onClick={runCloud}
         >
-          {busy ? "Consulting…" : "Ask Night Desk (cloud)"}
-        </button>
-        <button
-          type="button"
-          className="btn btn-outline btn-sm"
+          {busy ? "Consulting…" : "Ask Lantern (cloud)"}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => {
             setUseCloud(false);
             setVibeCards([]);
@@ -166,12 +178,12 @@ export function OracleClient() {
           }}
         >
           Local reading
-        </button>
+        </Button>
       </div>
 
       {useCloud && vibeCards.length > 0 ? (
         <div className="vibe-cards">
-          <p className="detail-kicker">Cloud · vibecast</p>
+          <p className="detail-kicker">Lantern · vibecast</p>
           {vibeCards.map((c, i) => {
             const href = c.anime?.id
               ? `/anime/${c.anime.id}`
@@ -199,14 +211,14 @@ export function OracleClient() {
         </div>
       ) : useCloud && cloudText ? (
         <article className="oracle-card oracle-in">
-          <p className="detail-kicker">Cloud · {mode}</p>
+          <p className="detail-kicker">Lantern · {mode}</p>
           <div className="oracle-body" style={{ whiteSpace: "pre-wrap" }}>
             {cloudText}
           </div>
         </article>
       ) : (
         <article className="oracle-card oracle-in">
-          <p className="detail-kicker">On-device</p>
+          <p className="detail-kicker">Lantern · on-device</p>
           <h2 className="oracle-headline">{local.headline}</h2>
           <p className="oracle-body">{local.body}</p>
           {local.moodSlug ? (
@@ -223,8 +235,8 @@ export function OracleClient() {
       )}
 
       <p className="taste-footnote" style={{ marginTop: 20 }}>
-        Cloud modes need a key in the 🤖 AI panel. Keys stay in localStorage as{" "}
-        <code>anime_nexus_ai_settings</code>.
+        Cloud modes need a key in the 🤖 AI panel. Local readings always work
+        from your shelf and Lantern memory.
       </p>
     </div>
   );

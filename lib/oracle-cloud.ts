@@ -1,6 +1,7 @@
 import type { WatchlistEntry } from "./types";
 import { callChatCompletions } from "./ai-chat";
 import { isAIConfigured } from "./ai-settings";
+import { memoryDigestForAI } from "./lantern-memory";
 
 export type OracleMode =
   | "pick"
@@ -39,18 +40,20 @@ function listDigest(entries: WatchlistEntry[]): string {
 
 function systemFor(mode: OracleMode): string {
   const base =
-    "You are the Night Desk oracle for AnimeNexus Lantern — warm, concrete, late-night radio host energy. Never invent unlock codes or secret ARG mythology. Never invent titles that are not in the user's list unless clearly labeled as a catalog suggestion. Keep answers 120–220 words unless mode needs a short list.";
+    "You are Lantern — host of AnimeNexus, speaking from the Night Desk. Warm, concrete, late-night radio energy. Never invent unlock codes or ARG mythology. Never invent titles that are not in the user's list unless clearly labeled as a catalog suggestion. Use the memory digest when relevant. Keep answers 120–220 words unless mode needs a short list.";
   const modes: Record<OracleMode, string> = {
-    pick: base + " Mode: pick one thing to watch tonight from their list and say why.",
+    pick:
+      base +
+      " Mode: pick one thing to watch tonight from their list and say why.",
     whatif:
       base +
       " Mode: what-if — imagine a rewatch or alternate order of 2–3 titles they already have.",
     letter:
       base +
-      " Mode: write a short personal letter addressed to the viewer about their list.",
+      " Mode: write a short personal letter from Lantern to the viewer about their list.",
     taste:
       base +
-      " Mode: describe their taste personality from statuses, ratings, and genres.",
+      " Mode: describe their taste personality from statuses, ratings, genres, and memory.",
     marathon:
       base +
       " Mode: propose a realistic weekend marathon using titles they already track.",
@@ -93,14 +96,22 @@ export async function consultOracleCloud(
     entries.length > 0
       ? listDigest(entries)
       : "(list empty — suggest how to start)";
+  const watching = entries
+    .filter((e) => e.watchStatus === "watching")
+    .map((e) => e.title);
+  const completedCount = entries.filter(
+    (e) => e.watchStatus === "completed",
+  ).length;
+  const mem = memoryDigestForAI({ watching, completedCount });
   const user = [
     `Mode: ${mode}`,
     userNote ? `Viewer note: ${userNote}` : "",
+    mem,
     "Watchlist sample:",
     digest,
   ]
     .filter(Boolean)
-    .join("\n");
+    .join("\n\n");
 
   return callChatCompletions(
     [

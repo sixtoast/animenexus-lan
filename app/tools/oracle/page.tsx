@@ -5,7 +5,7 @@ import "../../oracle-vibe.css";
 
 export const metadata = {
   title: "Night Desk · AnimeNexus",
-  description: "Local + cloud oracle; vibe-cast resolves to title cards.",
+  description: "Lantern’s local + cloud readings — what to watch, why, and how.",
 };
 
 export default function OraclePage() {
@@ -13,12 +13,13 @@ export default function OraclePage() {
     <main>
       <section className="hero" style={{ paddingBottom: 12 }}>
         <div className="container">
-          <div className="hero-badge">Night Desk · Oracle</div>
+          <div className="hero-badge">Lantern · Night Desk</div>
           <h1>
             Night <span>Desk</span>
           </h1>
           <p>
-            Switch bands. Vibe cast deals resolved title cards.
+            Ask Lantern for a pick, a letter, a marathon — or a local reading
+            that never leaves this browser.
           </p>
         </div>
       </section>
