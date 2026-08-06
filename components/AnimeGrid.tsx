@@ -16,8 +16,8 @@ export function AnimeGrid({ items }: Props) {
 
   return (
     <div className="anime-grid">
-      {items.map((a) => (
-        <AnimeCard key={a.id} anime={a} />
+      {items.map((a, i) => (
+        <AnimeCard key={a.id} anime={a} index={i} />
       ))}
     </div>
   );

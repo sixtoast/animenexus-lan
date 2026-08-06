@@ -1,14 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useToast } from "@/components/ToastProvider";
 
 export function FabMenu() {
   const [open, setOpen] = useState(false);
+  const [pulse, setPulse] = useState(false);
   const { toggleTheme, theme } = useTheme();
   const { showToast } = useToast();
+
+  useEffect(() => {
+    const onPulse = () => {
+      setPulse(true);
+      window.setTimeout(() => setPulse(false), 700);
+    };
+    window.addEventListener("animenexus:lantern-pulse", onPulse);
+    return () => window.removeEventListener("animenexus:lantern-pulse", onPulse);
+  }, []);
 
   return (
     <div className={`fab-root${open ? " open" : ""}`}>
@@ -52,6 +62,7 @@ export function FabMenu() {
             role="menuitem"
             onClick={() => {
               window.dispatchEvent(new CustomEvent("animenexus:tonight"));
+              document.documentElement.dataset.session = "tonight";
               setOpen(false);
             }}
           >
@@ -63,6 +74,7 @@ export function FabMenu() {
             role="menuitem"
             onClick={() => {
               window.dispatchEvent(new CustomEvent("animenexus:break"));
+              document.documentElement.dataset.session = "break";
               setOpen(false);
             }}
           >
@@ -114,7 +126,7 @@ export function FabMenu() {
       ) : null}
       <button
         type="button"
-        className="fab-toggle"
+        className={"fab-toggle" + (pulse ? " pulse" : "")}
         aria-expanded={open}
         aria-label={open ? "Close quick menu" : "Open quick menu"}
         onClick={() => setOpen((v) => !v)}

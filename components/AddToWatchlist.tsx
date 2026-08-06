@@ -2,6 +2,7 @@
 
 import type { Anime, WatchStatus } from "@/lib/types";
 import { useWatchlist } from "@/components/WatchlistProvider";
+import { useToast } from "@/components/ToastProvider";
 
 const STATUSES: { value: WatchStatus; label: string }[] = [
   { value: "planning", label: "Planning" },
@@ -15,8 +16,14 @@ type Props = {
   anime: Anime;
 };
 
+function sealLantern() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent("animenexus:lantern-pulse"));
+}
+
 export function AddToWatchlist({ anime }: Props) {
   const { ready, getEntry, add, remove, setStatus } = useWatchlist();
+  const { showToast } = useToast();
   const entry = getEntry(anime.id);
 
   if (!ready) {
@@ -33,14 +40,22 @@ export function AddToWatchlist({ anime }: Props) {
         <button
           type="button"
           className="btn btn-accent btn-sm"
-          onClick={() => add(anime, "planning")}
+          onClick={() => {
+            add(anime, "planning");
+            showToast("Sealed to your list", "🕯️", true);
+            sealLantern();
+          }}
         >
           + Add to watchlist
         </button>
         <button
           type="button"
           className="btn btn-outline btn-sm"
-          onClick={() => add(anime, "watching")}
+          onClick={() => {
+            add(anime, "watching");
+            showToast("Now watching", "▶", true);
+            sealLantern();
+          }}
         >
           Start watching
         </button>
@@ -67,7 +82,10 @@ export function AddToWatchlist({ anime }: Props) {
       <button
         type="button"
         className="btn btn-outline btn-sm"
-        onClick={() => remove(anime.id)}
+        onClick={() => {
+          remove(anime.id);
+          showToast("Removed from list", "·");
+        }}
       >
         Remove
       </button>
