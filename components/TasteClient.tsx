@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useWatchlist } from "@/components/WatchlistProvider";
+import { TasteExtras } from "@/components/TasteExtras";
 import { computeTaste, statusLabel } from "@/lib/taste";
 import type { WatchStatus } from "@/lib/types";
 
@@ -178,6 +179,8 @@ export function TasteClient() {
           </ul>
         </section>
       ) : null}
+
+      <TasteExtras />
 
       <p className="taste-footnote">
         Hours use progress × episode length (default 24 min). Completed hours
