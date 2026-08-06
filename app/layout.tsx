@@ -6,10 +6,12 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { ToastProvider } from "@/components/ToastProvider";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { FabMenu } from "@/components/FabMenu";
+import { AIPanel } from "@/components/AIPanel";
 import "./globals.css";
 import "./card-link.css";
 import "./nav-polish.css";
 import "./sprint-a.css";
+import "./ai-panel.css";
 
 export const metadata: Metadata = {
   title: "AnimeNexus — Lantern",
@@ -59,9 +61,10 @@ export default function RootLayout({
                 <Navbar />
                 {children}
                 <FabMenu />
+                <AIPanel />
                 <footer className="site-footer">
                   <div className="container">
-                    AnimeNexus · Lantern · Parity Sprint A · Data via{" "}
+                    AnimeNexus · Lantern · Data via{" "}
                     <a
                       href="https://anilist.co"
                       target="_blank"
