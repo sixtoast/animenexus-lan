@@ -1,13 +1,54 @@
+.daily-ritual {
+  max-width: 900px;
+}
+
+.daily-ritual-line {
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(240, 160, 144, 0.2);
+  background:
+    radial-gradient(
+      ellipse 70% 80% at 0% 50%,
+      rgba(240, 160, 144, 0.1),
+      transparent 60%
+    ),
+    rgba(22, 18, 16, 0.65);
+}
+
+.daily-ritual-kicker {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: 6px;
+}
+
+.daily-ritual-line p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--color-text);
+  max-width: 40rem;
+}
+
 .daily-card {
   display: flex;
   flex-wrap: wrap;
   gap: 28px;
   align-items: flex-start;
-  background: var(--color-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  background:
+    linear-gradient(
+      165deg,
+      rgba(34, 28, 24, 0.75),
+      rgba(12, 10, 9, 0.9)
+    );
+  border: 1px solid rgba(240, 160, 144, 0.22);
+  border-radius: 18px;
   padding: 24px;
-  max-width: 900px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.28);
 }
 
 .daily-cover {
@@ -77,4 +118,5 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  align-items: center;
 }

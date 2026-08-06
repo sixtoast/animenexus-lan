@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { fetchDailyPool } from "@/lib/anilist-discover";
 import { dailySeed, pickIndex } from "@/lib/season";
+import { DailyRitual } from "@/components/DailyRitual";
 import type { Metadata } from "next";
 import "./daily.css";
 
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Daily pick · AnimeNexus",
-  description: "One title for today — stable until midnight.",
+  description: "One title for today — Lantern’s daily signal until midnight.",
 };
 
 export default async function DailyPage() {
@@ -16,8 +16,7 @@ export default async function DailyPage() {
   const today = new Date();
   const dateLabel = today.toLocaleDateString(undefined, {
     weekday: "long",
-    year: "numeric",
-    month: "long",
+    month: "short",
     day: "numeric",
   });
 
@@ -39,72 +38,30 @@ export default async function DailyPage() {
     <main>
       <section className="hero" style={{ paddingBottom: 12 }}>
         <div className="container">
-          <div className="hero-badge">Daily pick · Sprint 8</div>
+          <div className="hero-badge">Lantern · daily frequency</div>
           <h1>
             Tonight’s <span>signal</span>
           </h1>
           <p>
-            One title from a popular pool, locked for {dateLabel}. Same seed all
-            day — refresh won’t change it.
+            One title, locked for {dateLabel}. Same seed all day — refresh won’t
+            change it. Lantern keeps the channel steady.
           </p>
         </div>
       </section>
 
       <section className="container" style={{ paddingBottom: 48 }}>
         {error ? (
-          <div className="state-box error">
+          <div className="state-box error lantern-empty">
+            <h3>Signal interrupted</h3>
             <p>{error}</p>
           </div>
         ) : !anime ? (
-          <div className="state-box">
-            <p>No pick available right now.</p>
+          <div className="state-box lantern-empty">
+            <h3>No pick on the desk</h3>
+            <p>The pool came back empty. Try again in a moment.</p>
           </div>
         ) : (
-          <article className="daily-card">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="daily-cover" src={anime.image} alt="" />
-            <div className="daily-body">
-              <p className="daily-kicker">Seed {seed}</p>
-              <h2 className="daily-title">{anime.title}</h2>
-              {anime.titleNative ? (
-                <p className="daily-native">{anime.titleNative}</p>
-              ) : null}
-              <div className="daily-meta">
-                {anime.score > 0 ? (
-                  <span className="detail-pill score">
-                    ★ {anime.score.toFixed(1)}
-                  </span>
-                ) : null}
-                <span className="detail-pill">{anime.format}</span>
-                {anime.year ? (
-                  <span className="detail-pill">{anime.year}</span>
-                ) : null}
-                {anime.tags.slice(0, 3).map((g) => (
-                  <span key={g} className="detail-pill">
-                    {g}
-                  </span>
-                ))}
-              </div>
-              <p className="daily-desc">
-                {anime.description.slice(0, 320)}
-                {anime.description.length > 320 ? "…" : ""}
-              </p>
-              <div className="daily-actions">
-                <Link
-                  href={`/anime/${anime.id}`}
-                  className="btn btn-accent btn-sm"
-                >
-                  Open detail
-                </Link>
-                <Link href="/seasonal" className="btn btn-outline btn-sm">
-                  Seasonal chart
-                </Link>
-                <Link href="/browse" className="btn btn-outline btn-sm">
-                  Browse
-                </Link>
-              </div>
-            </div>
-          </article>
+          <DailyRitual anime={anime} dateLabel={dateLabel} />
         )}
       </section>
     </main>
