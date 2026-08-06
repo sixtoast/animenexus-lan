@@ -56,3 +56,55 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
 }
+
+.ancestry-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+}
+.ancestry-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 20px;
+  background: var(--color-primary);
+}
+.ancestry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+.ancestry-header h3 {
+  font-size: 1.15rem;
+}
+.ancestry-close {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-tertiary);
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+#ancestryNetwork {
+  flex: 1;
+  min-height: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+}
+.ancestry-footer {
+  margin-top: 10px;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-align: center;
+  flex-shrink: 0;
+}
