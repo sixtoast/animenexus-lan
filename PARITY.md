@@ -5,17 +5,16 @@ Repo: **sixtoast/animenexus-lantern** · branch `main`
 | Feature | Status |
 |--------|--------|
 | Product surface | done |
-| Craft cycles 1–3 | done |
-| Craft cycle 4 (CSS merge + loading shells) | done |
+| Craft cycles 1–4 | done |
+| Craft cycle 5 (rooms, kit, stats portrait) | done |
 | Night Signal ARG | declined |
 
-## Cycle 4
-- Merged `sprint-l.css`, `sprint-n.css`, `card-link.css` → **`motion.css`**
-- Layout drops those three imports (fewer CSS requests)
-- `app/browse/loading.tsx` + `app/anime/[id]/loading.tsx` skeleton shells
-- `sprint-a.css` kept (base shell / cards / filters — larger surface)
+## Cycle 5 (cohesion)
+- **`RoomEnter`**: soft fade/slide on every route change (shared “room” continuity)
+- **Interaction kit**: unified button transitions, `:active` press, `btn-ghost`, overlay enter keyframes
+- **Stats portrait**: editorial lead line (shelf depth · finisher lean · genre signal) matching Taste
 
-## Intentionally not done
-- Opt-in sound (scope; a11y default off)
-- Full parallel routes (optional Next architecture)
-- Deleting `sprint-a.css` wholesale (risk without full visual regression suite)
+## Honest gap vs SPA
+- Interaction quality still below the monolith’s density of micro-effects
+- Architecture/maintainability remain the migration win
+- Optional later: deeper Lantern agency, opt-in sound, full sprint-a CSS dissolve

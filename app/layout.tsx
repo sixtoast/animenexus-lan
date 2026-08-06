@@ -14,6 +14,7 @@ import { SessionTools } from "@/components/SessionTools";
 import { ConfettiHost } from "@/components/ConfettiBurst";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 import { LoadingTheater } from "@/components/LoadingTheater";
+import { RoomEnter } from "@/components/RoomEnter";
 import "./globals.css";
 import "./nav-polish.css";
 import "./sprint-a.css";
@@ -79,7 +80,7 @@ export default function RootLayout({
                 <SakuraCanvas />
                 <PwaRegister />
                 <Navbar />
-                {children}
+                <RoomEnter>{children}</RoomEnter>
                 <FabMenu />
                 <AIPanel />
                 <CommandPalette />

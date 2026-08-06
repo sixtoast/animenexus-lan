@@ -9,6 +9,16 @@ export function StatsClient() {
   const { entries, ready } = useWatchlist();
   const s = useMemo(() => computeWatchlistStats(entries), [entries]);
   const maxGenre = Math.max(...s.topGenres.map(([, n]) => n), 1);
+  const topGenre = s.topGenres[0]?.[0];
+  const watching = s.byStatus.watching;
+  const completed = s.byStatus.completed;
+  const portraitLine = [
+    s.total >= 40 ? "Heavy shelf" : s.total >= 15 ? "Solid shelf" : "Early shelf",
+    watching > completed ? "more in progress" : "finisher lean",
+    topGenre ? `${topGenre} signal` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   if (!ready) {
     return (
@@ -31,17 +41,27 @@ export function StatsClient() {
 
   return (
     <div>
+      <div className="taste-portrait stats-portrait">
+        <p className="taste-portrait-kicker">Stats portrait</p>
+        <h2 className="taste-portrait-title">{portraitLine}</h2>
+        <p className="taste-portrait-body">
+          {s.hours} estimated hours · {s.total} titles
+          {s.meanRating ? ` · mean score ${s.meanRating.toFixed(1)}` : ""}
+          {topGenre ? ` · strongest genre ${topGenre}` : ""}
+        </p>
+      </div>
+
       <div className="stats-grid">
         <div className="stats-card">
           <div className="stat-number">{s.total}</div>
           <div className="stat-label">Titles tracked</div>
         </div>
         <div className="stats-card">
-          <div className="stat-number">{s.byStatus.watching}</div>
+          <div className="stat-number">{watching}</div>
           <div className="stat-label">Watching</div>
         </div>
         <div className="stats-card">
-          <div className="stat-number">{s.byStatus.completed}</div>
+          <div className="stat-number">{completed}</div>
           <div className="stat-label">Completed</div>
         </div>
         <div className="stats-card">
