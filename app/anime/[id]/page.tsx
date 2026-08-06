@@ -7,6 +7,7 @@ import { fetchThemesFromJikan, youtubeSearchUrl } from "@/lib/jikan-themes";
 import { AddToWatchlist } from "@/components/AddToWatchlist";
 import { BingeCalculator } from "@/components/BingeCalculator";
 import { AnimeNotes } from "@/components/AnimeNotes";
+import { DetailAI } from "@/components/DetailAI";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -86,6 +87,9 @@ export default async function AnimeDetailPage({ params }: Props) {
   }
 
   const relations = anime.relations || [];
+  const relationsSummary = relations
+    .map((r) => `${r.relationType}: ${r.title}`)
+    .join("\n");
 
   return (
     <main>
@@ -245,6 +249,13 @@ export default async function AnimeDetailPage({ params }: Props) {
             </div>
           </section>
         ) : null}
+
+        <DetailAI
+          title={anime.title}
+          synopsis={anime.description || ""}
+          genres={anime.tags || []}
+          relationsSummary={relationsSummary}
+        />
 
         {anime.characters && anime.characters.length > 0 ? (
           <section className="detail-section">
