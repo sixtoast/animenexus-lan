@@ -318,8 +318,8 @@ img {
   padding: 3px 10px;
   border-radius: 50px;
   font-size: 0.65rem;
-  font-weight: 600;
   border: 1px solid rgba(255, 255, 255, 0.08);
+  font-weight: 600;
 }
 
 .state-box {
@@ -361,6 +361,108 @@ img {
   text-align: center;
 }
 
+/* ---- Browse filters (Sprint 2) ---- */
+.feed-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.feed-tab {
+  background: var(--color-tertiary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  padding: 8px 16px;
+  border-radius: 50px;
+  font-family: var(--font);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.feed-tab:hover {
+  color: var(--color-text);
+  border-color: var(--color-accent);
+}
+
+.feed-tab.active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #2a1210;
+}
+
+.filter-panel {
+  background: var(--color-secondary);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  border: 1px solid var(--color-border);
+  margin-bottom: 24px;
+}
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 12px;
+}
+
+.search-row {
+  align-items: center;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 120px;
+  flex: 1 1 120px;
+  max-width: 200px;
+}
+
+.filter-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filter-input {
+  background: var(--color-tertiary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-family: var(--font);
+  font-size: 0.9rem;
+  outline: none;
+  transition: var(--transition);
+  width: 100%;
+}
+
+.filter-input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-glow);
+}
+
+.filter-search {
+  flex: 1 1 200px;
+  max-width: none;
+}
+
+.filter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
 @media (max-width: 640px) {
   .anime-grid {
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -369,5 +471,10 @@ img {
 
   .nav-links {
     display: none;
+  }
+
+  .filter-field {
+    max-width: none;
+    flex: 1 1 100%;
   }
 }
