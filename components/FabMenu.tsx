@@ -46,6 +46,39 @@ export function FabMenu() {
           >
             🔍 Sauce
           </Link>
+          <button
+            type="button"
+            className="fab-item"
+            role="menuitem"
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent("animenexus:tonight"));
+              setOpen(false);
+            }}
+          >
+            🌙 Tonight
+          </button>
+          <button
+            type="button"
+            className="fab-item"
+            role="menuitem"
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent("animenexus:break"));
+              setOpen(false);
+            }}
+          >
+            ☕ Break
+          </button>
+          <button
+            type="button"
+            className="fab-item"
+            role="menuitem"
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent("animenexus:flashback"));
+              setOpen(false);
+            }}
+          >
+            📼 Flashback
+          </button>
           <Link
             href="/daily"
             className="fab-item"

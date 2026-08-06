@@ -4,6 +4,7 @@ import { HeroGreeting } from "@/components/HeroGreeting";
 import { QuoteBanner } from "@/components/QuoteBanner";
 import { ViewModeToggle } from "@/components/ViewModeToggle";
 import { MoodChips } from "@/components/MoodChips";
+import { HomeDashboard } from "@/components/HomeDashboard";
 import { fetchDiscover } from "@/lib/anilist";
 import "./mood-home.css";
 
@@ -65,6 +66,9 @@ export default async function HomePage() {
         id="trending"
         style={{ paddingBottom: 48 }}
       >
+        <div style={{ marginBottom: 24 }}>
+          <HomeDashboard trending={items} />
+        </div>
         <QuoteBanner />
         <div
           style={{
