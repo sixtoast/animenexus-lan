@@ -1,16 +1,15 @@
 # AnimeNexus — Lantern
 
-**Repo:** https://github.com/sixtoast/animenexus-lantern  
-See **[SPRINTS.md](./SPRINTS.md)**.
+**Repo:** https://github.com/sixtoast/animenexus-lantern
 
-## Current: Sprint 4
+## Current: Sprint 5
 
-- Browse + detail
-- **Watchlist** (localStorage) — status, progress, your score
+Mood chips → `/mood/[slug]` recommendation feeds.
 
 ```bash
 npm install && npm run dev
 ```
 
+- http://localhost:3000 — mood chips on home  
+- http://localhost:3000/mood/hype  
 - http://localhost:3000/watchlist  
-- Add from any `/anime/[id]` page
