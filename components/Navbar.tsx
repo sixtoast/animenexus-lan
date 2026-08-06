@@ -67,7 +67,7 @@ export function Navbar() {
           >
             {theme === "dark" ? "☀️" : "🌙"}
           </button>
-          <span className="sprint-badge">Parity A</span>
+          <span className="sprint-badge">Lantern</span>
           <button
             type="button"
             className="nav-toggle"
