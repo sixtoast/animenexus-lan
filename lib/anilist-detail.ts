@@ -2,7 +2,7 @@
  * Rich single-title fetch (studios, trailer, characters, relations + recommendations).
  */
 import { mapAniListMedia, ANILIST_ENDPOINT } from "./anilist";
-import type { Anime, AnimeRelation } from "./types";
+import type { Anime, AnimeRelation, GraphEdge, GraphNode } from "./types";
 
 type GqlResponse<T> = {
   data?: T;
@@ -22,7 +22,7 @@ async function gql<T>(
     body: JSON.stringify({ query, variables }),
   };
   if (typeof window === "undefined") {
-    init.next = { revalidate: 60 };
+    init.next = { revalidate: 120 };
   }
   const res = await fetch(ANILIST_ENDPOINT, init);
   if (!res.ok) throw new Error(`AniList HTTP ${res.status}`);
@@ -94,7 +94,6 @@ const DETAIL_FIELDS = `
   }
 `;
 
-/** Skip non-anime media; ONE_SHOT can be anime specials — only skip manga/novel types */
 const NON_ANIME_TYPE = new Set(["MANGA", "NOVEL"]);
 
 type RelNode = {
@@ -108,28 +107,33 @@ type RelNode = {
   coverImage?: { large?: string; medium?: string };
 };
 
+function nodeFromRel(n: RelNode, relationType: string): AnimeRelation | null {
+  if (!n?.id) return null;
+  if (n.type && NON_ANIME_TYPE.has(n.type)) return null;
+  const fmt = (n.format || "").toUpperCase();
+  if (fmt === "MANGA" || fmt === "NOVEL") return null;
+  return {
+    id: n.id,
+    title: n.title?.english || n.title?.romaji || "Untitled",
+    relationType,
+    format: n.format,
+    status: n.status,
+    image: n.coverImage?.large || n.coverImage?.medium,
+    year: n.startDate?.year ?? null,
+    score: n.averageScore != null ? n.averageScore / 10 : null,
+  };
+}
+
 export function mapRelationEdges(
   edges: { relationType?: string; node?: RelNode }[],
 ): AnimeRelation[] {
   const relations: AnimeRelation[] = [];
   const seen = new Set<number>();
   for (const e of edges) {
-    const n = e.node;
-    if (!n?.id || seen.has(n.id)) continue;
-    if (n.type && NON_ANIME_TYPE.has(n.type)) continue;
-    const fmt = (n.format || "").toUpperCase();
-    if (fmt === "MANGA" || fmt === "NOVEL") continue;
-    seen.add(n.id);
-    relations.push({
-      id: n.id,
-      title: n.title?.english || n.title?.romaji || "Untitled",
-      relationType: e.relationType || "RELATED",
-      format: n.format,
-      status: n.status,
-      image: n.coverImage?.large || n.coverImage?.medium,
-      year: n.startDate?.year ?? null,
-      score: n.averageScore != null ? n.averageScore / 10 : null,
-    });
+    const mapped = nodeFromRel(e.node!, e.relationType || "RELATED");
+    if (!mapped || seen.has(mapped.id)) continue;
+    seen.add(mapped.id);
+    relations.push(mapped);
   }
   return relations;
 }
@@ -143,20 +147,10 @@ function mapRecommendations(
 ): AnimeRelation[] {
   const out: AnimeRelation[] = [];
   for (const n of nodes) {
-    const m = n.mediaRecommendation;
-    if (!m?.id || already.has(m.id)) continue;
-    if (m.type && NON_ANIME_TYPE.has(m.type)) continue;
-    already.add(m.id);
-    out.push({
-      id: m.id,
-      title: m.title?.english || m.title?.romaji || "Untitled",
-      relationType: "RECOMMENDED",
-      format: m.format,
-      status: m.status,
-      image: m.coverImage?.large || m.coverImage?.medium,
-      year: m.startDate?.year ?? null,
-      score: m.averageScore != null ? m.averageScore / 10 : null,
-    });
+    const mapped = nodeFromRel(n.mediaRecommendation!, "RECOMMENDED");
+    if (!mapped || already.has(mapped.id)) continue;
+    already.add(mapped.id);
+    out.push(mapped);
   }
   return out;
 }
@@ -242,16 +236,15 @@ export async function fetchAnimeDetail(id: number): Promise<Anime | null> {
       }
     )?.nodes || [];
 
-  anime.relations = [
-    ...relations,
-    ...mapRecommendations(recNodes, seen),
-  ];
+  anime.relations = [...relations, ...mapRecommendations(recNodes, seen)];
 
   return anime;
 }
 
-/** Full ancestry payload for client fallback */
-export async function fetchRelationsOnly(id: number): Promise<AnimeRelation[]> {
+async function fetchMediaLinks(id: number): Promise<{
+  relations: AnimeRelation[];
+  recommendations: AnimeRelation[];
+}> {
   const query = `
     query ($id: Int) {
       Media(id: $id, type: ANIME) {
@@ -261,7 +254,7 @@ export async function fetchRelationsOnly(id: number): Promise<AnimeRelation[]> {
             node { ${RELATION_NODE} }
           }
         }
-        recommendations(page: 1, perPage: 12, sort: RATING_DESC) {
+        recommendations(page: 1, perPage: 10, sort: RATING_DESC) {
           nodes {
             rating
             mediaRecommendation { ${RELATION_NODE} }
@@ -282,13 +275,111 @@ export async function fetchRelationsOnly(id: number): Promise<AnimeRelation[]> {
     } | null;
   }>(query, { id });
 
-  const edges = data.Media?.relations?.edges || [];
-  const relations = mapRelationEdges(edges);
+  if (!data.Media) return { relations: [], recommendations: [] };
+
+  const relations = mapRelationEdges(data.Media.relations?.edges || []);
   const seen = new Set(relations.map((r) => r.id));
   seen.add(id);
-  const recs = mapRecommendations(
-    data.Media?.recommendations?.nodes || [],
+  const recommendations = mapRecommendations(
+    data.Media.recommendations?.nodes || [],
     seen,
   );
-  return [...relations, ...recs];
+  return { relations, recommendations };
+}
+
+/** Flat list (detail page / simple fallback) */
+export async function fetchRelationsOnly(id: number): Promise<AnimeRelation[]> {
+  const { relations, recommendations } = await fetchMediaLinks(id);
+  return [...relations, ...recommendations];
+}
+
+/**
+ * Multi-hop ancestry graph:
+ * - hop 0: official relations + recommendations from center
+ * - hop 1+: recommendations-of-recommendations (and edges between them)
+ */
+export async function fetchAncestryGraph(
+  rootId: number,
+  opts?: { hopRecLimit?: number; maxNodes?: number },
+): Promise<{ nodes: GraphNode[]; edges: GraphEdge[] }> {
+  const hopRecLimit = opts?.hopRecLimit ?? 5;
+  const maxNodes = opts?.maxNodes ?? 36;
+
+  const nodeMap = new Map<number, GraphNode>();
+  const edges: GraphEdge[] = [];
+  const edgeKey = new Set<string>();
+
+  const addEdge = (
+    from: number,
+    to: number,
+    kind: GraphEdge["kind"],
+    label?: string,
+  ) => {
+    if (from === to) return;
+    const a = Math.min(from, to);
+    const b = Math.max(from, to);
+    const k = `${kind}:${a}-${b}`;
+    if (edgeKey.has(k)) return;
+    edgeKey.add(k);
+    edges.push({ from, to, kind, label });
+  };
+
+  const addNode = (n: AnimeRelation, depth: number, layer: GraphNode["layer"]) => {
+    if (nodeMap.has(n.id)) return false;
+    if (nodeMap.size >= maxNodes) return false;
+    nodeMap.set(n.id, { ...n, depth, layer });
+    return true;
+  };
+
+  const root = await fetchMediaLinks(rootId);
+
+  for (const r of root.relations) {
+    if (addNode(r, 0, "official")) {
+      addEdge(rootId, r.id, "official", r.relationType);
+    }
+  }
+  for (const r of root.recommendations) {
+    if (addNode(r, 0, "recommended")) {
+      addEdge(rootId, r.id, "recommended", "RECOMMENDED");
+    }
+  }
+
+  // Expand recommendations of first-hop recommendations
+  const hop0Recs = root.recommendations.slice(0, hopRecLimit);
+  const expansions = await Promise.all(
+    hop0Recs.map(async (rec) => {
+      try {
+        const links = await fetchMediaLinks(rec.id);
+        return { parentId: rec.id, links };
+      } catch {
+        return { parentId: rec.id, links: { relations: [], recommendations: [] } };
+      }
+    }),
+  );
+
+  for (const { parentId, links } of expansions) {
+    // A few official links from hop-1 titles help density without noise
+    for (const r of links.relations.slice(0, 2)) {
+      if (r.id === rootId) continue;
+      if (!nodeMap.has(r.id)) {
+        if (!addNode({ ...r, relationType: r.relationType }, 1, "official")) continue;
+      }
+      addEdge(parentId, r.id, "official", r.relationType);
+    }
+    for (const r of links.recommendations.slice(0, hopRecLimit)) {
+      if (r.id === rootId) continue;
+      const isNew = !nodeMap.has(r.id);
+      if (isNew) {
+        if (!addNode({ ...r, relationType: "RECOMMENDED" }, 1, "recommended")) {
+          continue;
+        }
+      }
+      addEdge(parentId, r.id, "recommended", "RECOMMENDED");
+    }
+  }
+
+  return {
+    nodes: [...nodeMap.values()],
+    edges,
+  };
 }

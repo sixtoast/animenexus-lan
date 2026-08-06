@@ -45,6 +45,19 @@ export type AnimeRelation = {
   score?: number | null;
 };
 
+/** Graph node for ancestry constellation */
+export type GraphNode = AnimeRelation & {
+  depth?: number;
+  layer?: "official" | "recommended";
+};
+
+export type GraphEdge = {
+  from: number;
+  to: number;
+  kind: "official" | "recommended";
+  label?: string;
+};
+
 /** Normalized anime used across the UI */
 export type Anime = {
   id: number;
