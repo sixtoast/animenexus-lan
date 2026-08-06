@@ -3,7 +3,7 @@ import "./tools.css";
 
 export const metadata = {
   title: "Tools · AnimeNexus",
-  description: "Compare, fusion, and challenge — playful desk tools.",
+  description: "Compare, fusion, challenge, sauce, and Night Desk.",
 };
 
 const TOOLS = [
@@ -25,6 +25,18 @@ const TOOLS = [
     title: "Challenge",
     blurb: "Guess score, year, or format from a popular cover.",
   },
+  {
+    href: "/tools/sauce",
+    emoji: "🔍",
+    title: "Sauce",
+    blurb: "Trace a screenshot to its episode via trace.moe.",
+  },
+  {
+    href: "/tools/oracle",
+    emoji: "🕯️",
+    title: "Night Desk",
+    blurb: "Local oracle — finish, queue, or mood from your list.",
+  },
 ];
 
 export default function ToolsHubPage() {
@@ -32,13 +44,13 @@ export default function ToolsHubPage() {
     <main>
       <section className="hero" style={{ paddingBottom: 12 }}>
         <div className="container">
-          <div className="hero-badge">Playful tools · Sprint 9</div>
+          <div className="hero-badge">Playful tools · Sprint 10</div>
           <h1>
             Desk <span>toys</span>
           </h1>
           <p>
-            Compare charts, fuse vibes, or run a quick memory challenge — no
-            account required.
+            Compare, fuse, challenge, find sauce, or ask the Night Desk — no
+            cloud LLM required.
           </p>
         </div>
       </section>

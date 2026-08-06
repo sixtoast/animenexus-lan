@@ -1,0 +1,80 @@
+.sauce-form {
+  margin-bottom: 16px;
+}
+
+.sauce-upload {
+  margin-bottom: 8px;
+}
+
+.sauce-upload input[type="file"] {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.sauce-hits {
+  list-style: none;
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sauce-hit {
+  display: flex;
+  gap: 14px;
+  background: var(--color-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  align-items: flex-start;
+}
+
+.sauce-hit img,
+.sauce-hit-ph {
+  width: 120px;
+  height: 68px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--color-tertiary);
+  flex-shrink: 0;
+}
+
+.sauce-sim {
+  color: var(--color-accent);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.sauce-file {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-top: 2px;
+  word-break: break-all;
+}
+
+.sauce-meta {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+.oracle-card {
+  background: var(--color-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  max-width: 640px;
+}
+
+.oracle-headline {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  margin: 8px 0 12px;
+}
+
+.oracle-body {
+  color: var(--color-text-muted);
+  line-height: 1.7;
+  margin-bottom: 18px;
+}
