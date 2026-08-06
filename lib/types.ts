@@ -34,7 +34,6 @@ export type AnimeCharacter = {
   image?: string;
 };
 
-/** Normalized anime used across the UI */
 export type Anime = {
   id: number;
   title: string;
@@ -63,6 +62,23 @@ export type Anime = {
   favourites?: number;
   trailer?: { id?: string; site?: string; thumbnail?: string };
   characters?: AnimeCharacter[];
+};
+
+export type WatchlistEntry = {
+  id: number;
+  title: string;
+  image: string;
+  format?: string;
+  year?: number | string;
+  episodes?: number | string;
+  duration?: number;
+  score?: number;
+  watchStatus: WatchStatus;
+  progress: number;
+  userRating: number;
+  notes: string;
+  addedAt: string;
+  updatedAt: string;
 };
 
 export type PageInfo = {
