@@ -24,6 +24,7 @@ import "./ancestry.css";
 import "./session-tools.css";
 import "./sprint-l.css";
 import "./oracle-vibe.css";
+import "./sprint-n.css";
 
 export const metadata: Metadata = {
   title: "AnimeNexus — Lantern",
