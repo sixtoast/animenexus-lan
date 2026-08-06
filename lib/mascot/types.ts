@@ -1,7 +1,8 @@
-/** Mascot Engine — shared types (extensible for later milestones) */
+/** Mascot Engine — shared types */
 
 export type MascotAnim =
   | "idle"
+  | "walk"
   | "happy"
   | "wave"
   | "think"
@@ -23,4 +24,13 @@ export type MascotEvent =
   | { type: "seal" }
   | { type: "complete" }
   | { type: "route"; path: string }
-  | { type: "idle-long" };
+  | { type: "idle-long" }
+  | { type: "go-to"; x: number; z: number };
+
+/** Habitat floor bounds (local 3D units) */
+export const HABITAT_BOUNDS = {
+  minX: -0.55,
+  maxX: 0.55,
+  minZ: -0.25,
+  maxZ: 0.25,
+} as const;

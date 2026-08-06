@@ -1,28 +1,23 @@
 # Mascot Engine (Companion)
 
-Separated from recommendation UI. Lives under `lib/mascot` + `components/mascot`.
-
 ## Milestone status
 
 | # | Goal | Status |
 |---|------|--------|
-| 1 | Placeholder chibi + idle/happy + habitat | **Done** |
-| 2 | Walking / navigation on UI terrain | Planned |
-| 3 | Animation state machine | Partial (store `anim`) |
-| 4–5 | Behaviour + emotion drivers | Stub emotions in Zustand |
-| 6–10 | UI awareness, physics, polish | Planned |
+| 1 | Placeholder chibi + idle/happy + habitat | Done |
+| 2 | Walking / navigation in habitat | **Done** |
+| 3 | Full animation state machine | Partial |
+| 4–5 | Behaviour + emotion drivers | Stub + wander |
+| 6+ | UI terrain, physics, polish | Planned |
 
-## Placeholder model
+## M2 navigation
 
-`PlaceholderChibi` is procedural meshes (sphere head, capsule body). Replace with a GLTF chibi later without rewriting the host or store.
+- XZ movement clamped to `HABITAT_BOUNDS`
+- `go-to` event / click floor → walk to point
+- Autonomous wander every ~4.5s when idle
+- Walk gait: bob + arm swing; speed scales with `energy`
+- Celebrations pause locomotion via `busyUntil`
 
-## Events
+## Placeholder
 
-- Click habitat → `happy`
-- `animenexus:seal` → celebrate
-- Route change → curiosity bump
-- Long idle → sleepiness / boredom
-
-## Toggle
-
-`localStorage.anime_nexus_mascot` = `on` | `off`
+Still procedural meshes — replace with GLTF without changing navigation API.
