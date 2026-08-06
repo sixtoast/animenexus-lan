@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useWatchlist } from "@/components/WatchlistProvider";
+import { WatchlistToolbar } from "@/components/WatchlistToolbar";
 import type { WatchStatus } from "@/lib/types";
 import { WATCH_STATUS_TABS } from "@/lib/watchlist-storage";
 
@@ -57,6 +58,8 @@ export function WatchlistClient() {
           </button>
         ))}
       </div>
+
+      <WatchlistToolbar />
 
       {entries.length === 0 ? (
         <div className="state-box">
