@@ -1,0 +1,115 @@
+/* Companion habitat — lives in the UI corner */
+
+.mascot-habitat {
+  position: fixed;
+  z-index: 40;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(72px, calc(env(safe-area-inset-bottom) + 64px));
+  width: min(148px, 34vw);
+  pointer-events: auto;
+  border-radius: 18px;
+  border: 1px solid rgba(240, 160, 144, 0.28);
+  background:
+    radial-gradient(
+      ellipse 80% 60% at 50% 20%,
+      rgba(240, 160, 144, 0.14),
+      transparent 55%
+    ),
+    rgba(18, 14, 12, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.4),
+    0 0 24px rgba(240, 160, 144, 0.08);
+  overflow: hidden;
+}
+
+.mascot-stage {
+  height: 140px;
+  width: 100%;
+  cursor: pointer;
+}
+
+.mascot-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  touch-action: none;
+}
+
+.mascot-loading {
+  height: 140px;
+  background: rgba(240, 160, 144, 0.06);
+}
+
+.mascot-sleeping {
+  height: 140px;
+  display: grid;
+  place-items: center;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+}
+
+.mascot-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px 8px;
+  border-top: 1px solid rgba(240, 160, 144, 0.12);
+}
+
+.mascot-name {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.mascot-hide {
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font);
+  padding: 2px 4px;
+}
+
+.mascot-hide:hover {
+  color: var(--color-text);
+}
+
+.mascot-enable {
+  position: fixed;
+  z-index: 40;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(72px, calc(env(safe-area-inset-bottom) + 64px));
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(240, 160, 144, 0.3);
+  background: rgba(18, 14, 12, 0.85);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  font-size: 1.1rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+@media (max-width: 480px) {
+  .mascot-habitat {
+    width: min(128px, 38vw);
+    bottom: max(68px, calc(env(safe-area-inset-bottom) + 60px));
+  }
+  .mascot-stage {
+    height: 120px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot-habitat {
+    transition: none;
+  }
+}
