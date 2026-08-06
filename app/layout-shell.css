@@ -1,6 +1,5 @@
 /* Page shell — cleaner layout, no FAB chrome */
 
-/* Kill legacy quick-access star FAB if any CSS still loads */
 .fab-root,
 .fab-toggle,
 .fab-menu,
@@ -9,7 +8,7 @@
 }
 
 .app-shell {
-  min-height: calc(100dvh - 120px);
+  min-height: calc(100dvh - 100px);
   display: flex;
   flex-direction: column;
 }
@@ -21,20 +20,19 @@
 }
 
 .container {
-  max-width: 1120px;
+  max-width: 1080px;
   margin: 0 auto;
   padding: 0 clamp(16px, 4vw, 28px);
   width: 100%;
 }
 
-/* Slightly tighter hero on mobile */
 .hero {
-  padding: clamp(28px, 5vw, 48px) 0 clamp(20px, 3vw, 28px);
+  padding: clamp(24px, 4.5vw, 44px) 0 clamp(16px, 3vw, 24px);
 }
 
 .hero h1 {
-  font-size: clamp(1.85rem, 5.5vw, 3.2rem);
-  max-width: 18ch;
+  font-size: clamp(1.85rem, 5.5vw, 3.05rem);
+  letter-spacing: -0.03em;
 }
 
 .hero p {
@@ -43,14 +41,13 @@
   line-height: 1.55;
 }
 
-/* Main content breathing room */
 main {
-  padding-bottom: clamp(32px, 6vw, 56px);
+  padding-bottom: clamp(28px, 5vw, 48px);
 }
 
 .site-footer {
   margin-top: 0;
-  padding: 20px 0 28px;
+  padding: 18px 0 24px;
   border-top: 1px solid rgba(240, 160, 144, 0.1);
   font-size: 0.78rem;
   color: var(--color-text-muted);
@@ -74,13 +71,31 @@ main {
   opacity: 0.5;
 }
 
-/* AI fab stays — smaller, less competing */
 .ai-fab {
   bottom: max(16px, env(safe-area-inset-bottom));
   right: max(16px, env(safe-area-inset-right));
   width: 48px;
   height: 48px;
   font-size: 1.15rem;
+  opacity: 0.92;
+}
+
+.ai-fab:hover {
+  opacity: 1;
+}
+
+.home-dash-empty {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+
+/* Section heads site-wide */
+.section-head h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 @media (min-width: 900px) {

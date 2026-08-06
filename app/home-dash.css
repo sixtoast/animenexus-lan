@@ -3,34 +3,41 @@
 .home-dash {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 20px;
 }
 
 .home-stat-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 520px) {
+  .home-stat-chips {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .home-chip {
-  min-width: 72px;
-  padding: 10px 14px;
+  min-width: 0;
+  padding: 12px 12px;
   border-radius: 12px;
-  border: 1px solid var(--color-border);
-  background: rgba(34, 28, 24, 0.55);
+  border: 1px solid rgba(240, 160, 144, 0.12);
+  background: rgba(12, 10, 9, 0.45);
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
 .home-chip strong {
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: var(--color-text);
+  font-variant-numeric: tabular-nums;
 }
 
 .home-chip span {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--color-text-muted);
@@ -60,23 +67,23 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .home-rail-head h2 {
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-weight: 650;
   margin: 0;
 }
 
 .home-rail-head a {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: var(--color-accent);
 }
 
 .home-rail-note {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -89,19 +96,23 @@
 
 .home-rail {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   overflow-x: auto;
-  padding-bottom: 8px;
+  padding-bottom: 6px;
+  margin: 0 -4px;
+  padding-left: 4px;
+  padding-right: 4px;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .home-rail-card {
-  flex: 0 0 118px;
+  flex: 0 0 108px;
   scroll-snap-align: start;
   border-radius: 12px;
-  border: 1px solid var(--color-border);
-  background: rgba(20, 16, 14, 0.7);
+  border: 1px solid rgba(240, 160, 144, 0.12);
+  background: rgba(20, 16, 14, 0.75);
   overflow: hidden;
   color: inherit;
   transition:
@@ -130,7 +141,7 @@
 }
 
 .hrc-title {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.25;
   display: -webkit-box;
@@ -141,7 +152,7 @@
 
 .hrc-meta {
   margin-top: 4px;
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   color: var(--color-text-muted);
 }
 

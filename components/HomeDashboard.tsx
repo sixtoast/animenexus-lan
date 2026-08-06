@@ -9,10 +9,11 @@ import { useToast } from "@/components/ToastProvider";
 import type { Anime } from "@/lib/types";
 
 type Props = {
-  trending: Anime[];
+  /** Optional; home page uses the full trending grid instead */
+  trending?: Anime[];
 };
 
-export function HomeDashboard({ trending }: Props) {
+export function HomeDashboard({ trending = [] }: Props) {
   const { entries, ready } = useWatchlist();
   const { showToast } = useToast();
   const [streak, setStreak] = useState(0);
@@ -29,7 +30,6 @@ export function HomeDashboard({ trending }: Props) {
     setRecent(readMemory().recentViews.slice(0, 10));
   }, [showToast]);
 
-  // Refresh recent when navigating back client-side after detail views
   useEffect(() => {
     const refresh = () => setRecent(readMemory().recentViews.slice(0, 10));
     window.addEventListener("focus", refresh);
@@ -54,7 +54,6 @@ export function HomeDashboard({ trending }: Props) {
     return c;
   }, [entries]);
 
-  // Avoid duplicating the same titles under Continue
   const continueIds = useMemo(
     () => new Set(continueList.map((e) => e.id)),
     [continueList],
@@ -80,27 +79,6 @@ export function HomeDashboard({ trending }: Props) {
           <strong>{streak}</strong>
           <span>Streak</span>
         </div>
-      </div>
-
-      <div className="home-cta-row">
-        <Link href="/browse" className="btn btn-accent btn-sm">
-          Recommend / browse
-        </Link>
-        <Link href="/daily" className="btn btn-outline btn-sm">
-          Daily pick
-        </Link>
-        <Link href="/seasonal" className="btn btn-outline btn-sm">
-          Seasonal
-        </Link>
-        <button
-          type="button"
-          className="btn btn-outline btn-sm"
-          onClick={() =>
-            window.dispatchEvent(new CustomEvent("animenexus:tonight"))
-          }
-        >
-          Tonight
-        </button>
       </div>
 
       {continueList.length > 0 ? (
@@ -135,7 +113,7 @@ export function HomeDashboard({ trending }: Props) {
         <section className="home-rail-section home-signals">
           <div className="home-rail-head">
             <h2>Recent signals</h2>
-            <span className="home-rail-note">Lantern remembered</span>
+            <span className="home-rail-note">Remembered</span>
           </div>
           <div className="home-rail">
             {signalRecent.map((r) => (
@@ -187,6 +165,16 @@ export function HomeDashboard({ trending }: Props) {
             ))}
           </div>
         </section>
+      ) : null}
+
+      {ready &&
+      continueList.length === 0 &&
+      signalRecent.length === 0 &&
+      trending.length === 0 ? (
+        <p className="home-dash-empty">
+          Open a few titles or seal one to your list — this desk fills as you
+          explore.
+        </p>
       ) : null}
     </div>
   );

@@ -9,6 +9,7 @@ import { RitualLine } from "@/components/RitualLine";
 import { fetchDiscover } from "@/lib/anilist";
 import "./mood-home.css";
 import "./home-dash.css";
+import "./home-v2.css";
 
 export const dynamic = "force-dynamic";
 
@@ -26,79 +27,63 @@ export default async function HomePage() {
   }
 
   return (
-    <main>
-      <section className="hero">
-        <div className="container">
+    <main className="home-main">
+      <section className="hero home-hero">
+        <div className="container home-hero-inner">
           <HeroGreeting />
           <div className="hero-badge">Lantern · late-night console</div>
           <h1>
             AnimeNexus <span>Lantern</span>
           </h1>
-          <p>
-            Pick a mood — or browse the full catalog with filters and search.
-            Your watchlist stays local to this browser.
+          <p className="home-lead">
+            Your local desk for moods, shelves, and signals. Watchlist stays in
+            this browser — Lantern remembers what you open.
           </p>
+
           <RitualLine />
-          <div className="mood-home-block">
-            <p className="mood-home-label">How are you feeling?</p>
+
+          <div className="home-hero-actions">
+            <Link href="/daily" className="btn btn-accent btn-sm">
+              Today’s signal
+            </Link>
+            <Link href="/browse" className="btn btn-outline btn-sm">
+              Browse catalog
+            </Link>
+            <Link href="/watchlist" className="btn btn-ghost btn-sm">
+              Watchlist
+            </Link>
+          </div>
+
+          <div className="mood-home-block home-mood">
+            <p className="mood-home-label">Tune by mood</p>
             <MoodChips />
           </div>
-          <p
-            style={{
-              marginTop: 18,
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 10,
-            }}
-          >
-            <Link href="/browse" className="btn btn-outline btn-sm">
-              Browse →
-            </Link>
-            <Link href="/seasonal" className="btn btn-outline btn-sm">
-              Seasonal
-            </Link>
-            <Link href="/daily" className="btn btn-accent btn-sm">
-              Daily pick
-            </Link>
-          </p>
         </div>
       </section>
 
-      <section
-        className="container"
-        id="trending"
-        style={{ paddingBottom: 48 }}
-      >
-        <div style={{ marginBottom: 24 }}>
-          <HomeDashboard trending={items} />
+      <section className="container home-body">
+        <div className="home-panel">
+          <HomeDashboard trending={[]} />
         </div>
+
         <QuoteBanner />
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            marginBottom: 12,
-          }}
-        >
+
+        <div className="home-trending-head">
+          <div className="section-head">
+            <h2>Trending now</h2>
+            <span className="meta">
+              {error
+                ? "—"
+                : `${items.length} shown · ${total.toLocaleString()} in catalog`}
+            </span>
+          </div>
           <ViewModeToggle />
-        </div>
-        <div className="section-head">
-          <h2>
-            <span className="accent">🔥</span> Trending now
-          </h2>
-          <span className="meta">
-            {error
-              ? "—"
-              : `${items.length} shown · ${total.toLocaleString()} in catalog`}
-          </span>
         </div>
 
         {error ? (
-          <div className="state-box error">
-            <p>Could not load trending titles.</p>
-            <p style={{ marginTop: 8, fontSize: "0.85rem", opacity: 0.85 }}>
-              {error}
-            </p>
+          <div className="state-box error lantern-empty">
+            <h3>Couldn’t reach the catalog</h3>
+            <p>{error}</p>
           </div>
         ) : (
           <AnimeGrid items={items} />
