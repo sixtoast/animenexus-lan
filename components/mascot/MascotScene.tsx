@@ -61,7 +61,6 @@ export function MascotScene({ reducedMotion }: Props) {
   const dispatch = useMascotStore((s) => s.dispatch);
   const runBehaviourTick = useMascotStore((s) => s.runBehaviourTick);
 
-  // Behaviour loop — not random anim spam
   useEffect(() => {
     if (reducedMotion) return;
     const id = window.setInterval(() => {
@@ -69,6 +68,15 @@ export function MascotScene({ reducedMotion }: Props) {
     }, 3200);
     return () => window.clearInterval(id);
   }, [reducedMotion, runBehaviourTick]);
+
+  // Spontaneous skits — rare, never while busy
+  useEffect(() => {
+    if (reducedMotion) return;
+    const id = window.setInterval(() => {
+      dispatch({ type: "skit" });
+    }, 16_000);
+    return () => window.clearInterval(id);
+  }, [reducedMotion, dispatch]);
 
   return (
     <Canvas

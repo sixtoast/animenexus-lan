@@ -48,7 +48,8 @@ export type MascotEvent =
   | { type: "error" }
   | { type: "empty-list" }
   | { type: "theme"; theme: "dark" | "light" }
-  | { type: "scroll-fast" };
+  | { type: "scroll-fast" }
+  | { type: "skit" };
 
 export const HABITAT_BOUNDS = {
   minX: -0.55,
