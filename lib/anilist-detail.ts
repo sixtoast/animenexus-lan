@@ -1,9 +1,8 @@
 /**
- * Rich single-title fetch (studios, trailer, characters).
- * Kept separate so list queries stay light.
+ * Rich single-title fetch (studios, trailer, characters, relations).
  */
 import { mapAniListMedia, ANILIST_ENDPOINT } from "./anilist";
-import type { Anime } from "./types";
+import type { Anime, AnimeRelation } from "./types";
 
 type GqlResponse<T> = {
   data?: T;
@@ -37,6 +36,7 @@ async function gql<T>(
 
 const DETAIL_FIELDS = `
   id
+  idMal
   title { romaji english native }
   description
   genres
@@ -57,13 +57,26 @@ const DETAIL_FIELDS = `
   source
   studios { nodes { name } }
   trailer { id site thumbnail }
-  characters(sort: [ROLE, RELEVANCE, ID], perPage: 12) {
+  characters(sort: [ROLE, RELEVANCE, ID], perPage: 16) {
     edges {
       role
       node {
         id
         name { full }
         image { large medium }
+      }
+    }
+  }
+  relations {
+    edges {
+      relationType
+      node {
+        id
+        type
+        title { romaji english }
+        format
+        status
+        coverImage { large medium }
       }
     }
   }
@@ -84,12 +97,16 @@ export async function fetchAnimeDetail(id: number): Promise<Anime | null> {
 
   const anime = mapAniListMedia(data.Media);
 
+  const idMal = data.Media.idMal;
+  if (typeof idMal === "number") anime.idMal = idMal;
+
   const studios = (
     data.Media.studios as { nodes?: { name: string }[] } | undefined
   )?.nodes;
   if (studios?.length) {
     anime.studios = studios.map((n) => n.name).filter(Boolean);
   }
+
   const tr = data.Media.trailer as
     | { id?: string; site?: string; thumbnail?: string }
     | null
@@ -101,9 +118,6 @@ export async function fetchAnimeDetail(id: number): Promise<Anime | null> {
       thumbnail: tr.thumbnail,
     };
   }
-  anime.season = (data.Media.season as string) || anime.season;
-  anime.seasonYear = (data.Media.seasonYear as number) || anime.seasonYear;
-  anime.source = (data.Media.source as string) || anime.source;
 
   const edges =
     (
@@ -127,6 +141,38 @@ export async function fetchAnimeDetail(id: number): Promise<Anime | null> {
       role: e.role || "SUPPORTING",
       image: e.node!.image?.large || e.node!.image?.medium,
     }));
+
+  const relEdges =
+    (
+      data.Media.relations as {
+        edges?: {
+          relationType?: string;
+          node?: {
+            id: number;
+            type?: string;
+            title?: { romaji?: string; english?: string };
+            format?: string;
+            status?: string;
+            coverImage?: { large?: string; medium?: string };
+          };
+        }[];
+      }
+    )?.edges || [];
+
+  const relations: AnimeRelation[] = [];
+  for (const e of relEdges) {
+    const n = e.node;
+    if (!n || n.type !== "ANIME") continue;
+    relations.push({
+      id: n.id,
+      title: n.title?.english || n.title?.romaji || "Untitled",
+      relationType: e.relationType || "RELATED",
+      format: n.format,
+      status: n.status,
+      image: n.coverImage?.large || n.coverImage?.medium,
+    });
+  }
+  anime.relations = relations;
 
   return anime;
 }
