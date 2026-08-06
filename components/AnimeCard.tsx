@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Anime } from "@/lib/types";
 import { useWatchlist } from "@/components/WatchlistProvider";
+import { readMemory } from "@/lib/lantern-memory";
 
 type Props = {
   anime: Anime;
@@ -15,6 +17,7 @@ export function AnimeCard({ anime, index = 0 }: Props) {
   const router = useRouter();
   const { isInList, ready } = useWatchlist();
   const onList = ready && isInList(anime.id);
+  const [recent, setRecent] = useState(false);
   const score = anime.score > 0 ? anime.score.toFixed(1) : "—";
   const vt = `cover-${anime.id}`;
   const href = `/anime/${anime.id}`;
@@ -23,6 +26,11 @@ export function AnimeCard({ anime, index = 0 }: Props) {
     src.includes("anilist.co") ||
     src.includes("myanimelist.net") ||
     src.includes("placehold.co");
+
+  useEffect(() => {
+    const m = readMemory();
+    setRecent(m.recentViews.some((r) => r.id === anime.id));
+  }, [anime.id]);
 
   function navigate(e: React.MouseEvent) {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) {
@@ -41,7 +49,11 @@ export function AnimeCard({ anime, index = 0 }: Props) {
   return (
     <Link
       href={href}
-      className="anime-card grid-enter"
+      className={
+        "anime-card grid-enter" +
+        (onList ? " is-sealed" : "") +
+        (recent && !onList ? " is-recent" : "")
+      }
       title={anime.title}
       data-on-list={onList ? "true" : "false"}
       onClick={navigate}
@@ -52,7 +64,15 @@ export function AnimeCard({ anime, index = 0 }: Props) {
         } as React.CSSProperties
       }
     >
-      {onList ? <span className="card-flame" aria-hidden /> : null}
+      {onList ? (
+        <span className="card-badge card-badge-sealed" aria-label="On watchlist">
+          Sealed
+        </span>
+      ) : recent ? (
+        <span className="card-badge card-badge-recent" aria-label="Recently opened">
+          Signal
+        </span>
+      ) : null}
       {canOptimize ? (
         <Image
           src={src}
