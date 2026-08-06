@@ -10,6 +10,7 @@ import { useEffect } from "react";
 
 type Props = {
   reducedMotion?: boolean;
+  lowPower?: boolean;
 };
 
 function Floor() {
@@ -36,7 +37,7 @@ function Floor() {
   );
 }
 
-function SceneContent({ reducedMotion }: Props) {
+function SceneContent({ reducedMotion }: { reducedMotion?: boolean }) {
   return (
     <>
       <ambientLight intensity={0.55} />
@@ -53,12 +54,14 @@ function SceneContent({ reducedMotion }: Props) {
           far={2}
         />
       ) : null}
-      <Environment preset="warehouse" environmentIntensity={0.25} />
+      {!reducedMotion ? (
+        <Environment preset="warehouse" environmentIntensity={0.25} />
+      ) : null}
     </>
   );
 }
 
-export function MascotScene({ reducedMotion }: Props) {
+export function MascotScene({ reducedMotion, lowPower }: Props) {
   const dispatch = useMascotStore((s) => s.dispatch);
   const runBehaviourTick = useMascotStore((s) => s.runBehaviourTick);
 
@@ -66,25 +69,32 @@ export function MascotScene({ reducedMotion }: Props) {
     if (reducedMotion) return;
     const id = window.setInterval(() => {
       runBehaviourTick();
-    }, 3200);
+    }, lowPower ? 4500 : 3200);
     return () => window.clearInterval(id);
-  }, [reducedMotion, runBehaviourTick]);
+  }, [reducedMotion, lowPower, runBehaviourTick]);
 
-  // Spontaneous skits — ~every 16s attempt, 28s min gap, 32% chance
   useEffect(() => {
     if (reducedMotion) return;
-    const id = window.setInterval(() => {
-      tryRunSkit();
-    }, 16_000);
+    const id = window.setInterval(
+      () => {
+        tryRunSkit();
+      },
+      lowPower ? 22_000 : 16_000,
+    );
     return () => window.clearInterval(id);
-  }, [reducedMotion]);
+  }, [reducedMotion, lowPower]);
 
   return (
     <Canvas
       className="mascot-canvas"
       camera={{ position: [0, 0.55, 2.6], fov: 35 }}
-      dpr={[1, 1.5]}
-      gl={{ alpha: true, antialias: true, powerPreference: "low-power" }}
+      dpr={lowPower ? [1, 1] : [1, 1.5]}
+      gl={{
+        alpha: true,
+        antialias: !lowPower,
+        powerPreference: "low-power",
+        failIfMajorPerformanceCaveat: false,
+      }}
       frameloop={reducedMotion ? "demand" : "always"}
       onPointerMissed={() => {}}
       onClick={() => dispatch({ type: "click" })}

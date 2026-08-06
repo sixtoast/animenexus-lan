@@ -22,6 +22,8 @@ export function MascotHost() {
   const [ready, setReady] = useState(false);
   const [hiddenTab, setHiddenTab] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [lowPower, setLowPower] = useState(false);
 
   useEffect(() => {
     setReady(true);
@@ -34,12 +36,32 @@ export function MascotHost() {
     setReducedMotion(
       window.matchMedia("(prefers-reduced-motion: reduce)").matches,
     );
+    setLowPower(
+      window.matchMedia("(max-width: 480px)").matches ||
+        (navigator as Navigator & { connection?: { saveData?: boolean } })
+          .connection?.saveData === true,
+    );
   }, [setEnabled]);
 
   useEffect(() => {
     const onVis = () => setHiddenTab(document.hidden);
     document.addEventListener("visibilitychange", onVis);
     return () => document.removeEventListener("visibilitychange", onVis);
+  }, []);
+
+  // Pause presence under modals / command palette
+  useEffect(() => {
+    const check = () => {
+      const open = !!(
+        document.querySelector(
+          '[role="dialog"][data-open="true"], .modal-root.open, .cmdk-root[data-open="true"], .ai-panel.open',
+        ) || document.body.classList.contains("modal-open")
+      );
+      setModalOpen(open);
+    };
+    const id = window.setInterval(check, 800);
+    check();
+    return () => window.clearInterval(id);
   }, []);
 
   useEffect(() => {
@@ -89,21 +111,26 @@ export function MascotHost() {
     );
   }
 
+  const pauseScene = hiddenTab || modalOpen;
+
   return (
     <>
       <UiAwareness />
       <ContextBridge />
       <div
-        className="mascot-habitat"
+        className={
+          "mascot-habitat" + (modalOpen ? " mascot-habitat--dim" : "")
+        }
         role="complementary"
         aria-label="Companion"
+        aria-hidden={modalOpen || undefined}
       >
         <div className="mascot-stage">
-          {!hiddenTab ? (
-            <MascotScene reducedMotion={reducedMotion} />
+          {!pauseScene ? (
+            <MascotScene reducedMotion={reducedMotion} lowPower={lowPower} />
           ) : (
             <div className="mascot-sleeping" aria-hidden>
-              zzz
+              {modalOpen ? "…" : "zzz"}
             </div>
           )}
         </div>
