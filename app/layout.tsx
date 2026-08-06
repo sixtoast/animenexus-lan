@@ -25,6 +25,7 @@ import "./session-tools.css";
 import "./oracle-vibe.css";
 import "./motion.css";
 import "./desk.css";
+import "./ui-lift.css";
 
 export const metadata: Metadata = {
   title: "AnimeNexus — Lantern",

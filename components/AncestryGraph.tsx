@@ -88,18 +88,20 @@ export function AncestryGraph({
             id: centerId,
             label: centerTitle.slice(0, 28),
             color: { background: "#f0a090", border: "#f8c4b8" },
-            font: { color: "#2a1210", bold: true },
+            font: { color: "#2a1210", bold: true, size: 14 },
             shape: "box",
+            margin: 12,
           },
           ...relations.map((r) => ({
             id: r.id,
             label: r.title.slice(0, 24),
             color: {
               background: "#221c18",
-              border: "rgba(240,160,144,0.35)",
+              border: "rgba(240,160,144,0.45)",
             },
-            font: { color: "#faf4ef" },
+            font: { color: "#faf4ef", size: 12 },
             shape: "box",
+            margin: 10,
           })),
         ];
         const seen = new Set<number>();
@@ -112,9 +114,10 @@ export function AncestryGraph({
           id: `e-${i}`,
           from: centerId,
           to: r.id,
-          label: (r.relationType || "").replace(/_/g, " ").slice(0, 12),
-          font: { size: 10, color: "#9e8e82" },
-          color: { color: "rgba(240,160,144,0.35)" },
+          label: (r.relationType || "").replace(/_/g, " ").slice(0, 14),
+          font: { size: 11, color: "#c4b4a8" },
+          color: { color: "rgba(240,160,144,0.5)", highlight: "#f0a090" },
+          width: 2,
         }));
         const data = {
           nodes: new window.vis!.DataSet(uniqueNodes),
@@ -123,10 +126,14 @@ export function AncestryGraph({
         const options = {
           physics: {
             enabled: true,
-            barnesHut: { gravitationalConstant: -8000, springLength: 140 },
+            barnesHut: {
+              gravitationalConstant: -12000,
+              springLength: 160,
+              springConstant: 0.04,
+            },
           },
-          interaction: { hover: true, tooltipDelay: 120 },
-          edges: { smooth: true },
+          interaction: { hover: true, tooltipDelay: 80, navigationButtons: true },
+          edges: { smooth: { type: "continuous" } },
         };
         const net = new window.vis!.Network(hostRef.current, data, options);
         net.on("click", (params) => {
@@ -159,12 +166,18 @@ export function AncestryGraph({
   }
 
   return (
-    <section className="detail-section">
-      <h2>Ancestry</h2>
-      <div className="daily-actions" style={{ marginBottom: 12 }}>
+    <section className="detail-section ancestry-section">
+      <div className="ancestry-callout">
+        <div>
+          <h2>Ancestry graph</h2>
+          <p className="ancestry-lead">
+            {relations.length} linked title{relations.length === 1 ? "" : "s"} —
+            sequels, prequels, and side stories mapped as a network.
+          </p>
+        </div>
         <button
           type="button"
-          className="btn btn-accent btn-sm"
+          className="btn btn-accent"
           onClick={() => {
             setFailed(false);
             setOpen(true);
@@ -178,6 +191,7 @@ export function AncestryGraph({
         <div
           className="ancestry-overlay open"
           role="dialog"
+          aria-modal="true"
           aria-label="Ancestry graph"
         >
           <div className="ancestry-content">
@@ -193,8 +207,8 @@ export function AncestryGraph({
               </button>
             </div>
             {failed ? (
-              <p className="tools-hint">
-                Graph library failed to load — use the list below.
+              <p className="tools-hint" style={{ padding: 24 }}>
+                Graph library failed to load (CDN blocked?). Use the list below.
               </p>
             ) : (
               <div
@@ -204,7 +218,7 @@ export function AncestryGraph({
               />
             )}
             <div className="ancestry-footer">
-              Click a node to open its detail page.
+              Drag to pan · scroll to zoom · click a node to open its page
             </div>
           </div>
         </div>

@@ -1,0 +1,103 @@
+/* Fan zone — bingo + confessions */
+.fanzone .fz-section {
+  margin-bottom: 32px;
+  padding: 20px;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background: linear-gradient(
+    165deg,
+    rgba(34, 28, 24, 0.65),
+    rgba(12, 10, 9, 0.85)
+  );
+}
+
+.fanzone .fz-section h2 {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin-bottom: 14px;
+  letter-spacing: -0.02em;
+}
+
+.confession-list {
+  list-style: none;
+  margin-top: 14px;
+  max-height: 240px;
+  overflow: auto;
+}
+
+.confession-list li {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: rgba(0, 0, 0, 0.25);
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+/* 5×5 bingo board — the missing piece */
+.bingo-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 14px;
+  width: 100%;
+  max-width: 520px;
+}
+
+.bingo-cell {
+  aspect-ratio: 1;
+  min-height: 0;
+  padding: 6px 4px;
+  border-radius: 10px;
+  border: 1px solid rgba(240, 160, 144, 0.2);
+  background: rgba(34, 28, 24, 0.95);
+  color: var(--color-text);
+  font-family: var(--font);
+  font-size: clamp(0.55rem, 1.8vw, 0.72rem);
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  hyphens: auto;
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    transform 0.2s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)),
+    box-shadow 0.25s ease;
+}
+
+.bingo-cell:hover {
+  border-color: var(--color-accent);
+  transform: translateY(-2px);
+}
+
+.bingo-cell:active {
+  transform: scale(0.96);
+}
+
+.bingo-cell.marked {
+  background: linear-gradient(145deg, rgba(240, 160, 144, 0.45), rgba(212, 132, 122, 0.35));
+  border-color: var(--color-accent);
+  color: #2a1210;
+  box-shadow: 0 0 16px rgba(240, 160, 144, 0.25);
+}
+
+.bingo-cell.marked:hover {
+  color: #2a1210;
+}
+
+@media (max-width: 480px) {
+  .bingo-grid {
+    gap: 4px;
+    max-width: 100%;
+  }
+  .bingo-cell {
+    border-radius: 8px;
+    padding: 4px 2px;
+  }
+}

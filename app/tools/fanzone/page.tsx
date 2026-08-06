@@ -1,6 +1,7 @@
 import { FanzoneClient } from "@/components/FanzoneClient";
 import { DeskShell } from "@/components/DeskShell";
 import "../tools.css";
+import "./../fanzone.css";
 
 export const metadata = {
   title: "Fan zone · AnimeNexus",
@@ -14,7 +15,7 @@ export default function Page() {
         <div className="container">
           <div className="hero-badge">Night Desk · Fan zone</div>
           <h1>Fan zone</h1>
-          <p>Bingo, confessions, Taste DNA.</p>
+          <p>Bingo board, local confessions, Taste DNA.</p>
         </div>
       </section>
       <section className="container" style={{ paddingBottom: 48 }}>
