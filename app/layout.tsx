@@ -10,6 +10,7 @@ import { AIPanel } from "@/components/AIPanel";
 import { CommandPalette } from "@/components/CommandPalette";
 import { SakuraCanvas } from "@/components/SakuraCanvas";
 import { PwaRegister } from "@/components/PwaRegister";
+import { SessionTools } from "@/components/SessionTools";
 import "./globals.css";
 import "./card-link.css";
 import "./nav-polish.css";
@@ -17,6 +18,7 @@ import "./sprint-a.css";
 import "./ai-panel.css";
 import "./cmdk.css";
 import "./ancestry.css";
+import "./session-tools.css";
 
 export const metadata: Metadata = {
   title: "AnimeNexus — Lantern",
@@ -70,6 +72,7 @@ export default function RootLayout({
                 <FabMenu />
                 <AIPanel />
                 <CommandPalette />
+                <SessionTools />
                 <footer className="site-footer">
                   <div className="container">
                     AnimeNexus · Lantern · Data via{" "}
