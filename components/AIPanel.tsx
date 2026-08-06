@@ -12,6 +12,8 @@ import {
 } from "@/lib/ai-settings";
 import { streamChatCompletions, testAIConnection } from "@/lib/ai-chat";
 import { useToast } from "@/components/ToastProvider";
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
 
 type Msg = { role: "user" | "assistant" | "system"; content: string };
 
@@ -39,7 +41,6 @@ export function AIPanel() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && open) setOpen(false);
       if (
         (e.key === "a" || e.key === "A") &&
         !e.metaKey &&
@@ -59,7 +60,7 @@ export function AIPanel() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+  }, []);
 
   function saveSettings() {
     writeAISettings(settings);
@@ -141,7 +142,9 @@ export function AIPanel() {
       );
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Chat failed", "😅");
-      setMessages((m) => m.filter((x, i) => !(i === m.length - 1 && !x.content)));
+      setMessages((m) =>
+        m.filter((x, i) => !(i === m.length - 1 && !x.content)),
+      );
     } finally {
       setBusy(false);
     }
@@ -163,176 +166,173 @@ export function AIPanel() {
         />
       </button>
 
-      {open ? (
-        <div className="ai-overlay open" role="dialog" aria-label="AI panel">
-          <div className="ai-panel">
-            <div className="ai-header">
-              <h2>
-                AI desk{" "}
-                <span
-                  className={"ai-status-dot" + (configured ? " on" : "")}
-                  title={configured ? "Key present" : "Not configured"}
-                />
-              </h2>
-              <div className="ai-header-actions">
-                <button
-                  type="button"
-                  className="btn-icon"
-                  onClick={() => setSettingsOpen((v) => !v)}
-                  title="Settings"
-                >
-                  ⚙
-                </button>
-                <button
-                  type="button"
-                  className="btn-icon"
-                  onClick={() => setMessages([])}
-                  title="Clear"
-                >
-                  ⌫
-                </button>
-                <button
-                  type="button"
-                  className="btn-icon"
-                  onClick={() => setOpen(false)}
-                  title="Close"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title="AI desk"
+        label="AI panel"
+        variant="drawer"
+        headerActions={
+          <>
+            <Button
+              variant="icon"
+              size="sm"
+              onClick={() => setSettingsOpen((v) => !v)}
+              title="Settings"
+              aria-label="Settings"
+            >
+              ⚙
+            </Button>
+            <Button
+              variant="icon"
+              size="sm"
+              onClick={() => setMessages([])}
+              title="Clear"
+              aria-label="Clear messages"
+            >
+              ⌫
+            </Button>
+          </>
+        }
+        panelClassName="ai-panel-modal"
+      >
+        <div className="ai-panel-inner">
+          <div className="ai-header-status">
+            <span
+              className={"ai-status-dot" + (configured ? " on" : "")}
+              title={configured ? "Key present" : "Not configured"}
+            />
+            <span className="ai-status-label">
+              {configured ? "Signal locked" : "No key"}
+            </span>
+          </div>
 
-            {settingsOpen ? (
-              <div className="ai-settings">
-                <label className="filter-label">Provider</label>
-                <select
-                  className="filter-input"
-                  value={settings.provider}
-                  onChange={(e) =>
-                    applyPreset(e.target.value as AIProviderId)
-                  }
-                >
-                  <option value="openrouter">OpenRouter</option>
-                  <option value="openai">OpenAI</option>
-                  <option value="gemini">Gemini</option>
-                  <option value="groq">Groq</option>
-                  <option value="custom">Custom</option>
-                </select>
-                <label className="filter-label">Base URL</label>
-                <input
-                  className="filter-input"
-                  value={settings.baseUrl}
-                  onChange={(e) =>
-                    setSettings((s) => ({ ...s, baseUrl: e.target.value }))
-                  }
-                />
-                <label className="filter-label">Model</label>
-                <input
-                  className="filter-input"
-                  value={settings.model}
-                  onChange={(e) =>
-                    setSettings((s) => ({ ...s, model: e.target.value }))
-                  }
-                />
-                <label className="filter-label">API key</label>
-                <input
-                  className="filter-input"
-                  type="password"
-                  autoComplete="off"
-                  value={settings.apiKey}
-                  onChange={(e) =>
-                    setSettings((s) => ({ ...s, apiKey: e.target.value }))
-                  }
-                  placeholder="sk-…"
-                />
-                <label className="filter-label">Fallback key (optional)</label>
-                <input
-                  className="filter-input"
-                  type="password"
-                  autoComplete="off"
-                  value={settings.fallbackKey || ""}
-                  onChange={(e) =>
-                    setSettings((s) => ({ ...s, fallbackKey: e.target.value }))
-                  }
-                />
-                <div className="daily-actions" style={{ marginTop: 12 }}>
-                  <button
-                    type="button"
-                    className="btn btn-accent btn-sm"
-                    onClick={saveSettings}
-                  >
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-outline btn-sm"
-                    onClick={test}
-                    disabled={busy}
-                  >
-                    Test
-                  </button>
-                </div>
-                <p className="taste-footnote">
-                  Keys stay in this browser (anime_nexus_ai_settings). Chat
-                  streams when the provider supports SSE.
-                </p>
-              </div>
-            ) : null}
-
-            <div className="ai-messages">
-              {messages.length === 0 ? (
-                <p className="taste-footnote">
-                  Ask anything anime — or use a quick prompt. Press A anytime.
-                </p>
-              ) : (
-                messages.map((m, i) => (
-                  <div key={i} className={"ai-msg " + m.role}>
-                    {m.content || (busy && m.role === "assistant" ? "…" : "")}
-                  </div>
-                ))
-              )}
-            </div>
-
-            <div className="ai-quick">
-              {QUICK.map((q) => (
-                <button
-                  key={q}
-                  type="button"
-                  className="btn btn-outline btn-sm"
-                  onClick={() => send(q)}
+          {settingsOpen ? (
+            <div className="ai-settings">
+              <label className="filter-label">Provider</label>
+              <select
+                className="filter-input"
+                value={settings.provider}
+                onChange={(e) => applyPreset(e.target.value as AIProviderId)}
+              >
+                <option value="openrouter">OpenRouter</option>
+                <option value="openai">OpenAI</option>
+                <option value="gemini">Gemini</option>
+                <option value="groq">Groq</option>
+                <option value="custom">Custom</option>
+              </select>
+              <label className="filter-label">Base URL</label>
+              <input
+                className="filter-input"
+                value={settings.baseUrl}
+                onChange={(e) =>
+                  setSettings((s) => ({ ...s, baseUrl: e.target.value }))
+                }
+              />
+              <label className="filter-label">Model</label>
+              <input
+                className="filter-input"
+                value={settings.model}
+                onChange={(e) =>
+                  setSettings((s) => ({ ...s, model: e.target.value }))
+                }
+              />
+              <label className="filter-label">API key</label>
+              <input
+                className="filter-input"
+                type="password"
+                autoComplete="off"
+                value={settings.apiKey}
+                onChange={(e) =>
+                  setSettings((s) => ({ ...s, apiKey: e.target.value }))
+                }
+                placeholder="sk-…"
+              />
+              <label className="filter-label">Fallback key (optional)</label>
+              <input
+                className="filter-input"
+                type="password"
+                autoComplete="off"
+                value={settings.fallbackKey || ""}
+                onChange={(e) =>
+                  setSettings((s) => ({ ...s, fallbackKey: e.target.value }))
+                }
+              />
+              <div className="daily-actions" style={{ marginTop: 12 }}>
+                <Button variant="accent" size="sm" onClick={saveSettings}>
+                  Save
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={test}
+                  loading={busy}
                   disabled={busy}
                 >
-                  {q}
-                </button>
-              ))}
+                  Test
+                </Button>
+              </div>
+              <p className="taste-footnote">
+                Keys stay in this browser (anime_nexus_ai_settings). Chat streams
+                when the provider supports SSE.
+              </p>
             </div>
+          ) : null}
 
-            <div className="ai-compose">
-              <textarea
-                className="notes-area"
-                rows={2}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Message the desk…"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    send(input);
-                  }
-                }}
-              />
-              <button
-                type="button"
-                className="btn btn-accent btn-sm"
+          <div className="ai-messages">
+            {messages.length === 0 ? (
+              <p className="taste-footnote">
+                Ask anything anime — or use a quick prompt. Press A anytime.
+              </p>
+            ) : (
+              messages.map((m, i) => (
+                <div key={i} className={"ai-msg " + m.role}>
+                  {m.content || (busy && m.role === "assistant" ? "…" : "")}
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="ai-quick">
+            {QUICK.map((q) => (
+              <Button
+                key={q}
+                variant="outline"
+                size="sm"
+                onClick={() => send(q)}
                 disabled={busy}
-                onClick={() => send(input)}
               >
-                Send
-              </button>
-            </div>
+                {q}
+              </Button>
+            ))}
+          </div>
+
+          <div className="ai-compose">
+            <textarea
+              className="notes-area"
+              rows={2}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Message the desk…"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  send(input);
+                }
+              }}
+            />
+            <Button
+              variant="accent"
+              size="sm"
+              disabled={busy}
+              loading={busy}
+              onClick={() => send(input)}
+            >
+              Send
+            </Button>
           </div>
         </div>
-      ) : null}
+      </Modal>
     </>
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Anime } from "@/lib/types";
+import { Modal } from "@/components/ui/Modal";
 
 const NAV = [
   { href: "/", label: "Home", group: "Navigate" },
@@ -35,7 +36,6 @@ export function CommandPalette() {
         e.preventDefault();
         setOpen((v) => !v);
       }
-      if (e.key === "Escape") setOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -85,70 +85,67 @@ export function CommandPalette() {
     router.push(href);
   }
 
-  if (!open) return null;
-
   return (
-    <div
-      className="cmdk-overlay open"
-      role="dialog"
-      aria-label="Command palette"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) setOpen(false);
-      }}
+    <Modal
+      open={open}
+      onClose={() => setOpen(false)}
+      label="Command palette"
+      variant="center"
+      size="md"
+      hideClose
+      panelClassName="nx-modal-cmdk cmdk-box"
     >
-      <div className="cmdk-box">
-        <div className="cmdk-input-row">
-          <span aria-hidden>⌘</span>
-          <input
-            autoFocus
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search anime or jump…"
-          />
-          <span className="cmdk-esc">esc</span>
-        </div>
-        <div className="cmdk-results">
-          {nav.length > 0 ? (
-            <>
-              <div className="cmdk-section-label">Navigate</div>
-              {nav.map((n) => (
-                <button
-                  key={n.href}
-                  type="button"
-                  className="cmdk-item"
-                  onClick={() => go(n.href)}
-                >
-                  {n.label}
-                  <span className="cmdk-item-meta">{n.group}</span>
-                </button>
-              ))}
-            </>
-          ) : null}
-          {q.trim().length >= 2 ? (
-            <>
-              <div className="cmdk-section-label">
-                Catalog {searching ? "…" : ""}
-              </div>
-              {hits.map((a) => (
-                <button
-                  key={a.id}
-                  type="button"
-                  className="cmdk-item"
-                  onClick={() => go(`/anime/${a.id}`)}
-                >
-                  {a.title}
-                  <span className="cmdk-item-meta">
-                    {a.year || a.format || "title"}
-                  </span>
-                </button>
-              ))}
-              {!searching && hits.length === 0 ? (
-                <p className="cmdk-empty">No titles matched.</p>
-              ) : null}
-            </>
-          ) : null}
-        </div>
+      <div className="cmdk-input-row">
+        <span aria-hidden>⌘</span>
+        <input
+          data-autofocus
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search anime or jump…"
+        />
+        <span className="cmdk-esc">esc</span>
       </div>
-    </div>
+      <div className="cmdk-results">
+        {nav.length > 0 ? (
+          <>
+            <div className="cmdk-section-label">Navigate</div>
+            {nav.map((n) => (
+              <button
+                key={n.href}
+                type="button"
+                className="cmdk-item"
+                onClick={() => go(n.href)}
+              >
+                {n.label}
+                <span className="cmdk-item-meta">{n.group}</span>
+              </button>
+            ))}
+          </>
+        ) : null}
+        {q.trim().length >= 2 ? (
+          <>
+            <div className="cmdk-section-label">
+              Catalog {searching ? "…" : ""}
+            </div>
+            {hits.map((a) => (
+              <button
+                key={a.id}
+                type="button"
+                className="cmdk-item"
+                onClick={() => go(`/anime/${a.id}`)}
+              >
+                {a.title}
+                <span className="cmdk-item-meta">
+                  {a.year || a.format || "title"}
+                </span>
+              </button>
+            ))}
+            {!searching && hits.length === 0 ? (
+              <p className="cmdk-empty">No titles matched.</p>
+            ) : null}
+          </>
+        ) : null}
+      </div>
+    </Modal>
   );
 }
