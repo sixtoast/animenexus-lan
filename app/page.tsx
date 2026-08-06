@@ -28,7 +28,12 @@ export default async function HomePage() {
 
   return (
     <main className="home-main">
-      <section className="hero home-hero">
+      <section
+        className="hero home-hero"
+        data-mascot-landmark="hero"
+        data-mascot-id="home-hero"
+        data-mascot-priority="2"
+      >
         <div className="container home-hero-inner">
           <HeroGreeting />
           <div className="hero-badge">Lantern · late-night console</div>
@@ -42,7 +47,12 @@ export default async function HomePage() {
 
           <RitualLine />
 
-          <div className="home-hero-actions">
+          <div
+            className="home-hero-actions"
+            data-mascot-landmark="button"
+            data-mascot-id="home-ctas"
+            data-mascot-priority="3"
+          >
             <Link href="/daily" className="btn btn-accent btn-sm">
               Today’s signal
             </Link>
@@ -62,7 +72,12 @@ export default async function HomePage() {
       </section>
 
       <section className="container home-body">
-        <div className="home-panel">
+        <div
+          className="home-panel"
+          data-mascot-landmark="rail"
+          data-mascot-id="home-desk"
+          data-mascot-priority="4"
+        >
           <HomeDashboard trending={[]} />
         </div>
 
@@ -86,7 +101,13 @@ export default async function HomePage() {
             <p>{error}</p>
           </div>
         ) : (
-          <AnimeGrid items={items} />
+          <div
+            data-mascot-landmark="card"
+            data-mascot-id="trending-grid"
+            data-mascot-priority="5"
+          >
+            <AnimeGrid items={items} />
+          </div>
         )}
       </section>
     </main>
