@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useTheme } from "@/components/ThemeProvider";
 
 const LINKS = [
   { href: "/", label: "Home" },
@@ -18,6 +19,7 @@ const LINKS = [
 export function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     setOpen(false);
@@ -56,7 +58,16 @@ export function Navbar() {
         </nav>
 
         <div className="nav-right">
-          <span className="sprint-badge">Sprint 11</span>
+          <button
+            type="button"
+            className="theme-toggle-btn"
+            onClick={toggleTheme}
+            title="Toggle theme"
+            aria-label="Toggle light/dark theme"
+          >
+            {theme === "dark" ? "☀️" : "🌙"}
+          </button>
+          <span className="sprint-badge">Parity A</span>
           <button
             type="button"
             className="nav-toggle"
@@ -70,11 +81,7 @@ export function Navbar() {
       </div>
 
       {open ? (
-        <nav
-          id="mobile-nav"
-          className="nav-mobile"
-          aria-label="Mobile primary"
-        >
+        <nav id="mobile-nav" className="nav-mobile" aria-label="Mobile primary">
           <ul>
             {LINKS.map((l) => {
               const active =

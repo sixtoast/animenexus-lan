@@ -2,6 +2,10 @@ import type { Metadata, Viewport } from "next";
 import { Navbar } from "@/components/Navbar";
 import { WatchlistProvider } from "@/components/WatchlistProvider";
 import { SessionProvider } from "@/components/SessionProvider";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { ToastProvider } from "@/components/ToastProvider";
+import { ScrollProgress } from "@/components/ScrollProgress";
+import { FabMenu } from "@/components/FabMenu";
 import "./globals.css";
 import "./card-link.css";
 import "./nav-polish.css";
@@ -11,6 +15,7 @@ export const metadata: Metadata = {
   description:
     "Mood-based anime recommendations, a deep taste profile, and AI-powered tools — late-night broadcast console.",
   applicationName: "AnimeNexus",
+  manifest: "/manifest.webmanifest",
 };
 
 export const viewport: Viewport = {
@@ -38,23 +43,37 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
           rel="stylesheet"
         />
-        <link rel="manifest" href="/manifest.webmanifest" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('anime_nexus_theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');var v=localStorage.getItem('anime_nexus_view_mode');if(v)document.documentElement.dataset.viewMode=v;}catch(e){}})();`,
+          }}
+        />
       </head>
       <body>
-        <WatchlistProvider>
-          <SessionProvider>
-            <Navbar />
-            {children}
-            <footer className="site-footer">
-              <div className="container">
-                AnimeNexus · Lantern · Sprint 11 · polish · Data via{" "}
-                <a href="https://anilist.co" target="_blank" rel="noreferrer">
-                  AniList
-                </a>
-              </div>
-            </footer>
-          </SessionProvider>
-        </WatchlistProvider>
+        <ThemeProvider>
+          <ToastProvider>
+            <WatchlistProvider>
+              <SessionProvider>
+                <ScrollProgress />
+                <Navbar />
+                {children}
+                <FabMenu />
+                <footer className="site-footer">
+                  <div className="container">
+                    AnimeNexus · Lantern · Parity Sprint A · Data via{" "}
+                    <a
+                      href="https://anilist.co"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      AniList
+                    </a>
+                  </div>
+                </footer>
+              </SessionProvider>
+            </WatchlistProvider>
+          </ToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
