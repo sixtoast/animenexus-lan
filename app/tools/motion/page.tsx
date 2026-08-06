@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { MotionClient } from "@/components/MotionClient";
+import { DeskShell } from "@/components/DeskShell";
 import "../tools.css";
 
 export const metadata = {
   title: "Motion · AnimeNexus",
-  description: "Clip room scaffold — honest about upscale limits.",
+  description: "Clip room — samples and URL preview.",
 };
 
 export default function Page() {
@@ -12,15 +12,15 @@ export default function Page() {
     <main>
       <section className="hero" style={{ paddingBottom: 12 }}>
         <div className="container">
-          <div className="hero-badge">
-            <Link href="/tools">Tools</Link> · Motion
-          </div>
-          <h1>Motion studio</h1>
-          <p>Browse clips from sauce/trace results. Upscale is key-gated.</p>
+          <div className="hero-badge">Night Desk · Motion</div>
+          <h1>Motion</h1>
+          <p>Clip room — samples and URL preview. No fake upscale.</p>
         </div>
       </section>
       <section className="container" style={{ paddingBottom: 48 }}>
-        <MotionClient />
+        <DeskShell title="Motion">
+          <MotionClient />
+        </DeskShell>
       </section>
     </main>
   );

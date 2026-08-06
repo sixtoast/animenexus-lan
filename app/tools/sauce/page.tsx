@@ -1,32 +1,27 @@
-import Link from "next/link";
 import { SauceClient } from "@/components/SauceClient";
+import { DeskShell } from "@/components/DeskShell";
 import "../tools.css";
 import "./sauce.css";
 
 export const metadata = {
   title: "Sauce · AnimeNexus",
-  description: "Find the anime from a screenshot via trace.moe.",
+  description: "Drop, paste, or URL → scene search.",
 };
 
-export default function SaucePage() {
+export default function Page() {
   return (
     <main>
       <section className="hero" style={{ paddingBottom: 12 }}>
         <div className="container">
-          <div className="hero-badge">
-            <Link href="/tools">Tools</Link> · Sauce · Sprint 10
-          </div>
-          <h1>
-            Find the <span>sauce</span>
-          </h1>
-          <p>
-            Trace a frame to its source episode. Results link into AnimeNexus
-            detail pages when AniList IDs are available.
-          </p>
+          <div className="hero-badge">Night Desk · Sauce</div>
+          <h1>Sauce</h1>
+          <p>Drop, paste, or URL — trace the frame.</p>
         </div>
       </section>
       <section className="container" style={{ paddingBottom: 48 }}>
-        <SauceClient />
+        <DeskShell title="Sauce">
+          <SauceClient />
+        </DeskShell>
       </section>
     </main>
   );

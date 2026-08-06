@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { ChallengeClient } from "@/components/ChallengeClient";
+import { DeskShell } from "@/components/DeskShell";
 import "../tools.css";
 
 export const metadata = { title: "Challenge · AnimeNexus" };
@@ -9,15 +9,15 @@ export default function ChallengePage() {
     <main>
       <section className="hero" style={{ paddingBottom: 12 }}>
         <div className="container">
-          <div className="hero-badge">
-            <Link href="/tools">Tools</Link> · Challenge
-          </div>
+          <div className="hero-badge">Night Desk · Challenge</div>
           <h1>Challenge</h1>
-          <p>Score, year, or format — one guess at a time.</p>
+          <p>Silhouette daily — art dissolves when you lock in.</p>
         </div>
       </section>
       <section className="container" style={{ paddingBottom: 48 }}>
-        <ChallengeClient />
+        <DeskShell title="Challenge">
+          <ChallengeClient />
+        </DeskShell>
       </section>
     </main>
   );

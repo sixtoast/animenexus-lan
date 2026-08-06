@@ -1,7 +1,6 @@
-import Link from "next/link";
 import { FanzoneClient } from "@/components/FanzoneClient";
+import { DeskShell } from "@/components/DeskShell";
 import "../tools.css";
-import "../sauce/sauce.css";
 
 export const metadata = {
   title: "Fan zone · AnimeNexus",
@@ -13,15 +12,15 @@ export default function Page() {
     <main>
       <section className="hero" style={{ paddingBottom: 12 }}>
         <div className="container">
-          <div className="hero-badge">
-            <Link href="/tools">Tools</Link> · Fan zone
-          </div>
+          <div className="hero-badge">Night Desk · Fan zone</div>
           <h1>Fan zone</h1>
-          <p>Bingo, local confessions, Taste DNA export & compare.</p>
+          <p>Bingo, confessions, Taste DNA.</p>
         </div>
       </section>
       <section className="container" style={{ paddingBottom: 48 }}>
-        <FanzoneClient />
+        <DeskShell title="Fan zone">
+          <FanzoneClient />
+        </DeskShell>
       </section>
     </main>
   );
