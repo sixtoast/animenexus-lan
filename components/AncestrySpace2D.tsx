@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { AnimeRelation } from "@/lib/types";
 
 type NodeSpec = {
   id: number;
@@ -35,7 +34,6 @@ function shortLabel(t: string) {
   return t.replace(/_/g, " ").slice(0, 12);
 }
 
-/** Polar layout: official inner ring, recommended outer */
 function layoutNodes(
   center: NodeSpec,
   nodes: NodeSpec[],
@@ -51,9 +49,7 @@ function layoutNodes(
   const rOuter = minDim * 0.42;
   const nodeR = Math.max(28, Math.min(44, minDim * 0.07));
 
-  const out: LaidOut[] = [
-    { ...center, x: cx, y: cy, r: nodeR * 1.35 },
-  ];
+  const out: LaidOut[] = [{ ...center, x: cx, y: cy, r: nodeR * 1.35 }];
 
   const place = (list: NodeSpec[], radius: number, phase: number) => {
     const n = list.length || 1;
@@ -69,13 +65,9 @@ function layoutNodes(
   };
 
   place(official, rInner, 0);
-  place(recommended, rOuter, Math.PI / nOr(recommended.length, 8));
+  place(recommended, rOuter, Math.PI / (recommended.length || 8));
 
   return out;
-}
-
-function nOr(n: number, d: number) {
-  return n || d;
 }
 
 export function AncestrySpace2D({ center, nodes }: Props) {
@@ -86,7 +78,6 @@ export function AncestrySpace2D({ center, nodes }: Props) {
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [selected, setSelected] = useState<LaidOut | null>(null);
   const drag = useRef<{
-    mode: "pan" | none;
     x: number;
     y: number;
     px: number;
@@ -94,8 +85,6 @@ export function AncestrySpace2D({ center, nodes }: Props) {
     moved: boolean;
   } | null>(null);
   const pinch = useRef<{ dist: number; scale: number } | null>(null);
-
-  type none = never;
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -122,17 +111,15 @@ export function AncestrySpace2D({ center, nodes }: Props) {
       const el = wrapRef.current;
       if (!el) return null;
       const rect = el.getBoundingClientRect();
-      // Inverse pan/scale: screen -> world
       const sx = clientX - rect.left;
       const sy = clientY - rect.top;
       const wx = (sx - pan.x - size.w / 2) / scale + size.w / 2;
       const wy = (sy - pan.y - size.h / 2) / scale + size.h / 2;
-      // Prefer smallest distance
       let best: LaidOut | null = null;
       let bestD = Infinity;
       for (const n of laid) {
         const d = Math.hypot(wx - n.x, wy - n.y);
-        const hitR = n.r + 12; // generous mobile hit area
+        const hitR = n.r + 14;
         if (d < hitR && d < bestD) {
           bestD = d;
           best = n;
@@ -144,12 +131,12 @@ export function AncestrySpace2D({ center, nodes }: Props) {
   );
 
   const onPointerDown = (e: React.PointerEvent) => {
-    if (e.pointerType === "touch" && (e as unknown as TouchEvent).touches) {
-      /* handled via native below for multi-touch */
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      /* ignore */
     }
-    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
     drag.current = {
-      mode: "pan",
       x: e.clientX,
       y: e.clientY,
       px: pan.x,
@@ -162,7 +149,7 @@ export function AncestrySpace2D({ center, nodes }: Props) {
     if (!drag.current) return;
     const dx = e.clientX - drag.current.x;
     const dy = e.clientY - drag.current.y;
-    if (Math.hypot(dx, dy) > 6) drag.current.moved = true;
+    if (Math.hypot(dx, dy) > 8) drag.current.moved = true;
     setPan({
       x: drag.current.px + dx,
       y: drag.current.py + dy,
@@ -180,12 +167,10 @@ export function AncestrySpace2D({ center, nodes }: Props) {
     }
     setSelected(hit);
     if (hit.kind !== "center") {
-      // short delay so user sees selection flash on mobile
-      window.setTimeout(() => router.push(`/anime/${hit.id}`), 120);
+      window.setTimeout(() => router.push(`/anime/${hit.id}`), 100);
     }
   };
 
-  // Native touch for pinch-zoom
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
@@ -238,13 +223,35 @@ export function AncestrySpace2D({ center, nodes }: Props) {
   const cx = size.w / 2;
   const cy = size.h / 2;
 
+  const selectedMeta = selected
+    ? [
+        selected.kind === "center"
+          ? "Current title"
+          : selected.relationType.replace(/_/g, " "),
+        selected.year ? String(selected.year) : null,
+        selected.score != null ? `★ ${selected.score.toFixed(1)}` : null,
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : "";
+
   return (
     <div className="ab2-shell">
       <div className="ab2-toolbar" role="toolbar" aria-label="Map controls">
-        <button type="button" className="ab2-tool" onClick={() => zoomBy(0.15)} aria-label="Zoom in">
+        <button
+          type="button"
+          className="ab2-tool"
+          onClick={() => zoomBy(0.15)}
+          aria-label="Zoom in"
+        >
           +
         </button>
-        <button type="button" className="ab2-tool" onClick={() => zoomBy(-0.15)} aria-label="Zoom out">
+        <button
+          type="button"
+          className="ab2-tool"
+          onClick={() => zoomBy(-0.15)}
+          aria-label="Zoom out"
+        >
           −
         </button>
         <button type="button" className="ab2-tool ab2-tool-wide" onClick={resetView}>
@@ -291,10 +298,12 @@ export function AncestrySpace2D({ center, nodes }: Props) {
               transformOrigin: `${cx}px ${cy}px`,
             }}
           >
-            {/* ambient glow */}
-            <circle cx={cx} cy={cy} r={Math.min(size.w, size.h) * 0.35} fill="url(#ab2-glow)" />
-
-            {/* orbit guides */}
+            <circle
+              cx={cx}
+              cy={cy}
+              r={Math.min(size.w, size.h) * 0.35}
+              fill="url(#ab2-glow)"
+            />
             <circle
               cx={cx}
               cy={cy}
@@ -314,7 +323,6 @@ export function AncestrySpace2D({ center, nodes }: Props) {
               strokeDasharray="2 8"
             />
 
-            {/* links */}
             {laid
               .filter((n) => n.kind !== "center")
               .map((n) => (
@@ -331,12 +339,9 @@ export function AncestrySpace2D({ center, nodes }: Props) {
                   filter="url(#ab2-soft)"
                 />
               ))}
-
-            {/* nodes rendered as foreignObject-free circles; posters via HTML overlay */}
           </g>
         </svg>
 
-        {/* HTML node layer (better images + a11y on mobile) */}
         <div
           className="ab2-nodes"
           style={{
@@ -347,7 +352,8 @@ export function AncestrySpace2D({ center, nodes }: Props) {
           }}
         >
           {laid.map((n) => {
-            const isSel = selected?.id === n.id && selected.relationType === n.relationType;
+            const isSel =
+              selected?.id === n.id && selected.relationType === n.relationType;
             const isCenter = n.kind === "center";
             return (
               <button
@@ -378,7 +384,10 @@ export function AncestrySpace2D({ center, nodes }: Props) {
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={n.image || "https://placehold.co/120x120/1a1a1a/555?text=?"}
+                  src={
+                    n.image ||
+                    "https://placehold.co/120x120/1a1a1a/555?text=?"
+                  }
                   alt=""
                   draggable={false}
                 />
@@ -399,21 +408,7 @@ export function AncestrySpace2D({ center, nodes }: Props) {
         {selected ? (
           <>
             <strong>{selected.title}</strong>
-            <span>
-              {["n.kind" === "x"
-                ? null
-                : selected.kind === "center"
-                  ? "Current title"
-                  : selected.relationType.replace(/_/g, " "),
-                selected.year ? String(selected.year) : null,
-                selected.score != null ? `★ ${selected.score.toFixed(1)}` : null,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            </span>
-            {selected.kind !== "center" ? (
-              <span className="ab2-hud-cta">Tap again or wait — opening…</span>
-            ) : null}
+            <span>{selectedMeta}</span>
           </>
         ) : (
           <span className="ab2-hint">
