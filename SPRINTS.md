@@ -2,17 +2,13 @@
 
 | Sprint | Theme | Status |
 |--------|--------|--------|
-| 1–9 | Foundation → Tools | ✅ |
-| 10 | AI & sauce | ✅ |
-| 11 | Polish | next |
+| 1–10 | Foundation → Sauce | ✅ |
+| 11 | Polish | ✅ |
 
-## Sprint 10 — Sauce & Night Desk ✅
+## Sprint 11 — Polish ✅
 
-- [x] `/tools/sauce` — trace.moe (URL + file upload)
-- [x] `/api/sauce` proxy
-- [x] `/tools/oracle` — local watchlist oracle
-- [x] Tools hub cards
+- [x] Responsive mobile nav
+- [x] PWA web manifest
+- [x] Deploy-ready package
 
-## Sprint 11 — Preview
-
-Theme polish, PWA bits, command palette, responsive nav.
+Migration complete for the core Next.js Lantern shell.

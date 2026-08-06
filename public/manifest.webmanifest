@@ -1,0 +1,10 @@
+{
+  "name": "AnimeNexus — Lantern",
+  "short_name": "AnimeNexus",
+  "description": "Mood-based anime recommendations and late-night broadcast console",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0c0a09",
+  "theme_color": "#120e0c",
+  "lang": "en"
+}

@@ -2,13 +2,19 @@
 
 **Repo:** https://github.com/sixtoast/animenexus-lantern
 
-## Current: Sprint 10
-
-Sauce (trace.moe) · Night Desk oracle.
+Next.js 15 rebuild of the AnimeNexus Lantern SPA.
 
 ```bash
 npm install && npm run dev
 ```
 
-- http://localhost:3000/tools/sauce  
-- http://localhost:3000/tools/oracle  
+## Features
+
+- Browse / filters / detail / watchlist
+- Moods · seasonal · daily pick
+- Tools: compare, fusion, challenge, sauce, Night Desk
+- AniList public username sync · taste profile
+
+## Deploy
+
+Vercel (Next.js auto-detect). Node ≥ 18.18.
