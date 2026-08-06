@@ -4,29 +4,20 @@
 
 | # | Goal | Status |
 |---|------|--------|
-| 1–7 | Render → physics | Done |
-| 8 | Context-aware reactions | **Done** |
-| 9 | Random idle skits | Next |
-| 10 | Polish / optimise | Planned |
+| 1–8 | Render → context | Done |
+| 9 | Random idle skits | **Done** |
+| 10 | Polish / optimise | Next |
 
-## M8 — context
+## M9 — skits
 
-`ContextBridge` watches the real app:
+`lib/mascot/skits.ts` + `run-skit.ts`
 
-| Signal | Reaction |
-|--------|----------|
-| Loading | Think → long wait sleeps |
-| Loading done | Wave |
-| Error box | Surprised + stress |
-| Empty watchlist | Think |
-| Fast scroll | Surprised |
-| Theme change | Wave |
-| Watching titles | Context flag |
+| Skit | Feel |
+|------|------|
+| stretch | Quick hop |
+| yawn / read | Think hold |
+| dance | Happy bounce |
+| binoculars | Point → think |
+| spin-peek | Wave |
 
-Fire from anywhere:
-
-```ts
-window.dispatchEvent(new CustomEvent('animenexus:loading', { detail: { active: true }}))
-window.dispatchEvent(new CustomEvent('animenexus:error'))
-window.dispatchEvent(new CustomEvent('animenexus:theme', { detail: { theme: 'light' }}))
-```
+Rules: 32% chance per 16s tick, **28s cooldown**, skipped while busy / loading / sleeping / celebrating. Weights lean on current emotions.

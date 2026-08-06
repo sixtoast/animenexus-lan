@@ -5,6 +5,7 @@ import { ContactShadows, Environment } from "@react-three/drei";
 import { PlaceholderChibi } from "./PlaceholderChibi";
 import { useMascotStore } from "@/lib/mascot/store";
 import { clampToHabitat } from "@/lib/mascot/navigation";
+import { tryRunSkit } from "@/lib/mascot/run-skit";
 import { useEffect } from "react";
 
 type Props = {
@@ -69,14 +70,14 @@ export function MascotScene({ reducedMotion }: Props) {
     return () => window.clearInterval(id);
   }, [reducedMotion, runBehaviourTick]);
 
-  // Spontaneous skits — rare, never while busy
+  // Spontaneous skits — ~every 16s attempt, 28s min gap, 32% chance
   useEffect(() => {
     if (reducedMotion) return;
     const id = window.setInterval(() => {
-      dispatch({ type: "skit" });
+      tryRunSkit();
     }, 16_000);
     return () => window.clearInterval(id);
-  }, [reducedMotion, dispatch]);
+  }, [reducedMotion]);
 
   return (
     <Canvas
