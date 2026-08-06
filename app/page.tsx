@@ -50,9 +50,22 @@ export default async function HomePage() {
             <p className="mood-home-label">How are you feeling?</p>
             <MoodChips />
           </div>
-          <p style={{ marginTop: 18 }}>
+          <p
+            style={{
+              marginTop: 18,
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 10,
+            }}
+          >
             <Link href="/browse" className="btn btn-outline btn-sm">
-              Open browse →
+              Browse →
+            </Link>
+            <Link href="/seasonal" className="btn btn-outline btn-sm">
+              Seasonal
+            </Link>
+            <Link href="/daily" className="btn btn-accent btn-sm">
+              Daily pick
             </Link>
           </p>
         </div>
