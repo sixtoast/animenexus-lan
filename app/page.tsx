@@ -8,6 +8,7 @@ import { HomeDashboard } from "@/components/HomeDashboard";
 import { RitualLine } from "@/components/RitualLine";
 import { fetchDiscover } from "@/lib/anilist";
 import "./mood-home.css";
+import "./home-dash.css";
 
 export const dynamic = "force-dynamic";
 
