@@ -177,6 +177,9 @@ export default async function AnimeDetailPage({ params }: Props) {
               <Link href="/watchlist" className="btn btn-outline btn-sm">
                 Open watchlist
               </Link>
+              <a href="#ancestry" className="btn btn-outline btn-sm">
+                Ancestry graph
+              </a>
             </div>
           </div>
         </div>
@@ -187,6 +190,13 @@ export default async function AnimeDetailPage({ params }: Props) {
             {anime.description || "No description available."}
           </p>
         </section>
+
+        {/* Always mount — client can refetch if SSR list empty */}
+        <AncestryGraph
+          centerTitle={anime.title}
+          centerId={anime.id}
+          relations={relations}
+        />
 
         {youtube ? (
           <section className="detail-section">
@@ -285,14 +295,6 @@ export default async function AnimeDetailPage({ params }: Props) {
               ))}
             </div>
           </section>
-        ) : null}
-
-        {relations.length > 0 ? (
-          <AncestryGraph
-            centerTitle={anime.title}
-            centerId={anime.id}
-            relations={relations}
-          />
         ) : null}
 
         {relations.length > 0 ? (
