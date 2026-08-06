@@ -5,26 +5,33 @@ Repo: **sixtoast/animenexus-lantern** · branch `main`
 | Feature | Status | Evidence |
 |--------|--------|----------|
 | Shell / tools / lists / detail | done | prior sprints |
-| Challenge silhouette + confetti | done | |
-| Radar upcoming / Stats / Home / Session | done | |
+| Challenge silhouette + confetti | done | dissolve reveal + lantern pulse |
+| Radar / Stats / Home / Session | done | session `data-session` env |
 | Fan zone / Sauce / MAL | done | |
-| Oracle vibe-cast cards | done | Sprint M |
-| Motion clip room (A) | partial | no upscale |
-| PWA icon.svg + start_url `/` | done | |
-| **Streaming AI** | **done** | `streamChatCompletions` + AI panel |
-| Toast bounce / milestone | done | `sprint-n.css`, ToastProvider |
-| Quote multi-fallback | done | animechan.io + xyz + local |
-| SW shell cache v2 | done | no `/api` cache |
-| View modes grid/poster/shelf | done | CSS under `data-view-mode` |
+| Oracle vibe-cast cards | done | |
+| Motion clip room | partial | no upscale |
+| PWA icon.svg | done | |
+| Streaming AI | done | |
+| **Craft elevation** | **in progress** | cards, motion, skeletons, desk, seal |
 | Night Signal ARG | **declined** | |
 
-## Sprint N (optional polish)
-- [x] Streaming AI with non-stream fallback
-- [x] Anime-style toast bounce + milestone flag
-- [x] Quote API chain + expanded local fallbacks
-- [x] Service worker: shell routes, skip API errors
-- [x] View-mode CSS reinforcement
-- [ ] Detail journal timeline — left thin (no scope creep)
+## Craft pass (Awwwards elevation — no new features)
 
-## Smoke note (N)
-AI panel streams when provider returns `text/event-stream`; otherwise falls back to full JSON response. ARG remains declined.
+### Critical (shipped)
+- Elevated **AnimeCard**: on-list flame, hover glow, stagger entrance, view-transition name
+- **motion.css**: easing tokens, reduced-motion, poster skeletons, FAB pulse, session ambient
+- **Watchlist seal**: milestone toast + `animenexus:lantern-pulse` → FAB reacts
+- Browse **PosterSkeleton** while filters pending
+
+### High (shipped)
+- **desk.css** + tools hub stagger cards
+- Challenge silhouette **dissolve → revealed**
+- Session **Tonight/Break** sets `html[data-session]` (sakura speed/alpha + body wash)
+- Sakura respects reduced-motion + low hardware concurrency
+
+### Still open (next craft cycles)
+- Shared-element cover on detail (View Transitions full path)
+- Tool page desk-band on every tool route
+- Oracle band-switch deal animation
+- `next/image` on cards (domains already in next.config)
+- CSS consolidation (merge sprint-* files)
