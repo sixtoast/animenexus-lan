@@ -64,13 +64,37 @@ function loadVis(): Promise<void> {
 export function AncestryGraph({
   centerTitle,
   centerId,
-  relations,
+  relations: initial,
 }: Props) {
   const router = useRouter();
+  const [relations, setRelations] = useState<AnimeRelation[]>(initial || []);
+  const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [failed, setFailed] = useState(false);
   const hostRef = useRef<HTMLDivElement>(null);
   const netRef = useRef<{ destroy: () => void } | null>(null);
+
+  // Client fallback if SSR returned nothing
+  useEffect(() => {
+    if (initial?.length) {
+      setRelations(initial);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    fetch(`/api/relations?id=${centerId}`)
+      .then((r) => r.json())
+      .then((j) => {
+        if (!cancelled && Array.isArray(j.data)) setRelations(j.data);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [centerId, initial]);
 
   useEffect(() => {
     if (!open || !hostRef.current || !relations.length) return;
@@ -132,7 +156,12 @@ export function AncestryGraph({
               springConstant: 0.04,
             },
           },
-          interaction: { hover: true, tooltipDelay: 80, navigationButtons: true },
+          interaction: {
+            hover: true,
+            tooltipDelay: 80,
+            navigationButtons: true,
+            zoomView: true,
+          },
           edges: { smooth: { type: "continuous" } },
         };
         const net = new window.vis!.Network(hostRef.current, data, options);
@@ -156,8 +185,6 @@ export function AncestryGraph({
     };
   }, [open, centerId, centerTitle, relations, router]);
 
-  if (!relations.length) return null;
-
   const groups = new Map<string, AnimeRelation[]>();
   for (const r of relations) {
     const key = r.relationType || "RELATED";
@@ -166,24 +193,28 @@ export function AncestryGraph({
   }
 
   return (
-    <section className="detail-section ancestry-section">
+    <section className="detail-section ancestry-section" id="ancestry">
       <div className="ancestry-callout">
         <div>
           <h2>Ancestry graph</h2>
           <p className="ancestry-lead">
-            {relations.length} linked title{relations.length === 1 ? "" : "s"} —
-            sequels, prequels, and side stories mapped as a network.
+            {loading
+              ? "Loading linked titles…"
+              : relations.length
+                ? `${relations.length} linked title${relations.length === 1 ? "" : "s"} — sequels, prequels, and side stories.`
+                : "No anime relations on AniList for this title (one-shots often have none)."}
           </p>
         </div>
         <button
           type="button"
           className="btn btn-accent"
+          disabled={!relations.length || loading}
           onClick={() => {
             setFailed(false);
             setOpen(true);
           }}
         >
-          Open interactive graph
+          {loading ? "Loading…" : "Open interactive graph"}
         </button>
       </div>
 
@@ -224,24 +255,26 @@ export function AncestryGraph({
         </div>
       ) : null}
 
-      <div className="ancestry-wrap">
-        {[...groups.entries()].map(([type, list]) => (
-          <div key={type} className="ancestry-group">
-            <div className="ancestry-type">{type.replace(/_/g, " ")}</div>
-            <div className="ancestry-nodes">
-              {list.map((r) => (
-                <Link
-                  key={`${r.id}-${r.relationType}`}
-                  href={`/anime/${r.id}`}
-                  className="ancestry-node"
-                >
-                  {r.title}
-                </Link>
-              ))}
+      {relations.length > 0 ? (
+        <div className="ancestry-wrap">
+          {[...groups.entries()].map(([type, list]) => (
+            <div key={type} className="ancestry-group">
+              <div className="ancestry-type">{type.replace(/_/g, " ")}</div>
+              <div className="ancestry-nodes">
+                {list.map((r) => (
+                  <Link
+                    key={`${r.id}-${r.relationType}`}
+                    href={`/anime/${r.id}`}
+                    className="ancestry-node"
+                  >
+                    {r.title}
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : null}
     </section>
   );
 }

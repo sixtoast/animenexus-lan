@@ -22,7 +22,7 @@ async function gql<T>(
     body: JSON.stringify({ query, variables }),
   };
   if (typeof window === "undefined") {
-    init.next = { revalidate: 300 };
+    init.next = { revalidate: 60 };
   }
   const res = await fetch(ANILIST_ENDPOINT, init);
   if (!res.ok) throw new Error(`AniList HTTP ${res.status}`);
@@ -81,6 +81,42 @@ const DETAIL_FIELDS = `
     }
   }
 `;
+
+const NON_ANIME = new Set(["MANGA", "NOVEL", "ONE_SHOT", "OTHER"]);
+
+export function mapRelationEdges(
+  edges: {
+    relationType?: string;
+    node?: {
+      id: number;
+      type?: string;
+      title?: { romaji?: string; english?: string };
+      format?: string;
+      status?: string;
+      coverImage?: { large?: string; medium?: string };
+    };
+  }[],
+): AnimeRelation[] {
+  const relations: AnimeRelation[] = [];
+  for (const e of edges) {
+    const n = e.node;
+    if (!n?.id) continue;
+    // Prefer anime; skip known non-anime media types
+    if (n.type && NON_ANIME.has(n.type)) continue;
+    // Format-based fallback when type is missing
+    const fmt = (n.format || "").toUpperCase();
+    if (fmt === "MANGA" || fmt === "NOVEL") continue;
+    relations.push({
+      id: n.id,
+      title: n.title?.english || n.title?.romaji || "Untitled",
+      relationType: e.relationType || "RELATED",
+      format: n.format,
+      status: n.status,
+      image: n.coverImage?.large || n.coverImage?.medium,
+    });
+  }
+  return relations;
+}
 
 export async function fetchAnimeDetail(id: number): Promise<Anime | null> {
   const query = `
@@ -159,20 +195,38 @@ export async function fetchAnimeDetail(id: number): Promise<Anime | null> {
       }
     )?.edges || [];
 
-  const relations: AnimeRelation[] = [];
-  for (const e of relEdges) {
-    const n = e.node;
-    if (!n || n.type !== "ANIME") continue;
-    relations.push({
-      id: n.id,
-      title: n.title?.english || n.title?.romaji || "Untitled",
-      relationType: e.relationType || "RELATED",
-      format: n.format,
-      status: n.status,
-      image: n.coverImage?.large || n.coverImage?.medium,
-    });
-  }
-  anime.relations = relations;
+  anime.relations = mapRelationEdges(relEdges);
 
   return anime;
+}
+
+/** Client-side relations-only fetch (fallback if SSR empty) */
+export async function fetchRelationsOnly(id: number): Promise<AnimeRelation[]> {
+  const query = `
+    query ($id: Int) {
+      Media(id: $id, type: ANIME) {
+        relations {
+          edges {
+            relationType
+            node {
+              id
+              type
+              title { romaji english }
+              format
+              status
+              coverImage { large medium }
+            }
+          }
+        }
+      }
+    }
+  `;
+  const data = await gql<{ Media: { relations?: { edges?: unknown[] } } | null }>(
+    query,
+    { id },
+  );
+  const edges =
+    (data.Media?.relations?.edges as Parameters<typeof mapRelationEdges>[0]) ||
+    [];
+  return mapRelationEdges(edges);
 }
