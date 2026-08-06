@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { touchStreak, readStreak } from "@/lib/streak";
+import { readMemory, type RecentView } from "@/lib/lantern-memory";
 import { useToast } from "@/components/ToastProvider";
 import type { Anime } from "@/lib/types";
 
@@ -15,6 +16,7 @@ export function HomeDashboard({ trending }: Props) {
   const { entries, ready } = useWatchlist();
   const { showToast } = useToast();
   const [streak, setStreak] = useState(0);
+  const [recent, setRecent] = useState<RecentView[]>([]);
 
   useEffect(() => {
     const { state, milestone } = touchStreak();
@@ -24,7 +26,15 @@ export function HomeDashboard({ trending }: Props) {
     } else {
       setStreak(readStreak().count);
     }
+    setRecent(readMemory().recentViews.slice(0, 10));
   }, [showToast]);
+
+  // Refresh recent when navigating back client-side after detail views
+  useEffect(() => {
+    const refresh = () => setRecent(readMemory().recentViews.slice(0, 10));
+    window.addEventListener("focus", refresh);
+    return () => window.removeEventListener("focus", refresh);
+  }, []);
 
   const continueList = useMemo(() => {
     return entries
@@ -43,6 +53,13 @@ export function HomeDashboard({ trending }: Props) {
     }
     return c;
   }, [entries]);
+
+  // Avoid duplicating the same titles under Continue
+  const continueIds = useMemo(
+    () => new Set(continueList.map((e) => e.id)),
+    [continueList],
+  );
+  const signalRecent = recent.filter((r) => !continueIds.has(r.id));
 
   return (
     <div className="home-dash">
@@ -107,6 +124,37 @@ export function HomeDashboard({ trending }: Props) {
                     Ep {e.progress}
                     {e.episodes ? ` / ${e.episodes}` : ""}
                   </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {signalRecent.length > 0 ? (
+        <section className="home-rail-section home-signals">
+          <div className="home-rail-head">
+            <h2>Recent signals</h2>
+            <span className="home-rail-note">Lantern remembered</span>
+          </div>
+          <div className="home-rail">
+            {signalRecent.map((r) => (
+              <Link
+                key={r.id}
+                href={`/anime/${r.id}`}
+                className="home-rail-card"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={
+                    r.image ||
+                    "https://placehold.co/120x170/1a1a1a/555?text=?"
+                  }
+                  alt=""
+                />
+                <div className="hrc-body">
+                  <div className="hrc-title">{r.title}</div>
+                  <div className="hrc-meta">Opened</div>
                 </div>
               </Link>
             ))}
