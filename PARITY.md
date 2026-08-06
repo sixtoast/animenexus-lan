@@ -1,26 +1,30 @@
 # AnimeNexus Lantern — SPA ↔ Next.js parity
 
-| Sprint | Theme | Status |
-|--------|--------|--------|
-| A | Shell & CSS | **done** |
-| B | Detail depth | **done** |
-| C | Lists & taste | **done** |
-| D | AI | **done** |
-| E | Discovery tools | **done** |
-| F–H | CmdK, ancestry, motion, PWA | **done** |
+Honest status for **sixtoast/animenexus-lantern**. Evidence is file + behavior.
 
-## Shipped highlights
+| Feature | Status | Evidence |
+|--------|--------|----------|
+| Shell (theme, toasts, FAB, cmdk, sakura) | done | `app/layout.tsx` |
+| Browse / moods / seasonal / daily / airing | done | app routes |
+| Detail (trailer, chars, relations, binge, notes, AI) | done | `app/anime/[id]` |
+| Watchlist + AniList username | done | providers + account |
+| AI panel + Oracle modes | done | `AIPanel`, `oracle-cloud` |
+| Fusion / dislike / completionist | done | tools routes |
+| **Challenge silhouette MCQ** | **done** | `ChallengeClient.tsx` — daily seed, `brightness(0)`, MCQ + hard tab |
+| **Radar upcoming** | **done** | `RadarClient.tsx` + `/api/upcoming` + `fetchUpcoming` |
+| **Ancestry vis-network** | **done** | `AncestryGraph.tsx` full-screen overlay + list fallback |
+| **Stats** | **done** | `/tools/stats` + `StatsClient` + `lib/stats.ts` |
+| **PWA start_url `/`** | **done** | `public/manifest.json` + `.webmanifest` |
+| Home dashboard (continue, streak, rails) | partial / missing | still hero + trending |
+| Tonight / break / flashback | missing | FAB mostly links |
+| Fan zone / MAL / motion | missing | not on this branch |
+| Night Signal ARG | declined | not shipped |
 
-- Design tokens, theme, toasts, FAB, quotes, view modes
-- Detail: characters, relations, trailer, binge, notes, OP/ED, AI tools, ancestry
-- Watchlist export/import, taste DNA, badges, heatmap
-- AI panel + Night Desk cloud modes
-- Fusion catalog children, dislike reverse, completionist, radar, airing
-- Ctrl/Cmd+K palette, sakura canvas, challenge silhouette, service worker
+## Sprint I (this pass)
+- [x] I1 Silhouette daily challenge
+- [x] I2 Upcoming radar
+- [x] I3 Interactive ancestry graph
+- [x] I4 Stats page
+- [x] I5 PWA manifests
 
-## Optional polish still open
-
-- Full vis-network physics graph (ancestry is structured map today)
-- Fanzone / ARG mythology (intentionally light — no fake unlock codes)
-- MAL OAuth (public username sync remains)
-- Streaming response for AI chat
+Next: Sprint J (home dashboard + session tools) when ready.

@@ -1,7 +1,9 @@
 "use client";
 
-import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { AnimeRelation } from "@/lib/types";
+import Link from "next/link";
 
 type Props = {
   centerTitle: string;
@@ -9,7 +11,144 @@ type Props = {
   relations: AnimeRelation[];
 };
 
-export function AncestryGraph({ centerTitle, centerId, relations }: Props) {
+declare global {
+  interface Window {
+    vis?: {
+      Network: new (
+        el: HTMLElement,
+        data: unknown,
+        options: unknown,
+      ) => {
+        destroy: () => void;
+        on: (ev: string, cb: (p: { nodes: number[] }) => void) => void;
+      };
+      DataSet: new (data: unknown[]) => unknown;
+    };
+  }
+}
+
+function loadVis(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (window.vis?.Network) {
+      resolve();
+      return;
+    }
+    const cssId = "vis-network-css";
+    if (!document.getElementById(cssId)) {
+      const link = document.createElement("link");
+      link.id = cssId;
+      link.rel = "stylesheet";
+      link.href =
+        "https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/vis-network.min.css";
+      document.head.appendChild(link);
+    }
+    const existing = document.querySelector(
+      "script[data-vis-network]",
+    ) as HTMLScriptElement | null;
+    if (existing) {
+      existing.addEventListener("load", () => resolve());
+      existing.addEventListener("error", () => reject(new Error("vis load")));
+      return;
+    }
+    const s = document.createElement("script");
+    s.src =
+      "https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/vis-network.min.js";
+    s.async = true;
+    s.dataset.visNetwork = "1";
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error("vis load failed"));
+    document.body.appendChild(s);
+  });
+}
+
+export function AncestryGraph({
+  centerTitle,
+  centerId,
+  relations,
+}: Props) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const hostRef = useRef<HTMLDivElement>(null);
+  const netRef = useRef<{ destroy: () => void } | null>(null);
+
+  useEffect(() => {
+    if (!open || !hostRef.current || !relations.length) return;
+    let cancelled = false;
+
+    loadVis()
+      .then(() => {
+        if (cancelled || !hostRef.current || !window.vis) return;
+        if (netRef.current) {
+          netRef.current.destroy();
+          netRef.current = null;
+        }
+        const nodes = [
+          {
+            id: centerId,
+            label: centerTitle.slice(0, 28),
+            color: { background: "#f0a090", border: "#f8c4b8" },
+            font: { color: "#2a1210", bold: true },
+            shape: "box",
+          },
+          ...relations.map((r) => ({
+            id: r.id,
+            label: r.title.slice(0, 24),
+            color: {
+              background: "#221c18",
+              border: "rgba(240,160,144,0.35)",
+            },
+            font: { color: "#faf4ef" },
+            shape: "box",
+          })),
+        ];
+        const seen = new Set<number>();
+        const uniqueNodes = nodes.filter((n) => {
+          if (seen.has(n.id)) return false;
+          seen.add(n.id);
+          return true;
+        });
+        const edges = relations.map((r, i) => ({
+          id: `e-${i}`,
+          from: centerId,
+          to: r.id,
+          label: (r.relationType || "").replace(/_/g, " ").slice(0, 12),
+          font: { size: 10, color: "#9e8e82" },
+          color: { color: "rgba(240,160,144,0.35)" },
+        }));
+        const data = {
+          nodes: new window.vis!.DataSet(uniqueNodes),
+          edges: new window.vis!.DataSet(edges),
+        };
+        const options = {
+          physics: {
+            enabled: true,
+            barnesHut: { gravitationalConstant: -8000, springLength: 140 },
+          },
+          interaction: { hover: true, tooltipDelay: 120 },
+          edges: { smooth: true },
+        };
+        const net = new window.vis!.Network(hostRef.current, data, options);
+        net.on("click", (params) => {
+          const id = params.nodes?.[0];
+          if (id && id !== centerId) {
+            setOpen(false);
+            router.push(`/anime/${id}`);
+          }
+        });
+        netRef.current = net;
+      })
+      .catch(() => setFailed(true));
+
+    return () => {
+      cancelled = true;
+      if (netRef.current) {
+        netRef.current.destroy();
+        netRef.current = null;
+      }
+    };
+  }, [open, centerId, centerTitle, relations, router]);
+
   if (!relations.length) return null;
 
   const groups = new Map<string, AnimeRelation[]>();
@@ -22,16 +161,56 @@ export function AncestryGraph({ centerTitle, centerId, relations }: Props) {
   return (
     <section className="detail-section">
       <h2>Ancestry</h2>
-      <p className="tools-hint" style={{ marginBottom: 12 }}>
-        Relation map for <strong>{centerTitle}</strong> — click a node to open
-        it.
-      </p>
-      <div className="ancestry-wrap">
-        <div className="ancestry-center">
-          <Link href={`/anime/${centerId}`} className="ancestry-node root">
-            {centerTitle}
-          </Link>
+      <div className="daily-actions" style={{ marginBottom: 12 }}>
+        <button
+          type="button"
+          className="btn btn-accent btn-sm"
+          onClick={() => {
+            setFailed(false);
+            setOpen(true);
+          }}
+        >
+          Open interactive graph
+        </button>
+      </div>
+
+      {open ? (
+        <div
+          className="ancestry-overlay open"
+          role="dialog"
+          aria-label="Ancestry graph"
+        >
+          <div className="ancestry-content">
+            <div className="ancestry-header">
+              <h3>Ancestry · {centerTitle}</h3>
+              <button
+                type="button"
+                className="ancestry-close"
+                onClick={() => setOpen(false)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+            {failed ? (
+              <p className="tools-hint">
+                Graph library failed to load — use the list below.
+              </p>
+            ) : (
+              <div
+                ref={hostRef}
+                id="ancestryNetwork"
+                style={{ flex: 1, minHeight: 0 }}
+              />
+            )}
+            <div className="ancestry-footer">
+              Click a node to open its detail page.
+            </div>
+          </div>
         </div>
+      ) : null}
+
+      <div className="ancestry-wrap">
         {[...groups.entries()].map(([type, list]) => (
           <div key={type} className="ancestry-group">
             <div className="ancestry-type">{type.replace(/_/g, " ")}</div>
@@ -41,7 +220,6 @@ export function AncestryGraph({ centerTitle, centerId, relations }: Props) {
                   key={`${r.id}-${r.relationType}`}
                   href={`/anime/${r.id}`}
                   className="ancestry-node"
-                  title={r.format || ""}
                 >
                   {r.title}
                 </Link>
