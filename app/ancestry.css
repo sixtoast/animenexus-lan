@@ -1,4 +1,4 @@
-/* Ancestry — mobile-first 2D map */
+/* Ancestry — mobile-first 2D map + physics */
 .ancestry-section {
   margin-top: 12px;
   padding: 16px 14px 22px;
@@ -54,7 +54,6 @@
   line-height: 1.45;
 }
 
-/* ——— 2D stage ——— */
 .ab2-shell {
   position: relative;
   border-radius: 14px;
@@ -64,6 +63,25 @@
     radial-gradient(ellipse 70% 60% at 50% 45%, rgba(60, 30, 24, 0.45), transparent 65%),
     #070605;
   box-shadow: inset 0 0 40px rgba(240, 160, 144, 0.05);
+}
+
+.ab2-loading {
+  position: absolute;
+  top: 58px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 50px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(240, 160, 144, 0.3);
+  color: var(--color-accent);
+  pointer-events: none;
+  white-space: nowrap;
 }
 
 .ab2-toolbar {
@@ -140,9 +158,9 @@
   background: #1a1412;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
   pointer-events: auto;
-  cursor: pointer;
+  cursor: grab;
   -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
+  touch-action: none;
 }
 
 .ab2-node img {
@@ -161,6 +179,7 @@
     0 10px 28px rgba(0, 0, 0, 0.5),
     0 0 24px rgba(240, 160, 144, 0.25);
   z-index: 2;
+  cursor: default;
 }
 
 .ab2-node-rec {
@@ -227,11 +246,6 @@
   color: var(--color-text-muted);
 }
 
-.ab2-hud-cta {
-  color: var(--color-accent) !important;
-  font-size: 0.7rem !important;
-}
-
 .ab2-hint {
   font-size: 0.8rem !important;
 }
@@ -268,15 +282,8 @@
   color: var(--color-accent);
 }
 
-/* Flat list fallback */
-.ab-flat {
-  margin-top: 20px;
-}
-
-.ab-block {
-  margin-top: 22px;
-}
-
+.ab-flat { margin-top: 20px; }
+.ab-block { margin-top: 22px; }
 .ab-block-title {
   font-size: 0.95rem;
   font-weight: 650;
@@ -304,7 +311,6 @@
   height: 2px;
   background: linear-gradient(90deg, rgba(240, 160, 144, 0.15), rgba(240, 160, 144, 0.55));
   margin: 0 4px 48px;
-  position: relative;
 }
 
 .ab-card {
@@ -315,14 +321,10 @@
 }
 
 @media (min-width: 640px) {
-  .ab-card {
-    width: 132px;
-  }
+  .ab-card { width: 132px; }
 }
 
-.ab-card.ab-current {
-  width: 124px;
-}
+.ab-card.ab-current { width: 124px; }
 
 .ab-poster {
   position: relative;
@@ -333,9 +335,7 @@
   background: var(--color-tertiary);
 }
 
-.ab-current .ab-poster {
-  border-color: var(--color-accent);
-}
+.ab-current .ab-poster { border-color: var(--color-accent); }
 
 .ab-poster img {
   width: 100%;
@@ -403,6 +403,4 @@
   gap: 14px 10px;
 }
 
-.ab-grid .ab-card {
-  width: 100%;
-}
+.ab-grid .ab-card { width: 100%; }
