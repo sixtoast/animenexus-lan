@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AnimeGrid } from "@/components/AnimeGrid";
+import { PosterSkeleton } from "@/components/PosterSkeleton";
 import { loadBrowsePage, parseBrowseParams } from "@/lib/browse-query";
 import {
   ANIME_GENRES,
@@ -238,7 +239,7 @@ export function BrowseClient({
       <div className="section-head">
         <h2>
           <span className="accent">📡</span> {title}
-          {pending ? <span className="meta" style={{ marginLeft: 10 }}>Updating…</span> : null}
+          {pending ? <span className="meta" style={{ marginLeft: 10 }}>Tuning…</span> : null}
         </h2>
         <span className="meta">
           {error ? "—" : `${items.length} shown${total ? ` · ${total.toLocaleString()} total` : ""}`}
@@ -250,6 +251,8 @@ export function BrowseClient({
           <p>Could not load results.</p>
           <p style={{ marginTop: 8, fontSize: "0.85rem", opacity: 0.85 }}>{error}</p>
         </div>
+      ) : pending ? (
+        <PosterSkeleton count={12} label="Tuning the frequency…" />
       ) : (
         <>
           <AnimeGrid items={items} />
