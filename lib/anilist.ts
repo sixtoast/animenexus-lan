@@ -28,7 +28,6 @@ function stripHtml(html?: string | null): string {
     .trim();
 }
 
-/** Map AniList Media node → our Anime shape */
 export function mapAniListMedia(item: Record<string, unknown>): Anime {
   const titleObj = (item.title as Record<string, string | null>) || {};
   const cover = (item.coverImage as Record<string, string | null>) || {};
@@ -71,15 +70,18 @@ async function anilistFetch<T>(
   query: string,
   variables: Record<string, unknown> = {},
 ): Promise<T> {
-  const res = await fetch(ANILIST_ENDPOINT, {
+  const init: RequestInit & { next?: { revalidate: number } } = {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
     },
     body: JSON.stringify({ query, variables }),
-    next: { revalidate: 300 },
-  });
+  };
+  if (typeof window === "undefined") {
+    init.next = { revalidate: 300 };
+  }
+  const res = await fetch(ANILIST_ENDPOINT, init);
 
   if (!res.ok) {
     throw new Error(`AniList HTTP ${res.status}`);
