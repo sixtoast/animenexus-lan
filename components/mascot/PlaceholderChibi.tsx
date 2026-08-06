@@ -4,8 +4,15 @@ import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { useMascotStore } from "@/lib/mascot/store";
-import { distXZ } from "@/lib/mascot/navigation";
+import { HABITAT_BOUNDS } from "@/lib/mascot/types";
 import { motionFromEmotions } from "@/lib/mascot/emotions";
+import {
+  applyJump,
+  createBody,
+  stepPhysics,
+  steerToward,
+  type PhysicsBody,
+} from "@/lib/mascot/physics";
 
 export function PlaceholderChibi() {
   const root = useRef<THREE.Group>(null);
@@ -21,6 +28,8 @@ export function PlaceholderChibi() {
   const pointer = useRef({ x: 0, y: 0 });
   const facing = useRef(0);
   const decayAcc = useRef(0);
+  const body = useRef<PhysicsBody>(createBody(0, 0));
+  const wasAirborne = useRef(false);
 
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime;
@@ -29,7 +38,6 @@ export function PlaceholderChibi() {
     const {
       anim,
       target,
-      position,
       setPosition,
       setTarget,
       setAnim,
@@ -37,6 +45,7 @@ export function PlaceholderChibi() {
       decayEmotions,
       dispatch,
       lookBias,
+      consumeJump,
     } = store;
 
     const motion = motionFromEmotions(emotions);
@@ -52,37 +61,74 @@ export function PlaceholderChibi() {
     const p = pose.current;
     if (!g || !p) return;
 
-    let moving = false;
+    // Jump impulse from store
+    if (consumeJump()) {
+      body.current = applyJump(body.current, 2.8 + emotions.energy * 0.8);
+      setAnim("jump");
+    }
+
+    // Steer toward nav target on ground
     if (
       target &&
+      body.current.onGround &&
       anim !== "sleep" &&
       anim !== "happy" &&
       anim !== "wave" &&
       anim !== "point"
     ) {
-      const d = distXZ(position.x, position.z, target.x, target.z);
-      if (d < 0.04) {
-        setPosition(target);
+      const speed = Math.max(0.25, motion.walkSpeed);
+      body.current = steerToward(
+        body.current,
+        target.x,
+        target.z,
+        speed,
+        dt,
+      );
+      const d = Math.hypot(
+        target.x - body.current.x,
+        target.z - body.current.z,
+      );
+      if (d < 0.05) {
         setTarget(null);
-        if (anim === "walk") setAnim("idle");
-      } else {
-        moving = true;
-        if (anim !== "walk" && anim !== "surprised") setAnim("walk");
-        const speed = Math.max(0.2, motion.walkSpeed);
-        const nx = position.x + ((target.x - position.x) / d) * speed * dt;
-        const nz = position.z + ((target.z - position.z) / d) * speed * dt;
-        setPosition({ x: nx, z: nz });
-        facing.current = Math.atan2(
-          target.x - position.x,
-          target.z - position.z,
-        );
+        body.current.vx = 0;
+        body.current.vz = 0;
+        if (anim === "walk" || anim === "jump") setAnim("idle");
+      } else if (anim !== "jump" && anim !== "land") {
+        setAnim("walk");
       }
+      facing.current = Math.atan2(
+        target.x - body.current.x,
+        target.z - body.current.z,
+      );
     }
 
+    body.current = stepPhysics(body.current, dt);
+
+    // Habitat walls
+    body.current.x = Math.max(
+      HABITAT_BOUNDS.minX,
+      Math.min(HABITAT_BOUNDS.maxX, body.current.x),
+    );
+    body.current.z = Math.max(
+      HABITAT_BOUNDS.minZ,
+      Math.min(HABITAT_BOUNDS.maxZ, body.current.z),
+    );
+
+    // Land detection
+    if (wasAirborne.current && body.current.onGround) {
+      setAnim("land");
+      window.setTimeout(() => {
+        if (useMascotStore.getState().anim === "land") setAnim("idle");
+      }, 280);
+    }
+    wasAirborne.current = !body.current.onGround;
+
+    setPosition({ x: body.current.x, z: body.current.z });
+
     const jit = motion.jitter;
-    g.position.x = position.x + (jit ? Math.sin(t * 20) * jit : 0);
-    g.position.z = position.z;
-    g.position.y = -0.15;
+    g.position.x = body.current.x + (jit ? Math.sin(t * 20) * jit : 0);
+    g.position.z = body.current.z;
+    g.position.y = -0.15 + body.current.y * 0.22;
     g.rotation.y = THREE.MathUtils.lerp(
       g.rotation.y,
       facing.current,
@@ -105,6 +151,17 @@ export function PlaceholderChibi() {
         rotZ = Math.sin(gait) * 0.035;
         break;
       }
+      case "jump":
+        scale *= 1.04;
+        bob = 0.06;
+        armSwing = -0.4;
+        headPitch = -0.15;
+        break;
+      case "land":
+        scale *= 0.94;
+        bob = -0.04;
+        armSwing = 0.3;
+        break;
       case "happy":
         scale *= 1 + Math.sin(t * 14) * 0.045;
         bob = Math.abs(Math.sin(t * 10)) * 0.11 * motion.bobAmp;
@@ -142,11 +199,6 @@ export function PlaceholderChibi() {
         break;
       default:
         bob = bob + breathe * 0.5;
-        if (moving) {
-          const gait = t * 10;
-          bob = Math.abs(Math.sin(gait)) * 0.05 * motion.bobAmp;
-          armSwing = Math.sin(gait) * 0.35 * motion.armAmp;
-        }
     }
 
     p.position.y = bob;

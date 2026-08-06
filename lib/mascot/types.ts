@@ -3,6 +3,8 @@
 export type MascotAnim =
   | "idle"
   | "walk"
+  | "jump"
+  | "land"
   | "happy"
   | "wave"
   | "think"
@@ -31,7 +33,8 @@ export type MascotEvent =
   | { type: "go-to"; x: number; z: number }
   | { type: "tick" }
   | { type: "notice-ui"; landmarkId?: string }
-  | { type: "ui-hover"; clientX: number; clientY: number };
+  | { type: "ui-hover"; clientX: number; clientY: number }
+  | { type: "jump" };
 
 export const HABITAT_BOUNDS = {
   minX: -0.55,

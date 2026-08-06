@@ -31,6 +31,8 @@ type MascotState = {
   position: NavTarget;
   target: NavTarget | null;
   lookBias: { x: number; y: number };
+  /** Request a jump impulse (consumed by renderer) */
+  jumpQueued: boolean;
   setEnabled: (v: boolean) => void;
   setAnim: (a: MascotAnim) => void;
   requestAnim: (req: AnimRequest) => boolean;
@@ -43,6 +45,7 @@ type MascotState = {
   requestWander: () => void;
   applyGoal: (goal: MascotGoal) => void;
   runBehaviourTick: () => void;
+  consumeJump: () => boolean;
 };
 
 const clamp = (n: number) => Math.max(0, Math.min(1, n));
@@ -58,6 +61,7 @@ export const useMascotStore = create<MascotState>((set, get) => ({
   position: { x: 0, z: 0 },
   target: null,
   lookBias: { x: 0, y: 0 },
+  jumpQueued: false,
   setEnabled: (v) => set({ enabled: v }),
   setAnim: (a) => set({ anim: a }),
   requestAnim: (req) => {
@@ -92,14 +96,25 @@ export const useMascotStore = create<MascotState>((set, get) => ({
     set((s) => ({ emotions: decayFn(s.emotions, dtSec) }));
   },
   motionProfile: () => motionFromEmotions(get().emotions),
+  consumeJump: () => {
+    if (!get().jumpQueued) return false;
+    set({ jumpQueued: false });
+    return true;
+  },
   applyGoal: (goal) => {
-    const { requestAnim, anim } = get();
+    const { requestAnim, anim, emotions } = get();
     set({ goal });
     switch (goal) {
       case "wander": {
         const t = randomWanderTarget();
         set({ target: t });
-        requestAnim({ anim: "walk" });
+        // Occasional hop when energetic
+        if (emotions.energy > 0.7 && Math.random() < 0.25) {
+          set({ jumpQueued: true });
+          requestAnim({ anim: "jump", holdMs: 500, force: true });
+        } else {
+          requestAnim({ anim: "walk" });
+        }
         break;
       }
       case "nap":
@@ -120,8 +135,11 @@ export const useMascotStore = create<MascotState>((set, get) => ({
         }, 900);
         break;
       case "celebrate":
-        set({ target: null });
-        requestAnim({ anim: "happy", holdMs: 1000, force: true });
+        set({ target: null, jumpQueued: true });
+        requestAnim({ anim: "jump", holdMs: 400, force: true });
+        window.setTimeout(() => {
+          requestAnim({ anim: "happy", holdMs: 900, force: true });
+        }, 380);
         break;
       case "idle":
       default:
@@ -166,7 +184,8 @@ export const useMascotStore = create<MascotState>((set, get) => ({
           anim === "happy" ||
           anim === "wave" ||
           anim === "surprised" ||
-          anim === "point"
+          anim === "point" ||
+          anim === "jump"
         )
           break;
         if (anim === "sleep") {
@@ -179,6 +198,11 @@ export const useMascotStore = create<MascotState>((set, get) => ({
         get().runBehaviourTick();
         break;
       }
+      case "jump":
+        set({ jumpQueued: true });
+        requestAnim({ anim: "jump", holdMs: 450, force: true });
+        bumpEmotion("energy", 0.05);
+        break;
       case "notice-ui":
         bumpEmotion("curiosity", 0.06);
         bumpEmotion("attention", 0.04);
@@ -215,14 +239,17 @@ export const useMascotStore = create<MascotState>((set, get) => ({
         bumpEmotion("energy", 0.1);
         bumpEmotion("confidence", 0.08);
         bumpEmotion("stress", -0.12);
-        set({ target: null });
+        set({ target: null, jumpQueued: true });
         if (get().anim === "sleep") {
           requestAnim({ anim: "surprised", holdMs: 600, force: true });
           window.setTimeout(() => {
             requestAnim({ anim: "happy", holdMs: 1100, force: true });
           }, 500);
         } else {
-          requestAnim({ anim: "happy", holdMs: 1200, force: true });
+          requestAnim({ anim: "jump", holdMs: 400, force: true });
+          window.setTimeout(() => {
+            requestAnim({ anim: "happy", holdMs: 1000, force: true });
+          }, 380);
         }
         set({ nextThinkAt: Date.now() + 3000 });
         break;
@@ -234,11 +261,14 @@ export const useMascotStore = create<MascotState>((set, get) => ({
         bumpEmotion("confidence", 0.12);
         bumpEmotion("sleepiness", -0.15);
         bumpEmotion("stress", -0.1);
-        set({ target: null });
-        requestAnim({ anim: "happy", holdMs: 1000, force: true });
+        set({ target: null, jumpQueued: true });
+        requestAnim({ anim: "jump", holdMs: 400, force: true });
         window.setTimeout(() => {
-          requestAnim({ anim: "wave", holdMs: 900, force: true });
-        }, 950);
+          requestAnim({ anim: "happy", holdMs: 900, force: true });
+          window.setTimeout(() => {
+            requestAnim({ anim: "wave", holdMs: 800, force: true });
+          }, 850);
+        }, 380);
         set({ nextThinkAt: Date.now() + 4000 });
         break;
       case "go-to": {

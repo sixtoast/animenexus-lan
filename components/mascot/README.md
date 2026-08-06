@@ -4,17 +4,19 @@
 
 | # | Goal | Status |
 |---|------|--------|
-| 1–4 | Render, walk, anim machine, behaviour | Done |
-| 5 | Emotion system (drives + motion profile) | **Done** |
-| 6 | UI awareness | Next |
-| 7+ | Physics / polish | Planned |
+| 1–6 | Render → UI awareness | Done |
+| 7 | Physics (jump / land / bounce) | **Done** |
+| 8 | Context-aware reactions | Next |
+| 9–10 | Random skits / polish | Planned |
 
-## M5 — emotions
+## M7 — physics
 
-`lib/mascot/emotions.ts`
+`lib/mascot/physics.ts` — kinematic body (no Rapier dependency yet).
 
-Drives (0–1): curiosity, energy, happiness, boredom, sleepiness, attention, **confidence**, **stress**.
+- Gravity, floor collision, bounce, friction
+- `steerToward` for walk
+- `applyJump` / `jumpQueued` from store
+- Anims: `jump`, `land`
+- Celebrate / energetic wander may hop
 
-`motionFromEmotions()` → walk speed, bob/arm amplitude, openness, tip glow, head droop, stress jitter.
-
-Renderer samples profile every frame so tired = slower/smaller gait; happy = brighter lantern tip + stronger blush.
+Rapier can replace `stepPhysics` later without changing goals/emotions.
