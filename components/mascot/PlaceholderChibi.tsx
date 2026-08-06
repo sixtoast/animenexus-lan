@@ -8,9 +8,11 @@ import { HABITAT_BOUNDS } from "@/lib/mascot/types";
 import { motionFromEmotions } from "@/lib/mascot/emotions";
 import {
   applyJump,
+  applyClimbJump,
   createBody,
   stepPhysics,
   steerToward,
+  teleportBody,
   type PhysicsBody,
 } from "@/lib/mascot/physics";
 
@@ -30,6 +32,10 @@ export function PlaceholderChibi() {
   const decayAcc = useRef(0);
   const body = useRef<PhysicsBody>(createBody(0, 0));
   const wasAirborne = useRef(false);
+  const dragging = useRef(false);
+  const lastClick = useRef(0);
+  const lastStorePos = useRef({ x: 0, z: 0 });
+  const dragStart = useRef({ x: 0, z: 0, moved: false });
 
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime;
@@ -61,13 +67,28 @@ export function PlaceholderChibi() {
     const p = pose.current;
     if (!g || !p) return;
 
-    // Jump impulse from store
+    if (
+      Math.abs(store.position.x - lastStorePos.current.x) > 0.15 ||
+      Math.abs(store.position.z - lastStorePos.current.z) > 0.15
+    ) {
+      if (!dragging.current) {
+        body.current = teleportBody(
+          body.current,
+          store.position.x,
+          store.position.z,
+        );
+      }
+    }
+    lastStorePos.current = { x: store.position.x, z: store.position.z };
+
     if (consumeJump()) {
-      body.current = applyJump(body.current, 2.8 + emotions.energy * 0.8);
+      const climbing = !!(target && Math.abs(target.x) > 0.28);
+      body.current = climbing
+        ? applyClimbJump(body.current, 0.35)
+        : applyJump(body.current, 2.8 + emotions.energy * 0.8);
       setAnim("jump");
     }
 
-    // Steer toward nav target on ground
     if (
       target &&
       body.current.onGround &&
@@ -104,7 +125,6 @@ export function PlaceholderChibi() {
 
     body.current = stepPhysics(body.current, dt);
 
-    // Habitat walls
     body.current.x = Math.max(
       HABITAT_BOUNDS.minX,
       Math.min(HABITAT_BOUNDS.maxX, body.current.x),
@@ -114,7 +134,6 @@ export function PlaceholderChibi() {
       Math.min(HABITAT_BOUNDS.maxZ, body.current.z),
     );
 
-    // Land detection
     if (wasAirborne.current && body.current.onGround) {
       setAnim("land");
       window.setTimeout(() => {
@@ -257,6 +276,60 @@ export function PlaceholderChibi() {
       onPointerMove={(e) => {
         pointer.current.x = THREE.MathUtils.clamp(e.point.x * 1.2, -1, 1);
         pointer.current.y = THREE.MathUtils.clamp(e.point.y * 1.2, -1, 1);
+        if (dragging.current) {
+          const x = THREE.MathUtils.clamp(
+            e.point.x,
+            HABITAT_BOUNDS.minX,
+            HABITAT_BOUNDS.maxX,
+          );
+          const z = THREE.MathUtils.clamp(
+            e.point.z,
+            HABITAT_BOUNDS.minZ,
+            HABITAT_BOUNDS.maxZ,
+          );
+          if (
+            Math.hypot(x - dragStart.current.x, z - dragStart.current.z) > 0.05
+          ) {
+            dragStart.current.moved = true;
+          }
+          body.current = teleportBody(body.current, x, z);
+          useMascotStore.getState().setPosition({ x, z });
+        }
+      }}
+      onPointerDown={(e) => {
+        e.stopPropagation();
+        dragging.current = true;
+        dragStart.current = {
+          x: body.current.x,
+          z: body.current.z,
+          moved: false,
+        };
+      }}
+      onPointerUp={(e) => {
+        e.stopPropagation();
+        if (!dragging.current) return;
+        dragging.current = false;
+        const moved =
+          dragStart.current.moved ||
+          Math.hypot(
+            body.current.x - dragStart.current.x,
+            body.current.z - dragStart.current.z,
+          ) > 0.08;
+        const now = Date.now();
+        if (moved) {
+          useMascotStore.getState().dispatch({
+            type: "drag",
+            x: body.current.x,
+            z: body.current.z,
+          });
+          lastClick.current = 0;
+        } else if (now - lastClick.current < 350) {
+          useMascotStore.getState().dispatch({ type: "pet" });
+          lastClick.current = 0;
+        } else {
+          useMascotStore.getState().dispatch({ type: "click" });
+          lastClick.current = now;
+        }
       }}
     >
       <group ref={pose}>
