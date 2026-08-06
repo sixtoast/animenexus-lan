@@ -5,7 +5,6 @@ import { SessionProvider } from "@/components/SessionProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ToastProvider } from "@/components/ToastProvider";
 import { ScrollProgress } from "@/components/ScrollProgress";
-import { FabMenu } from "@/components/FabMenu";
 import { AIPanel } from "@/components/AIPanel";
 import { CommandPalette } from "@/components/CommandPalette";
 import { SakuraCanvas } from "@/components/SakuraCanvas";
@@ -28,6 +27,7 @@ import "./seal-env.css";
 import "./signal-motion.css";
 import "./card-polish.css";
 import "./nav-polish.css";
+import "./layout-shell.css";
 import "./sprint-a.css";
 import "./ai-panel.css";
 import "./cmdk.css";
@@ -95,8 +95,9 @@ export default function RootLayout({
                 <PwaRegister />
                 <RouteTune />
                 <Navbar />
-                <RoomEnter>{children}</RoomEnter>
-                <FabMenu />
+                <div className="app-shell">
+                  <RoomEnter>{children}</RoomEnter>
+                </div>
                 <AIPanel />
                 <CommandPalette />
                 <SessionTools />
@@ -105,15 +106,21 @@ export default function RootLayout({
                 <ShortcutsHelp />
                 <LoadingTheater />
                 <footer className="site-footer">
-                  <div className="container">
-                    AnimeNexus · Lantern · Data via{" "}
-                    <a
-                      href="https://anilist.co"
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      AniList
-                    </a>
+                  <div className="container site-footer-inner">
+                    <span>AnimeNexus · Lantern</span>
+                    <span className="site-footer-sep" aria-hidden>
+                      ·
+                    </span>
+                    <span>
+                      Data via{" "}
+                      <a
+                        href="https://anilist.co"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        AniList
+                      </a>
+                    </span>
                   </div>
                 </footer>
               </SessionProvider>
