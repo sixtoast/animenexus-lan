@@ -1,8 +1,12 @@
 import "./detail.css";
+import "./sprint-b-detail.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchAnimeDetail } from "@/lib/anilist-detail";
+import { fetchThemesFromJikan, youtubeSearchUrl } from "@/lib/jikan-themes";
 import { AddToWatchlist } from "@/components/AddToWatchlist";
+import { BingeCalculator } from "@/components/BingeCalculator";
+import { AnimeNotes } from "@/components/AnimeNotes";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +42,13 @@ function statusLabel(s: string) {
   return map[s] || s;
 }
 
+function relLabel(t: string) {
+  return t
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/^\w/, (c) => c.toUpperCase());
+}
+
 export default async function AnimeDetailPage({ params }: Props) {
   const { id } = await params;
   const num = parseInt(id, 10);
@@ -60,9 +71,21 @@ export default async function AnimeDetailPage({ params }: Props) {
         : null;
 
   const youtube =
-    anime.trailer?.site === "youtube" && anime.trailer.id
+    anime.trailer?.site?.toLowerCase() === "youtube" && anime.trailer.id
       ? `https://www.youtube.com/embed/${anime.trailer.id}`
       : null;
+
+  const epNum =
+    typeof anime.episodes === "number"
+      ? anime.episodes
+      : parseInt(String(anime.episodes), 10) || 0;
+
+  let themes: { openings: string[]; endings: string[] } | null = null;
+  if (anime.idMal) {
+    themes = await fetchThemesFromJikan(anime.idMal);
+  }
+
+  const relations = anime.relations || [];
 
   return (
     <main>
@@ -85,31 +108,30 @@ export default async function AnimeDetailPage({ params }: Props) {
           <img className="detail-cover" src={anime.image} alt="" />
 
           <div className="detail-info">
-            <p className="detail-kicker">Sprint 4 · detail</p>
-            <h1 className="detail-title">{anime.title}</h1>
-            {anime.titleRomaji && anime.titleRomaji !== anime.title ? (
-              <p className="detail-alt">{anime.titleRomaji}</p>
-            ) : null}
-            {anime.titleNative ? (
-              <p className="detail-alt detail-native">{anime.titleNative}</p>
+            <p className="detail-kicker">Parity · detail depth</p>
+            <h1>{anime.title}</h1>
+            {(anime.titleRomaji || anime.titleNative) &&
+            (anime.titleRomaji !== anime.title || anime.titleNative) ? (
+              <p className="detail-alt-titles">
+                {[anime.titleRomaji, anime.titleNative]
+                  .filter(Boolean)
+                  .filter((t, i, a) => a.indexOf(t) === i && t !== anime.title)
+                  .join(" · ")}
+              </p>
             ) : null}
 
-            <div className="detail-meta-row">
-              <span className="detail-pill score">★ {score}</span>
-              <span className="detail-pill">{anime.format}</span>
-              <span className="detail-pill">{statusLabel(anime.status)}</span>
-              {season ? <span className="detail-pill">{season}</span> : null}
-              {anime.episodes !== "?" && anime.episodes != null ? (
-                <span className="detail-pill">{anime.episodes} ep</span>
-              ) : null}
-              {anime.duration ? (
-                <span className="detail-pill">{anime.duration} min</span>
-              ) : null}
+            <div className="detail-meta">
+              <span className="detail-score">★ {score}</span>
+              <span>{anime.format}</span>
+              <span>{statusLabel(String(anime.status))}</span>
+              {season ? <span>{season}</span> : null}
+              {epNum > 0 ? <span>{epNum} ep</span> : null}
+              {anime.duration > 0 ? <span>{anime.duration} min</span> : null}
             </div>
 
-            {anime.tags.length ? (
+            {anime.tags?.length ? (
               <div className="detail-tags">
-                {anime.tags.map((g) => (
+                {anime.tags.slice(0, 12).map((g) => (
                   <Link
                     key={g}
                     href={`/browse?genre=${encodeURIComponent(g)}`}
@@ -168,6 +190,62 @@ export default async function AnimeDetailPage({ params }: Props) {
           </section>
         ) : null}
 
+        <div className="detail-split">
+          <BingeCalculator
+            episodes={epNum}
+            duration={anime.duration || 24}
+            title={anime.title}
+          />
+          <AnimeNotes animeId={anime.id} />
+        </div>
+
+        {themes &&
+        (themes.openings.length > 0 || themes.endings.length > 0) ? (
+          <section className="detail-section">
+            <h2>Themes (OP / ED)</h2>
+            <div className="theme-lists">
+              {themes.openings.length > 0 ? (
+                <div>
+                  <h3 className="theme-sub">Openings</h3>
+                  <ul className="theme-ul">
+                    {themes.openings.slice(0, 8).map((t) => (
+                      <li key={t}>
+                        <span>{t}</span>{" "}
+                        <a
+                          href={youtubeSearchUrl(t)}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          YouTube
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              {themes.endings.length > 0 ? (
+                <div>
+                  <h3 className="theme-sub">Endings</h3>
+                  <ul className="theme-ul">
+                    {themes.endings.slice(0, 8).map((t) => (
+                      <li key={`ed-${t}`}>
+                        <span>{t}</span>{" "}
+                        <a
+                          href={youtubeSearchUrl(t)}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          YouTube
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
+          </section>
+        ) : null}
+
         {anime.characters && anime.characters.length > 0 ? (
           <section className="detail-section">
             <h2>Characters</h2>
@@ -185,6 +263,37 @@ export default async function AnimeDetailPage({ params }: Props) {
                   <div className="char-name">{c.name}</div>
                   <div className="char-role">{c.role.replace(/_/g, " ")}</div>
                 </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {relations.length > 0 ? (
+          <section className="detail-section">
+            <h2>Relations</h2>
+            <div className="rel-grid">
+              {relations.map((r) => (
+                <Link
+                  key={`${r.id}-${r.relationType}`}
+                  href={`/anime/${r.id}`}
+                  className="rel-card"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={
+                      r.image ||
+                      "https://placehold.co/120x180/1a1a1a/555?text=?"
+                    }
+                    alt=""
+                  />
+                  <div className="rel-body">
+                    <div className="rel-type">{relLabel(r.relationType)}</div>
+                    <div className="rel-title">{r.title}</div>
+                    <div className="rel-meta">
+                      {[r.format, r.status].filter(Boolean).join(" · ")}
+                    </div>
+                  </div>
+                </Link>
               ))}
             </div>
           </section>
