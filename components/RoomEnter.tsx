@@ -13,7 +13,7 @@ export function RoomEnter({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   return (
-    <div key={tick} className="room-enter">
+    <div key={tick} className="room-enter nx-room-tune">
       {children}
     </div>
   );

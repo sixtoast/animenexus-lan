@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useTheme } from "@/components/ThemeProvider";
 import { Button } from "@/components/ui/Button";
+import { OnAir } from "@/components/ui/OnAir";
 
 const LINKS = [
   { href: "/", label: "Home" },
@@ -74,10 +75,7 @@ export function Navbar() {
         </nav>
 
         <div className="nav-right">
-          <span className="nav-signal" title="Lantern broadcast">
-            <span className="nav-signal-dot" aria-hidden />
-            <span className="nav-signal-label">On air</span>
-          </span>
+          <OnAir className="nav-on-air" />
           <Button
             variant="icon"
             size="sm"

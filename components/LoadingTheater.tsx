@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SignalBars } from "@/components/ui/SignalBars";
 
 export function LoadingTheater() {
   const [on, setOn] = useState(false);
@@ -24,8 +25,8 @@ export function LoadingTheater() {
   if (!on) return null;
 
   return (
-    <div className="loading-theater" role="status" aria-live="polite">
-      <div className="spinner" />
+    <div className="loading-theater nx-loading-signal" role="status" aria-live="polite">
+      <SignalBars level={4} animated label="Receiving signal" />
       <p>{label}</p>
     </div>
   );
