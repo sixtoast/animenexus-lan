@@ -1,24 +1,15 @@
 import Link from "next/link";
 import { AnimeGrid } from "@/components/AnimeGrid";
+import { HeroGreeting } from "@/components/HeroGreeting";
+import { QuoteBanner } from "@/components/QuoteBanner";
+import { ViewModeToggle } from "@/components/ViewModeToggle";
 import { MoodChips } from "@/components/MoodChips";
 import { fetchDiscover } from "@/lib/anilist";
 import "./mood-home.css";
 
 export const dynamic = "force-dynamic";
 
-function greeting() {
-  const hour = new Date().getHours();
-  if (hour >= 5 && hour < 12)
-    return { icon: "🌅", text: "Good morning — ready for a new arc?" };
-  if (hour >= 12 && hour < 17)
-    return { icon: "☀️", text: "Good afternoon — what’s on the queue?" };
-  if (hour >= 17 && hour < 21)
-    return { icon: "🌆", text: "Good evening — perfect time for a binge." };
-  return { icon: "🌙", text: "Still tuned — the night signal is clear." };
-}
-
 export default async function HomePage() {
-  const g = greeting();
   let error: string | null = null;
   let items: Awaited<ReturnType<typeof fetchDiscover>>["data"] = [];
   let total = 0;
@@ -35,10 +26,8 @@ export default async function HomePage() {
     <main>
       <section className="hero">
         <div className="container">
-          <div className="hero-badge">
-            <span>{g.icon}</span>
-            <span>{g.text}</span>
-          </div>
+          <HeroGreeting />
+          <div className="hero-badge">Lantern · late-night console</div>
           <h1>
             AnimeNexus <span>Lantern</span>
           </h1>
@@ -71,7 +60,21 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="container" id="trending" style={{ paddingBottom: 48 }}>
+      <section
+        className="container"
+        id="trending"
+        style={{ paddingBottom: 48 }}
+      >
+        <QuoteBanner />
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginBottom: 12,
+          }}
+        >
+          <ViewModeToggle />
+        </div>
         <div className="section-head">
           <h2>
             <span className="accent">🔥</span> Trending now
