@@ -1,55 +1,147 @@
 "use client";
 
-import { useMemo } from "react";
-import { useWatchlist } from "@/components/WatchlistProvider";
-import { genreHeatmap } from "@/lib/taste";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import type { Anime } from "@/lib/types";
+
+const PREFS_KEY = "anime_nexus_radar_prefs";
+const ALERTS_KEY = "anime_nexus_radar_alerts";
+
+const GENRES = [
+  "",
+  "Action",
+  "Adventure",
+  "Comedy",
+  "Drama",
+  "Fantasy",
+  "Horror",
+  "Romance",
+  "Sci-Fi",
+  "Slice of Life",
+  "Sports",
+  "Supernatural",
+  "Thriller",
+];
+
+type Prefs = { genre: string; studio: string };
 
 export function RadarClient() {
-  const { entries, ready } = useWatchlist();
+  const [prefs, setPrefs] = useState<Prefs>({ genre: "", studio: "" });
+  const [alerts, setAlerts] = useState(false);
+  const [items, setItems] = useState<Anime[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
-  const heat = useMemo(() => genreHeatmap(entries), [entries]);
-  const max = Math.max(...heat.map((h) => h.count), 1);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(PREFS_KEY);
+      if (raw) setPrefs({ genre: "", studio: "", ...JSON.parse(raw) });
+      setAlerts(localStorage.getItem(ALERTS_KEY) === "true");
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
-  if (!ready) {
-    return (
-      <div className="state-box">
-        <div className="spinner" />
-      </div>
-    );
+  async function scan() {
+    setLoading(true);
+    setErr(null);
+    try {
+      localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+      const q = prefs.genre
+        ? `?genre=${encodeURIComponent(prefs.genre)}`
+        : "";
+      const res = await fetch(`/api/upcoming${q}`);
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.error || "Scan failed");
+      let list = (j.data || []) as Anime[];
+      if (prefs.studio.trim()) {
+        const s = prefs.studio.trim().toLowerCase();
+        list = list.filter((a) =>
+          (a.studios || []).some((x) => x.toLowerCase().includes(s)),
+        );
+      }
+      setItems(list);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Scan failed");
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  if (heat.length === 0) {
-    return (
-      <div className="state-box">
-        <p>
-          Genre radar needs titles with genres — add from Browse/Detail so tags
-          attach.
-        </p>
-      </div>
-    );
+  function toggleAlerts() {
+    const next = !alerts;
+    setAlerts(next);
+    localStorage.setItem(ALERTS_KEY, String(next));
   }
-
-  const top = heat.slice(0, 12);
 
   return (
     <div>
-      <p className="tools-hint" style={{ marginBottom: 16 }}>
-        Preference intensity from list genres.
-      </p>
-      <div className="radar-bars">
-        {top.map((h) => (
-          <div key={h.genre} className="radar-row">
-            <div className="radar-label">{h.genre}</div>
-            <div className="taste-bar-track">
-              <div
-                className="taste-bar-fill"
-                style={{ width: `${(h.count / max) * 100}%` }}
-              />
-            </div>
-            <div className="radar-count">{h.count}</div>
-          </div>
-        ))}
+      <div className="radar-prefs">
+        <label className="filter-label">Genre filter</label>
+        <select
+          className="filter-input"
+          value={prefs.genre}
+          onChange={(e) => setPrefs((p) => ({ ...p, genre: e.target.value }))}
+        >
+          {GENRES.map((g) => (
+            <option key={g || "any"} value={g}>
+              {g || "Any genre"}
+            </option>
+          ))}
+        </select>
+        <label className="filter-label">Studio contains (optional)</label>
+        <input
+          className="filter-input"
+          value={prefs.studio}
+          onChange={(e) => setPrefs((p) => ({ ...p, studio: e.target.value }))}
+          placeholder="e.g. Kyoto"
+        />
+        <div className="daily-actions" style={{ marginTop: 12 }}>
+          <button
+            type="button"
+            className="btn btn-accent btn-sm"
+            onClick={scan}
+            disabled={loading}
+          >
+            {loading ? "Scanning…" : "Scan upcoming"}
+          </button>
+          <button
+            type="button"
+            className="btn btn-outline btn-sm"
+            onClick={toggleAlerts}
+          >
+            Alerts: {alerts ? "on" : "off"}
+          </button>
+        </div>
+        <p className="tools-hint" style={{ marginTop: 8 }}>
+          Prefs saved as <code>anime_nexus_radar_prefs</code>. Alerts flag is
+          local-only (no push).
+        </p>
       </div>
+
+      {err ? <p className="tools-hint">{err}</p> : null}
+
+      {items.length > 0 ? (
+        <div className="radar-upcoming-grid" style={{ marginTop: 20 }}>
+          {items.map((a) => (
+            <Link key={a.id} href={`/anime/${a.id}`} className="radar-item">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={a.image} alt="" />
+              <div className="radar-title">{a.title}</div>
+              <div className="radar-air">
+                {[a.format, a.season, a.seasonYear || a.year]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </div>
+            </Link>
+          ))}
+        </div>
+      ) : !loading ? (
+        <p className="tools-hint" style={{ marginTop: 16 }}>
+          Scan to load not-yet-released titles from AniList.
+        </p>
+      ) : null}
     </div>
   );
 }
