@@ -2,13 +2,13 @@
 
 **Repo:** https://github.com/sixtoast/animenexus-lantern
 
-## Current: Sprint 8
+## Current: Sprint 9
 
-Seasonal chart · airing · daily pick.
+Playful tools: compare · fusion · challenge.
 
 ```bash
 npm install && npm run dev
 ```
 
-- http://localhost:3000/seasonal  
-- http://localhost:3000/daily  
+- http://localhost:3000/tools  
+- http://localhost:3000/tools/compare  

@@ -2,19 +2,19 @@
 
 | Sprint | Theme | Status |
 |--------|--------|--------|
-| 1–7 | Foundation → Taste | ✅ |
-| 8 | Discover extras | ✅ |
-| 9 | Playful tools | next |
-| 10 | AI & sauce | |
+| 1–8 | Foundation → Discover | ✅ |
+| 9 | Playful tools | ✅ |
+| 10 | AI & sauce | next |
 | 11 | Polish | |
 
-## Sprint 8 — Discover ✅
+## Sprint 9 — Tools ✅
 
-- [x] `/seasonal` chart (prev / current / next season tabs)
-- [x] Airing-now strip
-- [x] `/daily` deterministic daily pick
-- [x] Navbar + home links
+- [x] `/tools` hub
+- [x] Compare (side-by-side)
+- [x] Fusion (compatibility)
+- [x] Challenge (score/year/format)
+- [x] `/api/search` + `/api/challenge-pool`
 
-## Sprint 9 — Preview
+## Sprint 10 — Preview
 
-Fusion / compare / challenge-style playful tools.
+AI panel / sauce (trace.moe) stubs or light integrations.
