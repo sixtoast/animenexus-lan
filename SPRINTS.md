@@ -2,26 +2,20 @@
 
 | Sprint | Theme | Status |
 |--------|--------|--------|
-| 1 | Foundation | ✅ |
-| 2 | Browse & filters | ✅ |
-| 3 | Detail experience | ✅ |
-| 4 | Watchlist | ✅ |
-| 5 | Mood engine | ✅ |
-| 6 | Auth / AniList link | ✅ |
-| 7 | Taste profile | next |
-| 8 | Discover extras | |
+| 1–6 | Foundation → Auth | ✅ |
+| 7 | Taste profile | ✅ |
+| 8 | Discover extras | next |
 | 9 | Playful tools | |
 | 10 | AI & sauce | |
 | 11 | Polish | |
 
-## Sprint 6 — Auth ✅
+## Sprint 7 — Taste ✅
 
-- [x] Public AniList username connect (no OAuth secrets)
-- [x] Session in localStorage
-- [x] Fetch MediaListCollection
-- [x] Sync → merge into local watchlist
-- [x] `/account` UI + navbar link
+- [x] Stats from local watchlist (hours, episodes, scores)
+- [x] Status + format bars, decade chips
+- [x] Top rated & recently updated
+- [x] `/taste` + navbar
 
-## Sprint 7 — Preview
+## Sprint 8 — Preview
 
-Taste profile: stats from watchlist (hours, genres, status breakdown).
+Seasonal chart, airing schedule, daily pick.

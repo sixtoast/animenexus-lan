@@ -2,13 +2,13 @@
 
 **Repo:** https://github.com/sixtoast/animenexus-lantern
 
-## Current: Sprint 6
+## Current: Sprint 7
 
-AniList username connect + public list sync into local watchlist.
+Taste profile from your local watchlist.
 
 ```bash
 npm install && npm run dev
 ```
 
-- http://localhost:3000/account  
-- Connect a public username → **Sync AniList lists**
+- http://localhost:3000/taste  
+- Fill the list via Browse or Account sync first
