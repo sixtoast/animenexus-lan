@@ -1,10 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useToast } from "@/components/ToastProvider";
 import { Button } from "@/components/ui/Button";
 
 type Quote = { quote: string; character?: string; anime?: string };
+
+/** Seconds between automatic rotations */
+const CYCLE_MS = 14000;
 
 const FALLBACKS: Quote[] = [
   {
@@ -26,6 +29,11 @@ const FALLBACKS: Quote[] = [
     quote: "A lesson without pain is meaningless.",
     character: "Edward Elric",
     anime: "Fullmetal Alchemist",
+  },
+  {
+    quote: "The world isn’t perfect. But it’s there for us, doing the best it can.",
+    character: "Okabe Rintarou",
+    anime: "Steins;Gate",
   },
 ];
 
@@ -64,14 +72,36 @@ async function fetchQuoteChain(): Promise<Quote> {
 export function QuoteBanner() {
   const [q, setQ] = useState<Quote | null>(null);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [fade, setFade] = useState(false);
   const { showToast } = useToast();
 
-  const load = useCallback(async () => {
-    setBusy(true);
+  const startRef = useRef<number>(Date.now());
+  const pausedAtRef = useRef<number | null>(null);
+  const elapsedWhenPaused = useRef(0);
+  const reduceMotion = useRef(false);
+
+  useEffect(() => {
+    reduceMotion.current =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }, []);
+
+  const load = useCallback(async (opts?: { soft?: boolean }) => {
+    if (!opts?.soft) setBusy(true);
+    setFade(true);
     try {
       const next = await fetchQuoteChain();
+      // brief beat so text swap feels intentional
+      await new Promise((r) => setTimeout(r, reduceMotion.current ? 0 : 160));
       setQ(next);
+      startRef.current = Date.now();
+      elapsedWhenPaused.current = 0;
+      pausedAtRef.current = null;
+      setProgress(0);
     } finally {
+      setFade(false);
       setBusy(false);
     }
   }, []);
@@ -79,6 +109,53 @@ export function QuoteBanner() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Visual timer + auto-advance
+  useEffect(() => {
+    if (!q || busy) return;
+
+    let raf = 0;
+    const tick = () => {
+      if (paused) {
+        raf = requestAnimationFrame(tick);
+        return;
+      }
+      const elapsed =
+        elapsedWhenPaused.current + (Date.now() - startRef.current);
+      const p = Math.min(1, elapsed / CYCLE_MS);
+      setProgress(p);
+      if (p >= 1) {
+        load({ soft: true });
+        return;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [q, busy, paused, load]);
+
+  function onPause(enter: boolean) {
+    if (enter) {
+      setPaused(true);
+      pausedAtRef.current = Date.now();
+      elapsedWhenPaused.current +=
+        Date.now() -
+        (pausedAtRef.current
+          ? startRef.current
+          : startRef.current);
+      // correct elapsed: time since last resume
+      elapsedWhenPaused.current =
+        elapsedWhenPaused.current -
+        (Date.now() - startRef.current) +
+        (Date.now() - startRef.current);
+      // simpler: freeze progress value by updating elapsed baseline
+      elapsedWhenPaused.current =
+        progress * CYCLE_MS;
+    } else {
+      setPaused(false);
+      startRef.current = Date.now();
+    }
+  }
 
   async function copy() {
     if (!q) return;
@@ -93,10 +170,32 @@ export function QuoteBanner() {
     }
   }
 
+  const pct = Math.round(progress * 100);
+
   return (
-    <div className="quote-banner">
+    <div
+      className={"quote-banner" + (paused ? " is-paused" : "")}
+      onMouseEnter={() => onPause(true)}
+      onMouseLeave={() => onPause(false)}
+      onFocusCapture={() => onPause(true)}
+      onBlurCapture={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+          onPause(false);
+        }
+      }}
+    >
+      <div className="quote-signal-row">
+        <span className="quote-kicker">
+          <span className="quote-live-dot" aria-hidden />
+          Signal quote
+        </span>
+        <span className="quote-timer-label" aria-live="polite">
+          {paused ? "Paused" : busy ? "Tuning…" : `${Math.ceil((1 - progress) * (CYCLE_MS / 1000))}s`}
+        </span>
+      </div>
+
       <div className="quote-top">
-        <p className="quote-text">
+        <p className={"quote-text" + (fade ? " is-fading" : "")}>
           <span className="quote-mark">“</span>
           {q ? q.quote : busy ? "Tuning the desk…" : "…"}
           <span className="quote-mark">”</span>
@@ -107,7 +206,7 @@ export function QuoteBanner() {
             size="sm"
             title="Next quote"
             aria-label="Next quote"
-            onClick={load}
+            onClick={() => load()}
             loading={busy}
             disabled={busy}
           >
@@ -125,12 +224,27 @@ export function QuoteBanner() {
           </Button>
         </div>
       </div>
+
       {q?.character || q?.anime ? (
         <p className="quote-source">
           — {q.character}
           {q.anime ? ` · ${q.anime}` : ""}
         </p>
       ) : null}
+
+      <div
+        className="quote-progress"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={pct}
+        aria-label="Time until next quote"
+      >
+        <div
+          className="quote-progress-fill"
+          style={{ transform: `scaleX(${progress})` }}
+        />
+      </div>
     </div>
   );
 }
