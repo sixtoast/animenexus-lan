@@ -2,25 +2,21 @@
 
 Repo: **sixtoast/animenexus-lantern** · branch `main`
 
-| Feature | Status | Evidence |
-|--------|--------|----------|
-| Product features (browse→tools) | done | prior sprints |
-| Challenge + confetti + dissolve | done | |
-| Ancestry vis-network | done | restored on detail |
-| Oracle vibe-cast + card deal | done | |
-| Craft: cards / motion / seal / session env | done | cycle 1 |
-| Craft: DeskShell / VT cover / next/image | done | cycle 2 |
-| Motion upscale | partial | |
-| Night Signal ARG | **declined** | |
+| Feature | Status |
+|--------|--------|
+| Product surface | done |
+| Craft cycle 1 (cards, motion, seal, session) | done |
+| Craft cycle 2 (DeskShell, VT names, oracle deal, next/image) | done |
+| Craft cycle 3 (VT nav, radar sweep, taste portrait) | done |
+| Night Signal ARG | declined |
 
-## Craft cycle 2
-- `DeskShell` on all tool routes (shared band + panel)
-- Detail cover `view-transition-name: cover-{id}` (matches cards)
-- `AncestryGraph` restored on detail when relations exist
-- Oracle band flash + vibe-cast **card deal** stagger
-- `AnimeCard` uses `next/image` when host is allowlisted
+## Cycle 3
+- **View Transitions**: card click uses `document.startViewTransition` → `router.push` when supported
+- **Radar**: dish + sweeping beam while scanning; results **ping** in
+- **Taste portrait**: editorial header from list stats + peak title chip
+- Navbar badge: **Lantern** (not sprint labels)
 
-## Still open
-- Client-side `document.startViewTransition` on link clicks (progressive)
-- CSS file merge (sprint-* → motion/desk/globals)
-- Radar scan motif / Taste editorial portrait
+## Optional later
+- Full CSS merge of `sprint-*` files
+- Sound (opt-in)
+- Parallel routes / streaming shells
