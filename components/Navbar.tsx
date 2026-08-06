@@ -44,7 +44,7 @@ export function Navbar() {
             fontWeight: 600,
           }}
         >
-          Sprint 4
+          Sprint 5
         </span>
       </div>
     </header>
