@@ -2,6 +2,7 @@ import "./detail.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchAnimeDetail } from "@/lib/anilist-detail";
+import { AddToWatchlist } from "@/components/AddToWatchlist";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -84,7 +85,7 @@ export default async function AnimeDetailPage({ params }: Props) {
           <img className="detail-cover" src={anime.image} alt="" />
 
           <div className="detail-info">
-            <p className="detail-kicker">Sprint 3 · detail</p>
+            <p className="detail-kicker">Sprint 4 · detail</p>
             <h1 className="detail-title">{anime.title}</h1>
             {anime.titleRomaji && anime.titleRomaji !== anime.title ? (
               <p className="detail-alt">{anime.titleRomaji}</p>
@@ -127,19 +128,20 @@ export default async function AnimeDetailPage({ params }: Props) {
               </p>
             ) : null}
 
-            <div className="detail-actions">
+            <AddToWatchlist anime={anime} />
+            <div className="detail-actions" style={{ marginTop: 12 }}>
               {anime.url ? (
                 <a
                   href={anime.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="btn btn-accent btn-sm"
+                  className="btn btn-outline btn-sm"
                 >
                   Open on AniList ↗
                 </a>
               ) : null}
-              <Link href="/browse" className="btn btn-outline btn-sm">
-                Browse more
+              <Link href="/watchlist" className="btn btn-outline btn-sm">
+                Open watchlist
               </Link>
             </div>
           </div>
