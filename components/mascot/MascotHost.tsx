@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useMascotStore, mascotNotify } from "@/lib/mascot/store";
 import { UiAwareness } from "./UiAwareness";
+import { ContextBridge } from "./ContextBridge";
 
 const MascotScene = dynamic(
   () => import("./MascotScene").then((m) => m.MascotScene),
@@ -91,6 +92,7 @@ export function MascotHost() {
   return (
     <>
       <UiAwareness />
+      <ContextBridge />
       <div
         className="mascot-habitat"
         role="complementary"

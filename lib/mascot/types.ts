@@ -23,6 +23,14 @@ export type MascotEmotions = {
   stress: number;
 };
 
+export type MascotContext =
+  | "idle"
+  | "loading"
+  | "empty-list"
+  | "error"
+  | "browsing"
+  | "watching";
+
 export type MascotEvent =
   | { type: "pet" }
   | { type: "click" }
@@ -34,7 +42,13 @@ export type MascotEvent =
   | { type: "tick" }
   | { type: "notice-ui"; landmarkId?: string }
   | { type: "ui-hover"; clientX: number; clientY: number }
-  | { type: "jump" };
+  | { type: "jump" }
+  | { type: "context"; context: MascotContext }
+  | { type: "loading"; active: boolean }
+  | { type: "error" }
+  | { type: "empty-list" }
+  | { type: "theme"; theme: "dark" | "light" }
+  | { type: "scroll-fast" };
 
 export const HABITAT_BOUNDS = {
   minX: -0.55,

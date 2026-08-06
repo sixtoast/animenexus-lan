@@ -1,5 +1,10 @@
 import { create } from "zustand";
-import type { MascotAnim, MascotEmotions, MascotEvent } from "./types";
+import type {
+  MascotAnim,
+  MascotContext,
+  MascotEmotions,
+  MascotEvent,
+} from "./types";
 import {
   clampToHabitat,
   randomWanderTarget,
@@ -24,6 +29,7 @@ type MascotState = {
   enabled: boolean;
   anim: MascotAnim;
   goal: MascotGoal;
+  context: MascotContext;
   busyUntil: number;
   nextThinkAt: number;
   emotions: MascotEmotions;
@@ -31,8 +37,8 @@ type MascotState = {
   position: NavTarget;
   target: NavTarget | null;
   lookBias: { x: number; y: number };
-  /** Request a jump impulse (consumed by renderer) */
   jumpQueued: boolean;
+  loadingSince: number | null;
   setEnabled: (v: boolean) => void;
   setAnim: (a: MascotAnim) => void;
   requestAnim: (req: AnimRequest) => boolean;
@@ -54,6 +60,7 @@ export const useMascotStore = create<MascotState>((set, get) => ({
   enabled: true,
   anim: "idle",
   goal: "idle",
+  context: "idle",
   busyUntil: 0,
   nextThinkAt: 0,
   emotions: defaultEmotions(),
@@ -62,6 +69,7 @@ export const useMascotStore = create<MascotState>((set, get) => ({
   target: null,
   lookBias: { x: 0, y: 0 },
   jumpQueued: false,
+  loadingSince: null,
   setEnabled: (v) => set({ enabled: v }),
   setAnim: (a) => set({ anim: a }),
   requestAnim: (req) => {
@@ -108,7 +116,6 @@ export const useMascotStore = create<MascotState>((set, get) => ({
       case "wander": {
         const t = randomWanderTarget();
         set({ target: t });
-        // Occasional hop when energetic
         if (emotions.energy > 0.7 && Math.random() < 0.25) {
           set({ jumpQueued: true });
           requestAnim({ anim: "jump", holdMs: 500, force: true });
@@ -153,6 +160,22 @@ export const useMascotStore = create<MascotState>((set, get) => ({
     const s = get();
     if (!s.enabled) return;
     if (Date.now() < s.nextThinkAt) return;
+
+    // Long loading → sit / think / eventually nap
+    if (s.loadingSince) {
+      const waited = Date.now() - s.loadingSince;
+      if (waited > 12_000 && s.anim !== "sleep") {
+        s.requestAnim({ anim: "sleep" });
+        set({ nextThinkAt: Date.now() + 8000 });
+        return;
+      }
+      if (waited > 4_000) {
+        s.requestAnim({ anim: "think", holdMs: 3000 });
+        set({ nextThinkAt: Date.now() + 4000 });
+        return;
+      }
+    }
+
     const busy = Date.now() < s.busyUntil;
     const decision = chooseBehaviour(s.emotions, {
       msSinceInteract: Date.now() - s.lastInteractionAt,
@@ -188,7 +211,7 @@ export const useMascotStore = create<MascotState>((set, get) => ({
           anim === "jump"
         )
           break;
-        if (anim === "sleep") {
+        if (anim === "sleep" && !get().loadingSince) {
           if (shouldWake(emotions, false)) {
             requestAnim({ anim: "idle" });
             set({ goal: "idle" });
@@ -198,6 +221,49 @@ export const useMascotStore = create<MascotState>((set, get) => ({
         get().runBehaviourTick();
         break;
       }
+      case "loading":
+        if (e.active) {
+          set({ loadingSince: get().loadingSince ?? Date.now(), context: "loading" });
+          bumpEmotion("curiosity", 0.05);
+          bumpEmotion("attention", 0.08);
+          // binoculars moment → point / think
+          requestAnim({ anim: "think", holdMs: 2000 });
+        } else {
+          const was = get().loadingSince;
+          set({ loadingSince: null });
+          if (was) {
+            bumpEmotion("happiness", 0.06);
+            requestAnim({ anim: "wave", holdMs: 700 });
+          }
+        }
+        break;
+      case "error":
+        set({ context: "error" });
+        bumpEmotion("stress", 0.2);
+        bumpEmotion("confidence", -0.08);
+        requestAnim({ anim: "surprised", holdMs: 900, force: true });
+        set({ nextThinkAt: Date.now() + 2500 });
+        break;
+      case "empty-list":
+        set({ context: "empty-list" });
+        bumpEmotion("curiosity", 0.08);
+        bumpEmotion("boredom", 0.05);
+        requestAnim({ anim: "think", holdMs: 2500 });
+        break;
+      case "context":
+        set({ context: e.context });
+        break;
+      case "theme":
+        bumpEmotion("curiosity", 0.05);
+        // Soft settle into new light
+        requestAnim({ anim: "wave", holdMs: 600 });
+        break;
+      case "scroll-fast":
+        bumpEmotion("stress", 0.1);
+        if (Date.now() > get().busyUntil) {
+          requestAnim({ anim: "surprised", holdMs: 500, force: true });
+        }
+        break;
       case "jump":
         set({ jumpQueued: true });
         requestAnim({ anim: "jump", holdMs: 450, force: true });
