@@ -10,6 +10,11 @@ export type OracleMode =
   | "marathon"
   | "vibecast";
 
+export type VibecastPick = {
+  title: string;
+  why: string;
+};
+
 export const ORACLE_MODES: { id: OracleMode; label: string; blurb: string }[] =
   [
     { id: "pick", label: "Pick", blurb: "What should I watch tonight?" },
@@ -51,9 +56,29 @@ function systemFor(mode: OracleMode): string {
       " Mode: propose a realistic weekend marathon using titles they already track.",
     vibecast:
       base +
-      " Mode: recommend exactly three concrete titles (prefer from their list) with one-line reasons each.",
+      " Mode: vibecast. Reply with ONLY valid JSON (no markdown fences): {\"picks\":[{\"title\":string,\"why\":string}, ...]} with exactly 3 picks. Prefer titles from their list; if suggesting outside the list, still use a real well-known anime title string. why is one short line.",
   };
   return modes[mode];
+}
+
+export function parseVibecastPicks(raw: string): VibecastPick[] {
+  let text = raw.trim();
+  const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fence) text = fence[1].trim();
+  try {
+    const j = JSON.parse(text) as { picks?: VibecastPick[] } | VibecastPick[];
+    const arr = Array.isArray(j) ? j : j.picks;
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .filter((p) => p && typeof p.title === "string" && p.title.trim())
+      .slice(0, 5)
+      .map((p) => ({
+        title: String(p.title).trim(),
+        why: String(p.why || "").trim(),
+      }));
+  } catch {
+    return [];
+  }
 }
 
 export async function consultOracleCloud(
@@ -82,7 +107,7 @@ export async function consultOracleCloud(
       { role: "system", content: systemFor(mode) },
       { role: "user", content: user },
     ],
-    { temperature: 0.8 },
+    { temperature: mode === "vibecast" ? 0.55 : 0.8 },
   );
 }
 
