@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo } from "react";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { TasteExtras } from "@/components/TasteExtras";
+import { SignalBars } from "@/components/ui/SignalBars";
 import { computeTaste, statusLabel } from "@/lib/taste";
+import { readMemory } from "@/lib/lantern-memory";
 import type { WatchStatus } from "@/lib/types";
 
 const STATUS_ORDER: WatchStatus[] = [
@@ -14,26 +17,107 @@ const STATUS_ORDER: WatchStatus[] = [
   "dropped",
 ];
 
+function growthNotes(opts: {
+  total: number;
+  completionRate: number;
+  topGenre?: string;
+  recentGenre?: string;
+  completedRecent?: string;
+  visitDays: number;
+}): string[] {
+  const notes: string[] = [];
+  if (opts.total < 5) {
+    notes.push(
+      "Early signal — the portrait is still forming. A few more seals and patterns will appear.",
+    );
+  } else if (opts.total < 20) {
+    notes.push(
+      "Growing shelf. Lantern can already see habits, not only isolated titles.",
+    );
+  } else {
+    notes.push(
+      "Deep catalog. Your list is dense enough for honest comparisons and taste DNA.",
+    );
+  }
+
+  if (opts.completionRate >= 0.55) {
+    notes.push(
+      "You finish more than you abandon — the desk treats you as a finisher.",
+    );
+  } else if (opts.total >= 8 && opts.completionRate < 0.3) {
+    notes.push(
+      "You explore widely and complete selectively. That’s a valid frequency, not a flaw.",
+    );
+  }
+
+  if (opts.topGenre && opts.recentGenre && opts.topGenre !== opts.recentGenre) {
+    notes.push(
+      `List gravity sits toward ${opts.topGenre}, while recent browsing leans ${opts.recentGenre}. Orbit may be shifting.`,
+    );
+  } else if (opts.topGenre) {
+    notes.push(`Strong pull toward ${opts.topGenre} across the shelf.`);
+  }
+
+  if (opts.completedRecent) {
+    notes.push(`Recently closed: “${opts.completedRecent}”.`);
+  }
+
+  if (opts.visitDays >= 5) {
+    notes.push(
+      `You’ve opened the console on ${opts.visitDays} different days. The room is becoming familiar.`,
+    );
+  }
+
+  return notes.slice(0, 4);
+}
+
 export function TasteClient() {
   const { entries, ready } = useWatchlist();
+
+  const memNotes = useMemo(() => {
+    if (!ready || entries.length === 0) return [] as string[];
+    const s = computeTaste(entries);
+    const m = readMemory();
+    const genreFromList: Record<string, number> = {};
+    // soft: use memory genre counts + status stats
+    const topMem = Object.entries(m.genreCounts).sort((a, b) => b[1] - a[1])[0];
+    const secondMem = Object.entries(m.genreCounts).sort(
+      (a, b) => b[1] - a[1],
+    )[1];
+    return growthNotes({
+      total: s.total,
+      completionRate: s.completionRate,
+      topGenre: topMem?.[0],
+      recentGenre: secondMem?.[0],
+      completedRecent: m.completedLog[0]?.title,
+      visitDays: m.visitDays.length,
+    });
+  }, [ready, entries]);
 
   if (!ready) {
     return (
       <div className="state-box">
-        <div className="spinner" />
-        <p>Reading your list…</p>
+        <SignalBars level={3} animated />
+        <p style={{ marginTop: 12 }}>Lantern is reading your shelf…</p>
       </div>
     );
   }
 
   if (entries.length === 0) {
     return (
-      <div className="state-box">
-        <p>No data yet — your taste profile fills as the watchlist grows.</p>
-        <p style={{ marginTop: 12 }}>
+      <div className="state-box lantern-empty">
+        <h3>No portrait yet</h3>
+        <p>
+          Taste fills from this browser’s watchlist. Seal a few titles, mark
+          progress, and Lantern will describe how you watch — not only what.
+        </p>
+        <p style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 10 }}>
           <Link href="/browse" className="btn btn-accent btn-sm">
             Browse catalog
-          </Link>{" "}
+          </Link>
+          <Link href="/daily" className="btn btn-outline btn-sm">
+            Daily signal
+          </Link>
           <Link href="/account" className="btn btn-outline btn-sm">
             Sync AniList
           </Link>
@@ -48,7 +132,11 @@ export function TasteClient() {
   const top = s.topRated[0];
   const decadeLead = s.byDecade[0];
   const portraitLine = [
-    s.total >= 50 ? "Deep catalog" : s.total >= 20 ? "Growing shelf" : "Early signal",
+    s.total >= 50
+      ? "Deep catalog"
+      : s.total >= 20
+        ? "Growing shelf"
+        : "Early signal",
     s.completionRate >= 0.5 ? "finisher" : "explorer",
     decadeLead ? `${decadeLead.decade}s lean` : null,
   ]
@@ -57,6 +145,17 @@ export function TasteClient() {
 
   return (
     <div className="taste">
+      {memNotes.length > 0 ? (
+        <div className="taste-growth">
+          <p className="taste-growth-kicker">Lantern observes</p>
+          <ul>
+            {memNotes.map((n) => (
+              <li key={n}>{n}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       <div className="taste-portrait">
         <p className="taste-portrait-kicker">Taste portrait</p>
         <h2 className="taste-portrait-title">{portraitLine}</h2>
