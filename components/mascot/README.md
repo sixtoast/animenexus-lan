@@ -5,19 +5,27 @@
 | # | Goal | Status |
 |---|------|--------|
 | 1 | Placeholder + habitat | Done |
-| 2 | Walk / wander in habitat | Done |
-| 3 | Animation state machine | **Done** |
-| 4–5 | Richer behaviour loops | Next |
+| 2 | Walk / wander | Done |
+| 3 | Animation state machine | Done |
+| 4 | Behaviour system (goals) | **Done** |
+| 5 | Richer emotion coupling | Next |
 | 6+ | UI terrain / physics | Planned |
 
-## M3 — state machine
+## M4 — behaviour
 
-`lib/mascot/anim-machine.ts`
+`lib/mascot/behaviour.ts` — pure `chooseBehaviour(emotions, context)`.
 
-- **Priority stack**: sleep < idle < walk < think < wave < happy < surprised
-- **`requestAnim({ anim, holdMs, force })`** — gated interrupts
-- **`preferredAmbient(emotions)`** — sleep / think / idle from drives
-- **Emotion decay** each second + `tick` event
-- **Sleep → click** = surprised → happy wake
+Goals:
 
-Flow: **Emotion → ambient preference → animation** (reactions still force high priority).
+| Goal | Meaning |
+|------|--------|
+| `idle` | Baseline |
+| `wander` | Roam habitat |
+| `nap` | Sleep pose |
+| `ponder` | Think |
+| `seek-attention` | Walk forward + wave |
+| `celebrate` | User-driven joy |
+
+Pipeline: **Emotion → Goal → Animation**
+
+`runBehaviourTick()` every ~3s (and on `tick` / idle-long). Cooldowns prevent thrashing.

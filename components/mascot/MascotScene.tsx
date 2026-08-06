@@ -59,20 +59,16 @@ function SceneContent({ reducedMotion }: Props) {
 
 export function MascotScene({ reducedMotion }: Props) {
   const dispatch = useMascotStore((s) => s.dispatch);
-  const requestWander = useMascotStore((s) => s.requestWander);
+  const runBehaviourTick = useMascotStore((s) => s.runBehaviourTick);
 
-  // Autonomous wander (M2 behaviour lite)
+  // Behaviour loop — not random anim spam
   useEffect(() => {
     if (reducedMotion) return;
     const id = window.setInterval(() => {
-      const { anim, target, busyUntil } = useMascotStore.getState();
-      if (Date.now() < busyUntil) return;
-      if (target) return;
-      if (anim === "happy" || anim === "wave" || anim === "sleep") return;
-      if (Math.random() < 0.55) requestWander();
-    }, 4500);
+      runBehaviourTick();
+    }, 3200);
     return () => window.clearInterval(id);
-  }, [reducedMotion, requestWander]);
+  }, [reducedMotion, runBehaviourTick]);
 
   return (
     <Canvas
