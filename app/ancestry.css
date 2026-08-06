@@ -1,146 +1,230 @@
+/* Ancestry — franchise map (no vis-network) */
 .ancestry-section {
-  margin-top: 8px;
-}
-
-.ancestry-callout {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 20px 22px;
-  margin-bottom: 18px;
+  margin-top: 12px;
+  padding: 22px 20px 28px;
   border-radius: var(--radius);
-  border: 1px solid rgba(240, 160, 144, 0.28);
+  border: 1px solid rgba(240, 160, 144, 0.2);
   background:
-    radial-gradient(ellipse 70% 80% at 0% 50%, rgba(240, 160, 144, 0.14), transparent 55%),
-    linear-gradient(165deg, rgba(34, 28, 24, 0.9), rgba(12, 10, 9, 0.95));
+    radial-gradient(ellipse 60% 50% at 100% 0%, rgba(240, 160, 144, 0.1), transparent 50%),
+    linear-gradient(165deg, rgba(28, 22, 18, 0.95), rgba(10, 8, 7, 0.98));
 }
 
-.ancestry-callout h2 {
+.ab-header {
+  margin-bottom: 22px;
+}
+
+.ab-kicker {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: 4px;
+}
+
+.ab-header h2 {
   font-family: var(--font-display);
-  font-size: 1.4rem;
+  font-size: 1.65rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   margin-bottom: 6px;
 }
 
 .ancestry-lead {
   color: var(--color-text-muted);
   font-size: 0.9rem;
-  max-width: 36rem;
+  max-width: 40rem;
   line-height: 1.45;
 }
 
-.ancestry-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.ab-block {
+  margin-top: 28px;
 }
 
-.ancestry-node {
-  display: inline-block;
-  padding: 8px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--color-border);
-  background: var(--color-tertiary);
-  color: inherit;
-  font-size: 0.85rem;
-  max-width: 240px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  transition: var(--transition);
+.ab-block-title {
+  font-size: 0.95rem;
+  font-weight: 650;
+  margin-bottom: 2px;
 }
 
-.ancestry-node:hover {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
-}
-
-.ancestry-type {
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-accent);
-  margin-bottom: 8px;
-  font-weight: 700;
-}
-
-.ancestry-nodes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.ancestry-group {
-  padding: 14px;
-  background: var(--color-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-}
-
-.ancestry-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1200;
-  background: rgba(0, 0, 0, 0.92);
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
-  animation: roomEnter 0.35s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)) both;
-}
-
-.ancestry-content {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  padding: 16px 20px;
-  background: var(--color-primary);
-}
-
-.ancestry-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  flex-shrink: 0;
-}
-
-.ancestry-header h3 {
-  font-size: 1.15rem;
-  font-family: var(--font-display);
-}
-
-.ancestry-close {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 1px solid var(--color-border);
-  background: var(--color-tertiary);
-  color: var(--color-text);
-  cursor: pointer;
-  font-size: 1.4rem;
-  line-height: 1;
-  transition: border-color 0.2s ease, background 0.2s ease;
-}
-
-.ancestry-close:hover {
-  border-color: var(--color-accent);
-  background: rgba(240, 160, 144, 0.15);
-}
-
-#ancestryNetwork {
-  flex: 1;
-  min-height: 0;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: #0a0807;
-}
-
-.ancestry-footer {
-  margin-top: 10px;
+.ab-block-hint {
   font-size: 0.75rem;
   color: var(--color-text-muted);
-  text-align: center;
+  margin-bottom: 14px;
+}
+
+/* Horizontal franchise timeline */
+.ab-timeline {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ab-timeline-item {
+  display: flex;
+  align-items: center;
   flex-shrink: 0;
+  scroll-snap-align: start;
+}
+
+.ab-connector {
+  width: 28px;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(240, 160, 144, 0.15), rgba(240, 160, 144, 0.55));
+  margin: 0 4px;
+  align-self: center;
+  margin-bottom: 48px;
+  position: relative;
+}
+
+.ab-connector::after {
+  content: "";
+  position: absolute;
+  right: -3px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 4px solid transparent;
+  border-left-color: rgba(240, 160, 144, 0.55);
+}
+
+/* Poster cards */
+.ab-card {
+  display: block;
+  width: 132px;
+  color: inherit;
+  text-decoration: none;
+  transition: transform 0.25s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.ab-card:hover {
+  transform: translateY(-6px);
+  color: inherit;
+}
+
+.ab-card.ab-current {
+  width: 148px;
+}
+
+.ab-card.ab-current:hover {
+  transform: none;
+}
+
+.ab-poster {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  aspect-ratio: 2 / 3;
+  background: var(--color-tertiary);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+.ab-current .ab-poster {
+  border-color: var(--color-accent);
+  box-shadow:
+    0 0 0 2px rgba(240, 160, 144, 0.35),
+    0 16px 36px rgba(0, 0, 0, 0.45),
+    0 0 28px rgba(240, 160, 144, 0.2);
+}
+
+.ab-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ab-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 50px;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #faf4ef;
+}
+
+.ab-badge.ab-sequel {
+  border-color: rgba(140, 200, 160, 0.5);
+  color: #b8e0c4;
+}
+.ab-badge.ab-prequel {
+  border-color: rgba(140, 170, 220, 0.5);
+  color: #b8c8e8;
+}
+.ab-badge.ab-side {
+  border-color: rgba(230, 190, 120, 0.5);
+  color: #efc07a;
+}
+.ab-badge.ab-spin {
+  border-color: rgba(200, 150, 220, 0.5);
+  color: #d4b0e8;
+}
+.ab-badge.ab-rec {
+  border-color: rgba(240, 160, 144, 0.45);
+  color: var(--color-accent);
+}
+
+.ab-you {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 6px 4px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.85));
+  color: var(--color-accent);
+}
+
+.ab-card-title {
+  margin-top: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ab-card-meta {
+  margin-top: 3px;
+  font-size: 0.68rem;
+  color: var(--color-text-muted);
+}
+
+/* Grid for side / similar */
+.ab-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 16px 12px;
+}
+
+.ab-grid .ab-card {
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .ab-card {
+    width: 110px;
+  }
+  .ab-card.ab-current {
+    width: 120px;
+  }
+  .ab-connector {
+    width: 16px;
+  }
 }

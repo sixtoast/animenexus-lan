@@ -41,6 +41,8 @@ export type AnimeRelation = {
   format?: string;
   status?: string;
   image?: string;
+  year?: number | null;
+  score?: number | null;
 };
 
 /** Normalized anime used across the UI */

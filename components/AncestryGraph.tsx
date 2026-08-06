@@ -1,80 +1,92 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import type { AnimeRelation } from "@/lib/types";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import type { AnimeRelation } from "@/lib/types";
 
 type Props = {
   centerTitle: string;
   centerId: number;
+  centerImage?: string;
+  centerYear?: number | string | null;
   relations: AnimeRelation[];
 };
 
-declare global {
-  interface Window {
-    vis?: {
-      Network: new (
-        el: HTMLElement,
-        data: unknown,
-        options: unknown,
-      ) => {
-        destroy: () => void;
-        on: (ev: string, cb: (p: { nodes: number[] }) => void) => void;
-      };
-      DataSet: new (data: unknown[]) => unknown;
-    };
-  }
+const CHAIN = new Set(["PREQUEL", "SEQUEL", "PARENT", "SIDE_STORY"]);
+const SIDE = new Set(["SPIN_OFF", "ALTERNATIVE", "SUMMARY", "OTHER", "CHARACTER"]);
+
+function labelType(t: string) {
+  return t.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
 }
 
-function loadVis(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (window.vis?.Network) {
-      resolve();
-      return;
-    }
-    const cssId = "vis-network-css";
-    if (!document.getElementById(cssId)) {
-      const link = document.createElement("link");
-      link.id = cssId;
-      link.rel = "stylesheet";
-      link.href =
-        "https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/vis-network.min.css";
-      document.head.appendChild(link);
-    }
-    const existing = document.querySelector(
-      "script[data-vis-network]",
-    ) as HTMLScriptElement | null;
-    if (existing) {
-      existing.addEventListener("load", () => resolve());
-      existing.addEventListener("error", () => reject(new Error("vis load")));
-      return;
-    }
-    const s = document.createElement("script");
-    s.src =
-      "https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.6/dist/vis-network.min.js";
-    s.async = true;
-    s.dataset.visNetwork = "1";
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error("vis load failed"));
-    document.body.appendChild(s);
-  });
+function badgeClass(t: string) {
+  const u = t.toUpperCase();
+  if (u === "SEQUEL") return "ab-sequel";
+  if (u === "PREQUEL" || u === "PARENT") return "ab-prequel";
+  if (u === "SIDE_STORY") return "ab-side";
+  if (u === "SPIN_OFF") return "ab-spin";
+  if (u === "RECOMMENDED") return "ab-rec";
+  return "ab-other";
+}
+
+function PosterCard({
+  href,
+  title,
+  image,
+  meta,
+  badge,
+  badgeType,
+  current,
+}: {
+  href?: string;
+  title: string;
+  image?: string;
+  meta?: string;
+  badge?: string;
+  badgeType?: string;
+  current?: boolean;
+}) {
+  const body = (
+    <>
+      <div className="ab-poster">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={image || "https://placehold.co/200x300/1a1a1a/555?text=?"}
+          alt=""
+          loading="lazy"
+        />
+        {badge ? (
+          <span className={"ab-badge " + badgeClass(badgeType || badge)}>
+            {badge}
+          </span>
+        ) : null}
+        {current ? <span className="ab-you">You are here</span> : null}
+      </div>
+      <div className="ab-card-title">{title}</div>
+      {meta ? <div className="ab-card-meta">{meta}</div> : null}
+    </>
+  );
+
+  if (current || !href) {
+    return <div className={"ab-card" + (current ? " ab-current" : "")}>{body}</div>;
+  }
+  return (
+    <Link href={href} className="ab-card">
+      {body}
+    </Link>
+  );
 }
 
 export function AncestryGraph({
   centerTitle,
   centerId,
+  centerImage,
+  centerYear,
   relations: initial,
 }: Props) {
-  const router = useRouter();
   const [relations, setRelations] = useState<AnimeRelation[]>(initial || []);
   const [loading, setLoading] = useState(false);
-  const [open, setOpen] = useState(false);
-  const [failed, setFailed] = useState(false);
-  const hostRef = useRef<HTMLDivElement>(null);
-  const netRef = useRef<{ destroy: () => void } | null>(null);
 
-  // Client fallback if SSR returned nothing
   useEffect(() => {
     if (initial?.length) {
       setRelations(initial);
@@ -96,184 +108,213 @@ export function AncestryGraph({
     };
   }, [centerId, initial]);
 
-  useEffect(() => {
-    if (!open || !hostRef.current || !relations.length) return;
-    let cancelled = false;
+  const { timeline, sideOrbit, recommended, other } = useMemo(() => {
+    const prequels: AnimeRelation[] = [];
+    const sequels: AnimeRelation[] = [];
+    const sides: AnimeRelation[] = [];
+    const orbit: AnimeRelation[] = [];
+    const recs: AnimeRelation[] = [];
+    const rest: AnimeRelation[] = [];
 
-    loadVis()
-      .then(() => {
-        if (cancelled || !hostRef.current || !window.vis) return;
-        if (netRef.current) {
-          netRef.current.destroy();
-          netRef.current = null;
-        }
-        const nodes = [
-          {
-            id: centerId,
-            label: centerTitle.slice(0, 28),
-            color: { background: "#f0a090", border: "#f8c4b8" },
-            font: { color: "#2a1210", bold: true, size: 14 },
-            shape: "box",
-            margin: 12,
-          },
-          ...relations.map((r) => ({
-            id: r.id,
-            label: r.title.slice(0, 24),
-            color: {
-              background: "#221c18",
-              border: "rgba(240,160,144,0.45)",
-            },
-            font: { color: "#faf4ef", size: 12 },
-            shape: "box",
-            margin: 10,
-          })),
-        ];
-        const seen = new Set<number>();
-        const uniqueNodes = nodes.filter((n) => {
-          if (seen.has(n.id)) return false;
-          seen.add(n.id);
-          return true;
-        });
-        const edges = relations.map((r, i) => ({
-          id: `e-${i}`,
-          from: centerId,
-          to: r.id,
-          label: (r.relationType || "").replace(/_/g, " ").slice(0, 14),
-          font: { size: 11, color: "#c4b4a8" },
-          color: { color: "rgba(240,160,144,0.5)", highlight: "#f0a090" },
-          width: 2,
-        }));
-        const data = {
-          nodes: new window.vis!.DataSet(uniqueNodes),
-          edges: new window.vis!.DataSet(edges),
-        };
-        const options = {
-          physics: {
-            enabled: true,
-            barnesHut: {
-              gravitationalConstant: -12000,
-              springLength: 160,
-              springConstant: 0.04,
-            },
-          },
-          interaction: {
-            hover: true,
-            tooltipDelay: 80,
-            navigationButtons: true,
-            zoomView: true,
-          },
-          edges: { smooth: { type: "continuous" } },
-        };
-        const net = new window.vis!.Network(hostRef.current, data, options);
-        net.on("click", (params) => {
-          const id = params.nodes?.[0];
-          if (id && id !== centerId) {
-            setOpen(false);
-            router.push(`/anime/${id}`);
-          }
-        });
-        netRef.current = net;
-      })
-      .catch(() => setFailed(true));
+    for (const r of relations) {
+      const t = (r.relationType || "").toUpperCase();
+      if (t === "PREQUEL" || t === "PARENT") prequels.push(r);
+      else if (t === "SEQUEL") sequels.push(r);
+      else if (t === "SIDE_STORY") sides.push(r);
+      else if (SIDE.has(t)) orbit.push(r);
+      else if (t === "RECOMMENDED") recs.push(r);
+      else if (CHAIN.has(t)) sides.push(r);
+      else rest.push(r);
+    }
 
-    return () => {
-      cancelled = true;
-      if (netRef.current) {
-        netRef.current.destroy();
-        netRef.current = null;
-      }
+    const byYear = (a: AnimeRelation, b: AnimeRelation) =>
+      (a.year || 0) - (b.year || 0) || a.title.localeCompare(b.title);
+
+    prequels.sort(byYear);
+    sequels.sort(byYear);
+    sides.sort(byYear);
+
+    const timeline: {
+      id: number;
+      title: string;
+      image?: string;
+      year?: number | string | null;
+      score?: number | null;
+      badge?: string;
+      badgeType?: string;
+      current?: boolean;
+    }[] = [
+      ...prequels.map((r) => ({
+        id: r.id,
+        title: r.title,
+        image: r.image,
+        year: r.year,
+        score: r.score,
+        badge: labelType(r.relationType),
+        badgeType: r.relationType,
+      })),
+      {
+        id: centerId,
+        title: centerTitle,
+        image: centerImage,
+        year: centerYear,
+        current: true,
+      },
+      ...sequels.map((r) => ({
+        id: r.id,
+        title: r.title,
+        image: r.image,
+        year: r.year,
+        score: r.score,
+        badge: labelType(r.relationType),
+        badgeType: r.relationType,
+      })),
+    ];
+
+    return {
+      timeline,
+      sideOrbit: [...sides, ...orbit].sort(byYear),
+      recommended: recs,
+      other: rest,
     };
-  }, [open, centerId, centerTitle, relations, router]);
+  }, [relations, centerId, centerTitle, centerImage, centerYear]);
 
-  const groups = new Map<string, AnimeRelation[]>();
-  for (const r of relations) {
-    const key = r.relationType || "RELATED";
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key)!.push(r);
-  }
+  const officialCount = relations.filter(
+    (r) => (r.relationType || "").toUpperCase() !== "RECOMMENDED",
+  ).length;
 
   return (
     <section className="detail-section ancestry-section" id="ancestry">
-      <div className="ancestry-callout">
+      <div className="ab-header">
         <div>
-          <h2>Ancestry graph</h2>
+          <p className="ab-kicker">Franchise map</p>
+          <h2>Ancestry</h2>
           <p className="ancestry-lead">
             {loading
-              ? "Loading linked titles…"
-              : relations.length
-                ? `${relations.length} linked title${relations.length === 1 ? "" : "s"} — sequels, prequels, and side stories.`
-                : "No anime relations on AniList for this title (one-shots often have none)."}
+              ? "Mapping the family tree…"
+              : officialCount
+                ? `${officialCount} official link${officialCount === 1 ? "" : "s"} from AniList` +
+                  (recommended.length
+                    ? ` · ${recommended.length} similar picks`
+                    : "")
+                : recommended.length
+                  ? `No sequels listed — ${recommended.length} similar titles from AniList`
+                  : "No related anime on AniList for this title."}
           </p>
         </div>
-        <button
-          type="button"
-          className="btn btn-accent"
-          disabled={!relations.length || loading}
-          onClick={() => {
-            setFailed(false);
-            setOpen(true);
-          }}
-        >
-          {loading ? "Loading…" : "Open interactive graph"}
-        </button>
       </div>
 
-      {open ? (
-        <div
-          className="ancestry-overlay open"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Ancestry graph"
-        >
-          <div className="ancestry-content">
-            <div className="ancestry-header">
-              <h3>Ancestry · {centerTitle}</h3>
-              <button
-                type="button"
-                className="ancestry-close"
-                onClick={() => setOpen(false)}
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
-            {failed ? (
-              <p className="tools-hint" style={{ padding: 24 }}>
-                Graph library failed to load (CDN blocked?). Use the list below.
-              </p>
-            ) : (
-              <div
-                ref={hostRef}
-                id="ancestryNetwork"
-                style={{ flex: 1, minHeight: 0 }}
-              />
-            )}
-            <div className="ancestry-footer">
-              Drag to pan · scroll to zoom · click a node to open its page
-            </div>
+      {/* Main story timeline */}
+      {timeline.length > 1 || officialCount > 0 ? (
+        <div className="ab-block">
+          <h3 className="ab-block-title">Story line</h3>
+          <p className="ab-block-hint">Prequels → this title → sequels</p>
+          <div className="ab-timeline">
+            {timeline.map((n, i) => (
+              <div key={`${n.id}-${i}`} className="ab-timeline-item">
+                {i > 0 ? <div className="ab-connector" aria-hidden /> : null}
+                <PosterCard
+                  href={n.current ? undefined : `/anime/${n.id}`}
+                  title={n.title}
+                  image={n.image}
+                  current={n.current}
+                  badge={n.badge}
+                  badgeType={n.badgeType}
+                  meta={[
+                    n.year ? String(n.year) : null,
+                    n.score != null ? `★ ${n.score.toFixed(1)}` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                />
+              </div>
+            ))}
           </div>
         </div>
       ) : null}
 
-      {relations.length > 0 ? (
-        <div className="ancestry-wrap">
-          {[...groups.entries()].map(([type, list]) => (
-            <div key={type} className="ancestry-group">
-              <div className="ancestry-type">{type.replace(/_/g, " ")}</div>
-              <div className="ancestry-nodes">
-                {list.map((r) => (
-                  <Link
-                    key={`${r.id}-${r.relationType}`}
-                    href={`/anime/${r.id}`}
-                    className="ancestry-node"
-                  >
-                    {r.title}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ))}
+      {/* Side stories / spin-offs / alternatives */}
+      {sideOrbit.length > 0 ? (
+        <div className="ab-block">
+          <h3 className="ab-block-title">Side stories &amp; variants</h3>
+          <p className="ab-block-hint">OVAs, spin-offs, movies, alternates</p>
+          <div className="ab-grid">
+            {sideOrbit.map((r) => (
+              <PosterCard
+                key={`${r.id}-${r.relationType}`}
+                href={`/anime/${r.id}`}
+                title={r.title}
+                image={r.image}
+                badge={labelType(r.relationType)}
+                badgeType={r.relationType}
+                meta={[
+                  r.format,
+                  r.year ? String(r.year) : null,
+                  r.score != null ? `★ ${r.score.toFixed(1)}` : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              />
+            ))}
+          </div>
         </div>
+      ) : null}
+
+      {/* Recommended similar */}
+      {recommended.length > 0 ? (
+        <div className="ab-block">
+          <h3 className="ab-block-title">Related &amp; similar</h3>
+          <p className="ab-block-hint">
+            Community recommendations on AniList — not official sequels
+          </p>
+          <div className="ab-grid">
+            {recommended.map((r) => (
+              <PosterCard
+                key={`rec-${r.id}`}
+                href={`/anime/${r.id}`}
+                title={r.title}
+                image={r.image}
+                badge="Similar"
+                badgeType="RECOMMENDED"
+                meta={[
+                  r.format,
+                  r.year ? String(r.year) : null,
+                  r.score != null ? `★ ${r.score.toFixed(1)}` : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              />
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {other.length > 0 ? (
+        <div className="ab-block">
+          <h3 className="ab-block-title">Also linked</h3>
+          <div className="ab-grid">
+            {other.map((r) => (
+              <PosterCard
+                key={`${r.id}-${r.relationType}`}
+                href={`/anime/${r.id}`}
+                title={r.title}
+                image={r.image}
+                badge={labelType(r.relationType)}
+                badgeType={r.relationType}
+                meta={[r.format, r.year ? String(r.year) : null]
+                  .filter(Boolean)
+                  .join(" · ")}
+              />
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {!loading && !relations.length ? (
+        <p className="tools-hint" style={{ marginTop: 8 }}>
+          Try a multi-season franchise (e.g. Attack on Titan, Fate, Monogatari) for
+          a full map.
+        </p>
       ) : null}
     </section>
   );
