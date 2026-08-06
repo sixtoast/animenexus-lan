@@ -2,20 +2,19 @@
 
 | Sprint | Theme | Status |
 |--------|--------|--------|
-| 1–6 | Foundation → Auth | ✅ |
-| 7 | Taste profile | ✅ |
-| 8 | Discover extras | next |
-| 9 | Playful tools | |
+| 1–7 | Foundation → Taste | ✅ |
+| 8 | Discover extras | ✅ |
+| 9 | Playful tools | next |
 | 10 | AI & sauce | |
 | 11 | Polish | |
 
-## Sprint 7 — Taste ✅
+## Sprint 8 — Discover ✅
 
-- [x] Stats from local watchlist (hours, episodes, scores)
-- [x] Status + format bars, decade chips
-- [x] Top rated & recently updated
-- [x] `/taste` + navbar
+- [x] `/seasonal` chart (prev / current / next season tabs)
+- [x] Airing-now strip
+- [x] `/daily` deterministic daily pick
+- [x] Navbar + home links
 
-## Sprint 8 — Preview
+## Sprint 9 — Preview
 
-Seasonal chart, airing schedule, daily pick.
+Fusion / compare / challenge-style playful tools.

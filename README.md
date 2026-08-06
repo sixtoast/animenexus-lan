@@ -2,13 +2,13 @@
 
 **Repo:** https://github.com/sixtoast/animenexus-lantern
 
-## Current: Sprint 7
+## Current: Sprint 8
 
-Taste profile from your local watchlist.
+Seasonal chart · airing · daily pick.
 
 ```bash
 npm install && npm run dev
 ```
 
-- http://localhost:3000/taste  
-- Fill the list via Browse or Account sync first
+- http://localhost:3000/seasonal  
+- http://localhost:3000/daily  
