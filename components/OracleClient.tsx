@@ -29,11 +29,18 @@ export function OracleClient() {
   const [vibeCards, setVibeCards] = useState<ResolvedPick[]>([]);
   const [busy, setBusy] = useState(false);
   const [useCloud, setUseCloud] = useState(false);
+  const [bandFlash, setBandFlash] = useState(false);
 
   const local = useMemo(() => {
     void seed;
     return consultOracle(entries);
   }, [entries, seed]);
+
+  function switchMode(id: OracleMode) {
+    setMode(id);
+    setBandFlash(true);
+    window.setTimeout(() => setBandFlash(false), 420);
+  }
 
   async function resolvePick(p: VibecastPick): Promise<ResolvedPick> {
     const fromList = entries.find(
@@ -112,14 +119,14 @@ export function OracleClient() {
   }
 
   return (
-    <div className="oracle">
-      <div className="feed-tabs" role="tablist" aria-label="Oracle modes">
+    <div className={"oracle" + (bandFlash ? " band-flash" : "")}>
+      <div className="feed-tabs oracle-bands" role="tablist" aria-label="Oracle modes">
         {ORACLE_MODES.map((m) => (
           <button
             key={m.id}
             type="button"
             className={"feed-tab" + (mode === m.id ? " active" : "")}
-            onClick={() => setMode(m.id)}
+            onClick={() => switchMode(m.id)}
             title={m.blurb}
           >
             {m.label}
@@ -170,7 +177,12 @@ export function OracleClient() {
               ? `/anime/${c.anime.id}`
               : `/browse?q=${encodeURIComponent(c.title)}`;
             return (
-              <Link key={`${c.title}-${i}`} href={href} className="vibe-card">
+              <Link
+                key={`${c.title}-${i}`}
+                href={href}
+                className="vibe-card vibe-deal"
+                style={{ "--i": i } as React.CSSProperties}
+              >
                 {c.anime?.image ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={c.anime.image} alt="" />
@@ -186,14 +198,14 @@ export function OracleClient() {
           })}
         </div>
       ) : useCloud && cloudText ? (
-        <article className="oracle-card">
+        <article className="oracle-card oracle-in">
           <p className="detail-kicker">Cloud · {mode}</p>
           <div className="oracle-body" style={{ whiteSpace: "pre-wrap" }}>
             {cloudText}
           </div>
         </article>
       ) : (
-        <article className="oracle-card">
+        <article className="oracle-card oracle-in">
           <p className="detail-kicker">On-device</p>
           <h2 className="oracle-headline">{local.headline}</h2>
           <p className="oracle-body">{local.body}</p>
