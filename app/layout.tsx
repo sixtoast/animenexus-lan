@@ -40,7 +40,7 @@ export default function RootLayout({
         {children}
         <footer className="site-footer">
           <div className="container">
-            AnimeNexus · Lantern · Sprint 2 · browse & filters · Data via{" "}
+            AnimeNexus · Lantern · Sprint 3 · detail pages · Data via{" "}
             <a href="https://anilist.co" target="_blank" rel="noreferrer">
               AniList
             </a>
