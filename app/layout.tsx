@@ -17,11 +17,14 @@ import { LoadingTheater } from "@/components/LoadingTheater";
 import { RoomEnter } from "@/components/RoomEnter";
 import { RouteTune } from "@/components/RouteTune";
 import { LanternMemoryBoot } from "@/components/LanternMemoryBoot";
+import { SealMomentHost } from "@/components/SealMoment";
+import { EnvironmentController } from "@/components/EnvironmentController";
 import "./globals.css";
 import "./button.css";
 import "./modal.css";
 import "./quote.css";
 import "./ritual.css";
+import "./seal-env.css";
 import "./signal-motion.css";
 import "./nav-polish.css";
 import "./sprint-a.css";
@@ -75,7 +78,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon.svg" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('anime_nexus_theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');var v=localStorage.getItem('anime_nexus_view_mode');if(v)document.documentElement.dataset.viewMode=v;}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('anime_nexus_theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');var v=localStorage.getItem('anime_nexus_view_mode');if(v)document.documentElement.dataset.viewMode=v;var h=new Date().getHours();var tod=h<5||h>=21?'late-night':h<12?'morning':h<17?'afternoon':'evening';document.documentElement.dataset.tod=tod;}catch(e){}})();`,
           }}
         />
       </head>
@@ -85,6 +88,7 @@ export default function RootLayout({
             <WatchlistProvider>
               <SessionProvider>
                 <LanternMemoryBoot />
+                <EnvironmentController />
                 <ScrollProgress />
                 <SakuraCanvas />
                 <PwaRegister />
@@ -96,6 +100,7 @@ export default function RootLayout({
                 <CommandPalette />
                 <SessionTools />
                 <ConfettiHost />
+                <SealMomentHost />
                 <ShortcutsHelp />
                 <LoadingTheater />
                 <footer className="site-footer">
