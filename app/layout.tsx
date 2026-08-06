@@ -18,6 +18,7 @@ import { RouteTune } from "@/components/RouteTune";
 import { LanternMemoryBoot } from "@/components/LanternMemoryBoot";
 import { SealMomentHost } from "@/components/SealMoment";
 import { EnvironmentController } from "@/components/EnvironmentController";
+import { MascotHost } from "@/components/mascot/MascotHost";
 import "./globals.css";
 import "./button.css";
 import "./modal.css";
@@ -28,6 +29,7 @@ import "./signal-motion.css";
 import "./card-polish.css";
 import "./nav-polish.css";
 import "./layout-shell.css";
+import "./mascot.css";
 import "./sprint-a.css";
 import "./ai-panel.css";
 import "./cmdk.css";
@@ -98,6 +100,7 @@ export default function RootLayout({
                 <div className="app-shell">
                   <RoomEnter>{children}</RoomEnter>
                 </div>
+                <MascotHost />
                 <AIPanel />
                 <CommandPalette />
                 <SessionTools />
