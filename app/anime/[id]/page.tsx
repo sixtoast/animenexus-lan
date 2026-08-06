@@ -1,7 +1,7 @@
 import "./detail.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { fetchAnimeById } from "@/lib/anilist";
+import { fetchAnimeDetail } from "@/lib/anilist-detail";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const num = parseInt(id, 10);
   if (isNaN(num)) return { title: "Anime · AnimeNexus" };
   try {
-    const anime = await fetchAnimeById(num);
+    const anime = await fetchAnimeDetail(num);
     if (!anime) return { title: "Not found · AnimeNexus" };
     return {
       title: `${anime.title} · AnimeNexus`,
@@ -44,7 +44,7 @@ export default async function AnimeDetailPage({ params }: Props) {
 
   let anime;
   try {
-    anime = await fetchAnimeById(num);
+    anime = await fetchAnimeDetail(num);
   } catch {
     notFound();
   }
