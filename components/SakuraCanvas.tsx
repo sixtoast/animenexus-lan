@@ -22,11 +22,32 @@ export function SakuraCanvas() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+
     let w = 0;
     let h = 0;
     let raf = 0;
     const petals: Petal[] = [];
-    const N = 28;
+    const baseN =
+      typeof navigator !== "undefined" && navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4
+        ? 16
+        : 28;
+
+    function speedMul() {
+      const s = document.documentElement.dataset.session;
+      if (s === "tonight") return 0.65;
+      if (s === "break") return 0.45;
+      return 1;
+    }
+
+    function alphaMul() {
+      const s = document.documentElement.dataset.session;
+      if (s === "tonight") return 1.15;
+      if (s === "break") return 0.55;
+      return 1;
+    }
 
     function resize() {
       w = window.innerWidth;
@@ -50,13 +71,15 @@ export function SakuraCanvas() {
     }
 
     resize();
-    for (let i = 0; i < N; i++) petals.push(spawn());
+    for (let i = 0; i < baseN; i++) petals.push(spawn());
 
     function tick() {
       ctx!.clearRect(0, 0, w, h);
+      const sm = speedMul();
+      const am = alphaMul();
       for (const p of petals) {
-        p.y += p.speed;
-        p.x += p.drift + Math.sin(p.y * 0.01) * 0.3;
+        p.y += p.speed * sm;
+        p.x += (p.drift + Math.sin(p.y * 0.01) * 0.3) * sm;
         p.rot += p.rotSpeed;
         if (p.y > h + 20) {
           Object.assign(p, spawn({ y: -20, x: Math.random() * w }));
@@ -64,7 +87,7 @@ export function SakuraCanvas() {
         ctx!.save();
         ctx!.translate(p.x, p.y);
         ctx!.rotate(p.rot);
-        ctx!.fillStyle = `rgba(240, 160, 144, ${p.alpha})`;
+        ctx!.fillStyle = `rgba(240, 160, 144, ${p.alpha * am})`;
         ctx!.beginPath();
         ctx!.ellipse(0, 0, p.r, p.r * 0.55, 0, 0, Math.PI * 2);
         ctx!.fill();

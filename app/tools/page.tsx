@@ -1,5 +1,6 @@
 import Link from "next/link";
 import "./tools.css";
+import "../desk.css";
 
 export const metadata = {
   title: "Tools · AnimeNexus",
@@ -26,17 +27,28 @@ export default function ToolsHubPage() {
     <main>
       <section className="hero" style={{ paddingBottom: 12 }}>
         <div className="container">
-          <div className="hero-badge">Desk tools · Sprint K</div>
+          <div className="hero-badge">Night Desk · tools</div>
           <h1>
             Desk <span>tools</span>
           </h1>
-          <p>Fusion, radar, stats, fan zone, sauce, oracle, motion.</p>
+          <p>One frequency desk — fusion, radar, stats, fan zone, sauce, oracle, motion.</p>
         </div>
       </section>
       <section className="container" style={{ paddingBottom: 48 }}>
+        <div className="desk-band">
+          <span>
+            <strong>Lantern</strong> · pick a instrument
+          </span>
+          <Link href="/">← Home</Link>
+        </div>
         <div className="tools-hub">
-          {TOOLS.map((t) => (
-            <Link key={t.href} href={t.href} className="tools-hub-card">
+          {TOOLS.map((t, i) => (
+            <Link
+              key={t.href}
+              href={t.href}
+              className="tools-hub-card"
+              style={{ "--i": i } as React.CSSProperties}
+            >
               <span className="tools-hub-emoji">{t.emoji}</span>
               <h2>{t.title}</h2>
               <p>{t.blurb}</p>
