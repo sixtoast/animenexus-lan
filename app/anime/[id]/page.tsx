@@ -1,3 +1,4 @@
+import "./detail.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchAnimeById } from "@/lib/anilist";
