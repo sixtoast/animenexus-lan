@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { RadarClient } from "@/components/RadarClient";
 import "../tools.css";
-import "../../airing/airing.css";
+import "../stats/stats.css";
 
 export const metadata = {
   title: "Radar · AnimeNexus",
-  description: "Genre preference bars from your list.",
+  description: "Scan upcoming / not-yet-released anime by genre and studio.",
 };
 
 export default function Page() {
@@ -17,7 +17,7 @@ export default function Page() {
             <Link href="/tools">Tools</Link> · Radar
           </div>
           <h1>Radar</h1>
-          <p>Genre preference intensity from your list.</p>
+          <p>Upcoming titles from AniList — filter by genre or studio.</p>
         </div>
       </section>
       <section className="container" style={{ paddingBottom: 48 }}>
