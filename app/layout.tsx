@@ -26,6 +26,7 @@ import "./quote.css";
 import "./ritual.css";
 import "./seal-env.css";
 import "./signal-motion.css";
+import "./card-polish.css";
 import "./nav-polish.css";
 import "./sprint-a.css";
 import "./ai-panel.css";
