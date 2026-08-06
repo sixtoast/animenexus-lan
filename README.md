@@ -2,13 +2,13 @@
 
 **Repo:** https://github.com/sixtoast/animenexus-lantern
 
-## Current: Sprint 9
+## Current: Sprint 10
 
-Playful tools: compare · fusion · challenge.
+Sauce (trace.moe) · Night Desk oracle.
 
 ```bash
 npm install && npm run dev
 ```
 
-- http://localhost:3000/tools  
-- http://localhost:3000/tools/compare  
+- http://localhost:3000/tools/sauce  
+- http://localhost:3000/tools/oracle  
