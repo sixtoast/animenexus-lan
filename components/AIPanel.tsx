@@ -10,7 +10,7 @@ import {
   type AIProviderId,
   type AISettings,
 } from "@/lib/ai-settings";
-import { callChatCompletions, testAIConnection } from "@/lib/ai-chat";
+import { streamChatCompletions, testAIConnection } from "@/lib/ai-chat";
 import { useToast } from "@/components/ToastProvider";
 
 type Msg = { role: "user" | "assistant" | "system"; content: string };
@@ -107,10 +107,10 @@ export function AIPanel() {
     }
     setInput("");
     const next: Msg[] = [...messages, { role: "user", content: v }];
-    setMessages(next);
+    setMessages([...next, { role: "assistant", content: "" }]);
     setBusy(true);
     try {
-      const reply = await callChatCompletions(
+      await streamChatCompletions(
         [
           {
             role: "system",
@@ -122,11 +122,26 @@ export function AIPanel() {
             content: m.content,
           })),
         ],
-        { settings: readAISettings() },
+        {
+          settings: readAISettings(),
+          onToken: (chunk) => {
+            setMessages((m) => {
+              const copy = [...m];
+              const last = copy[copy.length - 1];
+              if (last?.role === "assistant") {
+                copy[copy.length - 1] = {
+                  role: "assistant",
+                  content: last.content + chunk,
+                };
+              }
+              return copy;
+            });
+          },
+        },
       );
-      setMessages((m) => [...m, { role: "assistant", content: reply }]);
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Chat failed", "😅");
+      setMessages((m) => m.filter((x, i) => !(i === m.length - 1 && !x.content)));
     } finally {
       setBusy(false);
     }
@@ -258,7 +273,8 @@ export function AIPanel() {
                   </button>
                 </div>
                 <p className="taste-footnote">
-                  Keys stay in this browser (anime_nexus_ai_settings).
+                  Keys stay in this browser (anime_nexus_ai_settings). Chat
+                  streams when the provider supports SSE.
                 </p>
               </div>
             ) : null}
@@ -271,11 +287,10 @@ export function AIPanel() {
               ) : (
                 messages.map((m, i) => (
                   <div key={i} className={"ai-msg " + m.role}>
-                    {m.content}
+                    {m.content || (busy && m.role === "assistant" ? "…" : "")}
                   </div>
                 ))
               )}
-              {busy ? <p className="taste-footnote">Thinking…</p> : null}
             </div>
 
             <div className="ai-quick">
