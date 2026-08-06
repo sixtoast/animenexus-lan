@@ -18,6 +18,7 @@ import {
   motionFromEmotions,
   type MotionProfile,
 } from "./emotions";
+import { screenToHabitatTarget } from "./ui-registry";
 
 type MascotState = {
   enabled: boolean;
@@ -29,6 +30,7 @@ type MascotState = {
   lastInteractionAt: number;
   position: NavTarget;
   target: NavTarget | null;
+  lookBias: { x: number; y: number };
   setEnabled: (v: boolean) => void;
   setAnim: (a: MascotAnim) => void;
   requestAnim: (req: AnimRequest) => boolean;
@@ -55,6 +57,7 @@ export const useMascotStore = create<MascotState>((set, get) => ({
   lastInteractionAt: Date.now(),
   position: { x: 0, z: 0 },
   target: null,
+  lookBias: { x: 0, y: 0 },
   setEnabled: (v) => set({ enabled: v }),
   setAnim: (a) => set({ anim: a }),
   requestAnim: (req) => {
@@ -159,7 +162,13 @@ export const useMascotStore = create<MascotState>((set, get) => ({
       case "tick": {
         const { busyUntil, anim, emotions } = get();
         if (Date.now() < busyUntil) break;
-        if (anim === "happy" || anim === "wave" || anim === "surprised") break;
+        if (
+          anim === "happy" ||
+          anim === "wave" ||
+          anim === "surprised" ||
+          anim === "point"
+        )
+          break;
         if (anim === "sleep") {
           if (shouldWake(emotions, false)) {
             requestAnim({ anim: "idle" });
@@ -168,6 +177,32 @@ export const useMascotStore = create<MascotState>((set, get) => ({
           break;
         }
         get().runBehaviourTick();
+        break;
+      }
+      case "notice-ui":
+        bumpEmotion("curiosity", 0.06);
+        bumpEmotion("attention", 0.04);
+        if (get().emotions.curiosity > 0.5 && Date.now() > get().busyUntil) {
+          requestAnim({ anim: "point", holdMs: 1400 });
+        }
+        break;
+      case "ui-hover": {
+        bumpEmotion("curiosity", 0.04);
+        bumpEmotion("attention", 0.06);
+        const hz = screenToHabitatTarget(e.clientX, e.clientY);
+        const t = clampToHabitat(hz.x * 0.85, hz.z);
+        set({
+          lookBias: {
+            x: (e.clientX / window.innerWidth - 0.5) * 2,
+            y: (e.clientY / window.innerHeight - 0.5) * 2,
+          },
+        });
+        if (Date.now() > get().busyUntil && Math.random() < 0.4) {
+          set({ target: t, goal: "wander" });
+          requestAnim({ anim: "walk" });
+        } else {
+          requestAnim({ anim: "point", holdMs: 900 });
+        }
         break;
       }
       case "click":
@@ -229,7 +264,7 @@ export const useMascotStore = create<MascotState>((set, get) => ({
         bumpEmotion("curiosity", 0.1);
         bumpEmotion("attention", 0.12);
         bumpEmotion("sleepiness", -0.06);
-        bumpEmotion("stress", 0.04); // mild novelty
+        bumpEmotion("stress", 0.04);
         if (get().anim === "sleep") {
           requestAnim({ anim: "wave", holdMs: 800, force: true });
           set({ goal: "seek-attention" });

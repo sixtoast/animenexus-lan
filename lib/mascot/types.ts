@@ -7,9 +7,9 @@ export type MascotAnim =
   | "wave"
   | "think"
   | "sleep"
-  | "surprised";
+  | "surprised"
+  | "point";
 
-/** All internal drives (0–1). */
 export type MascotEmotions = {
   curiosity: number;
   energy: number;
@@ -29,7 +29,9 @@ export type MascotEvent =
   | { type: "route"; path: string }
   | { type: "idle-long" }
   | { type: "go-to"; x: number; z: number }
-  | { type: "tick" };
+  | { type: "tick" }
+  | { type: "notice-ui"; landmarkId?: string }
+  | { type: "ui-hover"; clientX: number; clientY: number };
 
 export const HABITAT_BOUNDS = {
   minX: -0.55,
