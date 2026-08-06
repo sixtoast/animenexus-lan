@@ -25,6 +25,8 @@ import "./session-tools.css";
 import "./sprint-l.css";
 import "./oracle-vibe.css";
 import "./sprint-n.css";
+import "./motion.css";
+import "./desk.css";
 
 export const metadata: Metadata = {
   title: "AnimeNexus — Lantern",
