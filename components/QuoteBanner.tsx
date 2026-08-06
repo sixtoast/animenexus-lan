@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/Button";
 
 type Quote = { quote: string; character?: string; anime?: string };
 
-/** Seconds between automatic rotations */
 const CYCLE_MS = 14000;
 
 const FALLBACKS: Quote[] = [
@@ -31,7 +30,8 @@ const FALLBACKS: Quote[] = [
     anime: "Fullmetal Alchemist",
   },
   {
-    quote: "The world isn’t perfect. But it’s there for us, doing the best it can.",
+    quote:
+      "The world isn’t perfect. But it’s there for us, doing the best it can.",
     character: "Okabe Rintarou",
     anime: "Steins;Gate",
   },
@@ -77,9 +77,9 @@ export function QuoteBanner() {
   const [fade, setFade] = useState(false);
   const { showToast } = useToast();
 
-  const startRef = useRef<number>(Date.now());
-  const pausedAtRef = useRef<number | null>(null);
-  const elapsedWhenPaused = useRef(0);
+  const accumulated = useRef(0);
+  const segmentStart = useRef(Date.now());
+  const pausedRef = useRef(false);
   const reduceMotion = useRef(false);
 
   useEffect(() => {
@@ -88,18 +88,20 @@ export function QuoteBanner() {
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }, []);
 
+  const resetTimer = () => {
+    accumulated.current = 0;
+    segmentStart.current = Date.now();
+    setProgress(0);
+  };
+
   const load = useCallback(async (opts?: { soft?: boolean }) => {
     if (!opts?.soft) setBusy(true);
     setFade(true);
     try {
       const next = await fetchQuoteChain();
-      // brief beat so text swap feels intentional
       await new Promise((r) => setTimeout(r, reduceMotion.current ? 0 : 160));
       setQ(next);
-      startRef.current = Date.now();
-      elapsedWhenPaused.current = 0;
-      pausedAtRef.current = null;
-      setProgress(0);
+      resetTimer();
     } finally {
       setFade(false);
       setBusy(false);
@@ -110,50 +112,37 @@ export function QuoteBanner() {
     load();
   }, [load]);
 
-  // Visual timer + auto-advance
   useEffect(() => {
     if (!q || busy) return;
 
     let raf = 0;
     const tick = () => {
-      if (paused) {
-        raf = requestAnimationFrame(tick);
-        return;
-      }
-      const elapsed =
-        elapsedWhenPaused.current + (Date.now() - startRef.current);
-      const p = Math.min(1, elapsed / CYCLE_MS);
-      setProgress(p);
-      if (p >= 1) {
-        load({ soft: true });
-        return;
+      if (!pausedRef.current) {
+        const elapsed =
+          accumulated.current + (Date.now() - segmentStart.current);
+        const p = Math.min(1, elapsed / CYCLE_MS);
+        setProgress(p);
+        if (p >= 1) {
+          load({ soft: true });
+          return;
+        }
       }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [q, busy, paused, load]);
+  }, [q, busy, load]);
 
-  function onPause(enter: boolean) {
-    if (enter) {
+  function setPause(next: boolean) {
+    if (next === pausedRef.current) return;
+    if (next) {
+      accumulated.current += Date.now() - segmentStart.current;
+      pausedRef.current = true;
       setPaused(true);
-      pausedAtRef.current = Date.now();
-      elapsedWhenPaused.current +=
-        Date.now() -
-        (pausedAtRef.current
-          ? startRef.current
-          : startRef.current);
-      // correct elapsed: time since last resume
-      elapsedWhenPaused.current =
-        elapsedWhenPaused.current -
-        (Date.now() - startRef.current) +
-        (Date.now() - startRef.current);
-      // simpler: freeze progress value by updating elapsed baseline
-      elapsedWhenPaused.current =
-        progress * CYCLE_MS;
     } else {
+      segmentStart.current = Date.now();
+      pausedRef.current = false;
       setPaused(false);
-      startRef.current = Date.now();
     }
   }
 
@@ -171,16 +160,17 @@ export function QuoteBanner() {
   }
 
   const pct = Math.round(progress * 100);
+  const secsLeft = Math.max(0, Math.ceil((1 - progress) * (CYCLE_MS / 1000)));
 
   return (
     <div
       className={"quote-banner" + (paused ? " is-paused" : "")}
-      onMouseEnter={() => onPause(true)}
-      onMouseLeave={() => onPause(false)}
-      onFocusCapture={() => onPause(true)}
+      onMouseEnter={() => setPause(true)}
+      onMouseLeave={() => setPause(false)}
+      onFocusCapture={() => setPause(true)}
       onBlurCapture={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-          onPause(false);
+          setPause(false);
         }
       }}
     >
@@ -190,7 +180,7 @@ export function QuoteBanner() {
           Signal quote
         </span>
         <span className="quote-timer-label" aria-live="polite">
-          {paused ? "Paused" : busy ? "Tuning…" : `${Math.ceil((1 - progress) * (CYCLE_MS / 1000))}s`}
+          {paused ? "Paused" : busy ? "Tuning…" : `${secsLeft}s`}
         </span>
       </div>
 
