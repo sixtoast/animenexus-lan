@@ -2,7 +2,7 @@
 
 Mood-based anime recommendations, a deep taste profile, and AI-powered tools — a late-night broadcast console.
 
-This repository is a **Next.js 15** project that hosts the full original single-page application while providing an App Router shell for incremental migration to React components.
+**Next.js 15** project with an App Router shell. The full original SPA lives at `public/index.html` and is served at `/app`.
 
 ## Quick start
 
@@ -10,40 +10,66 @@ This repository is a **Next.js 15** project that hosts the full original single-
 git clone https://github.com/sixtoast/animenexus-lantern.git
 cd animenexus-lantern
 
-# Restore the full SPA + design CSS from compressed assets
-python3 scripts/reconstitute.py
+# Add the full Lantern SPA (your original ~1MB index.html)
+cp /path/to/your/index.html public/index.html
 
 npm install
 npm run dev
 ```
 
-- **Hub page:** http://localhost:3000  
-- **Full Lantern console:** http://localhost:3000/app
+| URL | What |
+|-----|------|
+| http://localhost:3000 | Next.js hub / migration landing |
+| http://localhost:3000/app | Full Lantern console (SPA) |
 
-## Architecture
+Repo: **https://github.com/sixtoast/animenexus-lantern**
 
-| Path | Role |
-|------|------|
-| `app/` | Next.js App Router (layout, landing, future React pages) |
-| `public/index.html` | Complete original SPA (after `reconstitute.py`) |
-| `styles/lantern.css` | Extracted design system (after `reconstitute.py`) |
-| `scripts/*.gz*` | Compressed source of the SPA (checked into git) |
-| `components/` | Reserved for React extractions |
-| `lib/` | Reserved for AniList / Jikan / AI clients |
+## Project layout
 
-`next.config.ts` rewrites `/app` → `/index.html` so the full console keeps working while you migrate features into React.
+```
+animenexus-lantern/
+├── app/                 # Next.js App Router
+│   ├── layout.tsx       # metadata, fonts, theme
+│   ├── page.tsx         # hub landing
+│   └── globals.css      # shell tokens
+├── components/          # future React ports
+├── lib/                 # future API clients (AniList / Jikan)
+├── public/
+│   ├── index.html       # full SPA (add this file)
+│   └── manifest.json
+├── styles/              # optional extracted lantern.css
+├── next.config.ts       # /app → /index.html rewrite
+├── package.json
+└── tsconfig.json
+```
 
-### Features (SPA)
+## Why this structure?
 
-Mood recommendations, watchlist, AniList/MAL auth, taste profile, ancestry graph, compare, stats, seasonal charts, daily challenge, Night Desk AI, sauce (trace.moe), session tools, ARG lore layer, and more.
+The source app is a large monolithic HTML file (~970KB of CSS + JS + markup). A line-by-line React rewrite of every feature (mood engine, watchlist, AI Night Desk, ARG lore, ancestry graph, etc.) is a multi-sprint effort.
+
+This repo:
+
+1. **Runs today** — drop in `public/index.html` and use `/app`.
+2. **Is real Next.js** — App Router, TypeScript, image config for AniList covers.
+3. **Supports gradual migration** — extract into `components/` and `lib/` over time.
+
+## SPA features (when index.html is present)
+
+- Mood recommendations & filters  
+- Watchlist + AniList / MAL sign-in  
+- Taste profile, achievements, genre heatmap  
+- Ancestry graph, compare, stats, seasonal  
+- Daily challenge, quotes, radar, fusion  
+- Night Desk AI, sauce (trace.moe)  
+- Session tools (queue, break timer, flashback)  
+- Night Signal ARG / lore layer  
 
 ## Scripts
 
 ```bash
-python3 scripts/reconstitute.py   # restore public/index.html + styles/lantern.css
-npm run dev
-npm run build
-npm run start
+npm run dev      # development
+npm run build    # production build
+npm run start    # serve production
 ```
 
 ## License
