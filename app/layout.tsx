@@ -4,6 +4,7 @@ import { WatchlistProvider } from "@/components/WatchlistProvider";
 import { SessionProvider } from "@/components/SessionProvider";
 import "./globals.css";
 import "./card-link.css";
+import "./nav-polish.css";
 
 export const metadata: Metadata = {
   title: "AnimeNexus — Lantern",
@@ -37,6 +38,7 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
           rel="stylesheet"
         />
+        <link rel="manifest" href="/manifest.webmanifest" />
       </head>
       <body>
         <WatchlistProvider>
@@ -45,7 +47,7 @@ export default function RootLayout({
             {children}
             <footer className="site-footer">
               <div className="container">
-                AnimeNexus · Lantern · Sprint 10 · sauce · Data via{" "}
+                AnimeNexus · Lantern · Sprint 11 · polish · Data via{" "}
                 <a href="https://anilist.co" target="_blank" rel="noreferrer">
                   AniList
                 </a>
