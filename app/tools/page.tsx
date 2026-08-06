@@ -3,40 +3,19 @@ import "./tools.css";
 
 export const metadata = {
   title: "Tools · AnimeNexus",
-  description: "Compare, fusion, challenge, sauce, and Night Desk.",
+  description: "Compare, fusion, radar, oracle, and more desk tools.",
 };
 
 const TOOLS = [
-  {
-    href: "/tools/compare",
-    emoji: "⚖️",
-    title: "Compare",
-    blurb: "Two titles, side by side — scores, formats, shared genres.",
-  },
-  {
-    href: "/tools/fusion",
-    emoji: "🧬",
-    title: "Fusion",
-    blurb: "Blend two signals and read a playful compatibility score.",
-  },
-  {
-    href: "/tools/challenge",
-    emoji: "🎯",
-    title: "Challenge",
-    blurb: "Guess score, year, or format from a popular cover.",
-  },
-  {
-    href: "/tools/sauce",
-    emoji: "🔍",
-    title: "Sauce",
-    blurb: "Trace a screenshot to its episode via trace.moe.",
-  },
-  {
-    href: "/tools/oracle",
-    emoji: "🕯️",
-    title: "Night Desk",
-    blurb: "Local oracle — finish, queue, or mood from your list.",
-  },
+  { href: "/tools/compare", emoji: "⚖️", title: "Compare", blurb: "Two titles side by side." },
+  { href: "/tools/fusion", emoji: "🧬", title: "Fusion", blurb: "Blend two signals + catalog children." },
+  { href: "/tools/dislike", emoji: "🙅", title: "Dislike reverse", blurb: "Opposite genre space." },
+  { href: "/tools/completionist", emoji: "✅", title: "Completionist", blurb: "Finish Watching, rank Planning." },
+  { href: "/tools/radar", emoji: "📡", title: "Radar", blurb: "Genre preference bars." },
+  { href: "/tools/challenge", emoji: "🎯", title: "Challenge", blurb: "Guess from a cover." },
+  { href: "/tools/sauce", emoji: "🔍", title: "Sauce", blurb: "trace.moe screenshot search." },
+  { href: "/tools/oracle", emoji: "🕯️", title: "Night Desk", blurb: "Local + cloud oracle." },
+  { href: "/airing", emoji: "📺", title: "Airing", blurb: "Schedule + releasing now." },
 ];
 
 export default function ToolsHubPage() {
@@ -44,14 +23,11 @@ export default function ToolsHubPage() {
     <main>
       <section className="hero" style={{ paddingBottom: 12 }}>
         <div className="container">
-          <div className="hero-badge">Playful tools · Sprint 10</div>
+          <div className="hero-badge">Discovery · Sprint E</div>
           <h1>
-            Desk <span>toys</span>
+            Desk <span>tools</span>
           </h1>
-          <p>
-            Compare, fuse, challenge, find sauce, or ask the Night Desk — no
-            cloud LLM required.
-          </p>
+          <p>Fusion recs, reverse signals, completion queue, radar, airing.</p>
         </div>
       </section>
       <section className="container" style={{ paddingBottom: 48 }}>
