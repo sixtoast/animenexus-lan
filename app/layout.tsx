@@ -17,6 +17,7 @@ import { LoadingTheater } from "@/components/LoadingTheater";
 import { RoomEnter } from "@/components/RoomEnter";
 import "./globals.css";
 import "./button.css";
+import "./modal.css";
 import "./nav-polish.css";
 import "./sprint-a.css";
 import "./ai-panel.css";
