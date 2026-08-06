@@ -32,6 +32,10 @@ export function normalizeEntry(
     progress: typeof entry.progress === "number" ? entry.progress : 0,
     userRating: typeof entry.userRating === "number" ? entry.userRating : 0,
     notes: typeof entry.notes === "string" ? entry.notes : "",
+    tags: Array.isArray(entry.tags) ? entry.tags.map(String) : undefined,
+    genres: Array.isArray((entry as { genres?: string[] }).genres)
+      ? (entry as { genres?: string[] }).genres
+      : undefined,
     addedAt: entry.addedAt || now(),
     updatedAt: entry.updatedAt || now(),
   };
@@ -60,7 +64,15 @@ export function writeWatchlist(entries: WatchlistEntry[]) {
 export function animeToEntry(
   anime: Pick<
     Anime,
-    "id" | "title" | "image" | "format" | "year" | "episodes" | "duration" | "score"
+    | "id"
+    | "title"
+    | "image"
+    | "format"
+    | "year"
+    | "episodes"
+    | "duration"
+    | "score"
+    | "tags"
   >,
   status: WatchStatus = "planning",
 ): WatchlistEntry {
@@ -77,5 +89,6 @@ export function animeToEntry(
     progress: 0,
     userRating: 0,
     notes: "",
+    genres: anime.tags?.length ? [...anime.tags] : undefined,
   });
 }
