@@ -136,3 +136,13 @@ export function statusLabel(s: WatchStatus): string {
   };
   return map[s] || s;
 }
+
+export {
+  getUserGenreWeights,
+  genreHeatmap,
+  buildTasteDNA,
+  parseTasteDNA,
+  compareSoulmates,
+  computeBadges,
+} from "./taste-dna";
+export type { TasteDNA, Badge } from "./taste-dna";
