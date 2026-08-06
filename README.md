@@ -1,42 +1,34 @@
 # AnimeNexus — Lantern
 
-Mood-based anime recommendations and late-night broadcast tools — migrating from a monolith SPA into **Next.js 15**.
-
+Migrating the monolith SPA into **Next.js 15**.  
 **Repo:** https://github.com/sixtoast/animenexus-lantern
 
-See **[SPRINTS.md](./SPRINTS.md)** for the full migration plan.
+See **[SPRINTS.md](./SPRINTS.md)** for the roadmap.
 
-## Sprint 1 (current)
+## Current: Sprint 2
 
-Foundation is live:
-
-- Lantern design tokens
-- Shared `Anime` types
-- AniList GraphQL client (`lib/anilist.ts`)
-- Navbar + home hero
-- **Live trending grid** from AniList
+- Live AniList trending on home
+- **`/browse`** — feed tabs, search, filters, load more
+- Shareable URL query params
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open http://localhost:3000
+- Home: http://localhost:3000  
+- Browse: http://localhost:3000/browse  
 
 ## Stack
 
-- Next.js 15 (App Router) · React 19 · TypeScript
-- AniList GraphQL (no API key required for public queries)
+Next.js 15 · React 19 · TypeScript · AniList GraphQL
 
 ## Layout
 
 ```
-app/           # routes + globals.css
-components/    # Navbar, AnimeCard, AnimeGrid
-lib/           # types, anilist client
-SPRINTS.md     # roadmap
+app/page.tsx          # home + trending
+app/browse/page.tsx   # catalog browse
+components/           # Navbar, cards, BrowseClient
+lib/anilist.ts        # GraphQL client
+lib/genres.ts         # filter constants
 ```
-
-## Next up — Sprint 2
-
-Browse filters, search, pagination.
