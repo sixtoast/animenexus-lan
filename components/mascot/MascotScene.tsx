@@ -3,6 +3,7 @@
 import { Canvas, ThreeEvent } from "@react-three/fiber";
 import { ContactShadows, Environment } from "@react-three/drei";
 import { PlaceholderChibi } from "./PlaceholderChibi";
+import { HabitatPlatforms } from "./HabitatPlatforms";
 import { useMascotStore } from "@/lib/mascot/store";
 import { clampToHabitat } from "@/lib/mascot/navigation";
 import { tryRunSkit } from "@/lib/mascot/run-skit";
@@ -45,6 +46,7 @@ function SceneContent({ reducedMotion }: { reducedMotion?: boolean }) {
       <pointLight position={[-2, 1, 2]} intensity={0.35} color="#f0a090" />
       <PlaceholderChibi />
       <Floor />
+      <HabitatPlatforms />
       {!reducedMotion ? (
         <ContactShadows
           position={[0, -0.72, 0]}
@@ -97,7 +99,6 @@ export function MascotScene({ reducedMotion, lowPower }: Props) {
       }}
       frameloop={reducedMotion ? "demand" : "always"}
       onPointerMissed={() => {}}
-      onClick={() => dispatch({ type: "click" })}
       aria-label="Lantern companion"
     >
       <SceneContent reducedMotion={reducedMotion} />
