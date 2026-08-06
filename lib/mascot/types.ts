@@ -39,6 +39,8 @@ export type MascotEvent =
   | { type: "route"; path: string }
   | { type: "idle-long" }
   | { type: "go-to"; x: number; z: number }
+  | { type: "climb"; x: number; z: number }
+  | { type: "drag"; x: number; z: number }
   | { type: "tick" }
   | { type: "notice-ui"; landmarkId?: string }
   | { type: "ui-hover"; clientX: number; clientY: number }
