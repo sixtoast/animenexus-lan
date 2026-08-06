@@ -18,6 +18,7 @@ import { RoomEnter } from "@/components/RoomEnter";
 import "./globals.css";
 import "./button.css";
 import "./modal.css";
+import "./quote.css";
 import "./nav-polish.css";
 import "./sprint-a.css";
 import "./ai-panel.css";
