@@ -62,6 +62,37 @@ export type BingoBoard = {
   createdAt: string;
 };
 
+/** All winning index lines on a 5×5 board */
+export const BINGO_LINES: number[][] = [
+  // rows
+  [0, 1, 2, 3, 4],
+  [5, 6, 7, 8, 9],
+  [10, 11, 12, 13, 14],
+  [15, 16, 17, 18, 19],
+  [20, 21, 22, 23, 24],
+  // cols
+  [0, 5, 10, 15, 20],
+  [1, 6, 11, 16, 21],
+  [2, 7, 12, 17, 22],
+  [3, 8, 13, 18, 23],
+  [4, 9, 14, 19, 24],
+  // diagonals
+  [0, 6, 12, 18, 24],
+  [4, 8, 12, 16, 20],
+];
+
+export function countBingoWins(marked: boolean[]): number {
+  let n = 0;
+  for (const line of BINGO_LINES) {
+    if (line.every((i) => marked[i])) n++;
+  }
+  return n;
+}
+
+export function markedCount(marked: boolean[]): number {
+  return marked.filter(Boolean).length;
+}
+
 export function readBingo(): BingoBoard | null {
   if (typeof window === "undefined") return null;
   try {
@@ -91,5 +122,5 @@ export function toggleBingo(i: number): BingoBoard | null {
   if (!b || i < 0 || i >= b.cells.length || b.cells[i] === "FREE") return b;
   b.marked[i] = !b.marked[i];
   localStorage.setItem(BINGO_KEY, JSON.stringify(b));
-  return b;
+  return { ...b, marked: [...b.marked] };
 }

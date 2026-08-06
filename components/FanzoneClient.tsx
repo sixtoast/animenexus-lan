@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   addConfession,
+  countBingoWins,
+  markedCount,
   newBingo,
   readBingo,
   readConfessions,
@@ -19,6 +21,9 @@ import { useWatchlist } from "@/components/WatchlistProvider";
 import { useToast } from "@/components/ToastProvider";
 import { isAIConfigured } from "@/lib/ai-settings";
 import { callChatCompletions } from "@/lib/ai-chat";
+import { Button } from "@/components/ui/Button";
+import { fireSeal } from "@/components/SealMoment";
+import { fireConfetti } from "@/components/ConfettiBurst";
 
 export function FanzoneClient() {
   const { entries } = useWatchlist();
@@ -30,10 +35,13 @@ export function FanzoneClient() {
   const [compareResult, setCompareResult] = useState<string | null>(null);
   const [freq, setFreq] = useState<string | null>(null);
   const [lastPct, setLastPct] = useState<number | null>(null);
+  const prevWins = useRef(0);
 
   useEffect(() => {
     setConfessions(readConfessions());
-    setBingo(readBingo() || newBingo());
+    const b = readBingo() || newBingo();
+    setBingo(b);
+    prevWins.current = countBingoWins(b.marked);
   }, []);
 
   function submitConfess() {
@@ -41,6 +49,35 @@ export function FanzoneClient() {
     setConfessions(next);
     setText("");
     showToast("Confession logged", "💌");
+  }
+
+  function onToggleCell(i: number) {
+    const next = toggleBingo(i);
+    if (!next) return;
+    setBingo(next);
+    const wins = countBingoWins(next.marked);
+    if (wins > prevWins.current) {
+      prevWins.current = wins;
+      fireSeal(
+        wins === 1 ? "First bingo line" : `${wins} bingo lines`,
+        "seal",
+      );
+      fireConfetti(1400);
+      showToast(
+        wins === 1 ? "Bingo!" : `${wins} lines complete`,
+        "✦",
+        true,
+      );
+    } else {
+      prevWins.current = wins;
+    }
+  }
+
+  function resetBoard() {
+    const b = newBingo();
+    setBingo(b);
+    prevWins.current = countBingoWins(b.marked);
+    showToast("Fresh board", "🎲");
   }
 
   async function exportDNA() {
@@ -101,6 +138,9 @@ export function FanzoneClient() {
     }
   }
 
+  const wins = bingo ? countBingoWins(bingo.marked) : 0;
+  const marked = bingo ? markedCount(bingo.marked) : 0;
+
   return (
     <div className="tools-panel fanzone">
       <section className="fz-section">
@@ -113,59 +153,80 @@ export function FanzoneClient() {
             placeholder="Anonymous local note…"
             maxLength={280}
           />
-          <button
-            type="button"
-            className="btn btn-accent btn-sm"
-            onClick={submitConfess}
-          >
+          <Button variant="accent" size="sm" onClick={submitConfess}>
             Post
-          </button>
+          </Button>
         </div>
         <ul className="confession-list">
           {confessions.map((c) => (
             <li key={c.id}>{c.text}</li>
           ))}
           {!confessions.length ? (
-            <li className="tools-hint">No confessions yet.</li>
+            <li className="tools-hint lantern-empty">
+              The booth is empty. Leave a local note only this browser will see.
+            </li>
           ) : null}
         </ul>
       </section>
 
       <section className="fz-section">
-        <h2>Bingo</h2>
-        <button
-          type="button"
-          className="btn btn-outline btn-sm"
-          onClick={() => setBingo(newBingo())}
-        >
-          New board
-        </button>
+        <div className="bingo-head">
+          <h2>Trope bingo</h2>
+          <Button variant="outline" size="sm" onClick={resetBoard}>
+            New board
+          </Button>
+        </div>
+        <p className="bingo-help">
+          Tap cells when a trope shows up. Center is free. Complete a row, column,
+          or diagonal for bingo.
+        </p>
         {bingo ? (
-          <div className="bingo-grid">
-            {bingo.cells.map((cell, i) => (
-              <button
-                key={`${cell}-${i}`}
-                type="button"
-                className={"bingo-cell" + (bingo.marked[i] ? " marked" : "")}
-                onClick={() => setBingo(toggleBingo(i))}
-              >
-                {cell}
-              </button>
-            ))}
-          </div>
+          <>
+            <div className="bingo-progress" aria-live="polite">
+              <span>
+                <strong>{marked}</strong> / 25 marked
+              </span>
+              <span>
+                <strong>{wins}</strong> line{wins === 1 ? "" : "s"}
+              </span>
+            </div>
+            <div
+              className="bingo-grid"
+              role="grid"
+              aria-label="Anime trope bingo board"
+            >
+              {bingo.cells.map((cell, i) => {
+                const isFree = cell === "FREE";
+                const markedCell = bingo.marked[i];
+                return (
+                  <button
+                    key={`${cell}-${i}`}
+                    type="button"
+                    role="gridcell"
+                    aria-pressed={markedCell}
+                    disabled={isFree}
+                    className={
+                      "bingo-cell" +
+                      (markedCell ? " marked" : "") +
+                      (isFree ? " is-free" : "")
+                    }
+                    onClick={() => onToggleCell(i)}
+                  >
+                    <span className="bingo-cell-label">{cell}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </>
         ) : null}
       </section>
 
       <section className="fz-section">
         <h2>Taste DNA</h2>
         <div className="daily-actions">
-          <button
-            type="button"
-            className="btn btn-accent btn-sm"
-            onClick={exportDNA}
-          >
+          <Button variant="accent" size="sm" onClick={exportDNA}>
             Export my DNA
-          </button>
+          </Button>
         </div>
         <label className="filter-label">Friend&apos;s code</label>
         <textarea
@@ -175,28 +236,28 @@ export function FanzoneClient() {
           onChange={(e) => setImportCode(e.target.value)}
           placeholder="Paste Taste DNA…"
         />
-        <button
-          type="button"
-          className="btn btn-outline btn-sm"
+        <Button
+          variant="outline"
+          size="sm"
           style={{ marginTop: 8 }}
           onClick={runCompare}
         >
           Compare
-        </button>
+        </Button>
         {compareResult ? (
           <p className="tools-hint" style={{ marginTop: 12 }}>
             {compareResult}
           </p>
         ) : null}
         {lastPct != null ? (
-          <button
-            type="button"
-            className="btn btn-outline btn-sm"
+          <Button
+            variant="outline"
+            size="sm"
             style={{ marginTop: 8 }}
             onClick={frequencyRead}
           >
             Frequency read (AI)
-          </button>
+          </Button>
         ) : null}
         {freq ? (
           <p className="oracle-cloud" style={{ marginTop: 12 }}>
