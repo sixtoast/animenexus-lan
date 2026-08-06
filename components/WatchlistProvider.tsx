@@ -26,6 +26,7 @@ type Ctx = {
   setProgress: (id: number, progress: number) => void;
   setUserRating: (id: number, rating: number) => void;
   clearAll: () => void;
+  replaceAll: (entries: WatchlistEntry[]) => void;
 };
 
 const WatchlistContext = createContext<Ctx | null>(null);
@@ -144,6 +145,13 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
     persist([]);
   }, [persist]);
 
+  const replaceAll = useCallback(
+    (next: WatchlistEntry[]) => {
+      persist(next);
+    },
+    [persist],
+  );
+
   const value = useMemo(
     () => ({
       entries,
@@ -156,6 +164,7 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
       setProgress,
       setUserRating,
       clearAll,
+      replaceAll,
     }),
     [
       entries,
@@ -168,6 +177,7 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
       setProgress,
       setUserRating,
       clearAll,
+      replaceAll,
     ],
   );
 
