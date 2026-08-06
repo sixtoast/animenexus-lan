@@ -36,6 +36,7 @@ export function PlaceholderChibi() {
       emotions,
       decayEmotions,
       dispatch,
+      lookBias,
     } = store;
 
     const motion = motionFromEmotions(emotions);
@@ -52,7 +53,13 @@ export function PlaceholderChibi() {
     if (!g || !p) return;
 
     let moving = false;
-    if (target && anim !== "sleep" && anim !== "happy" && anim !== "wave") {
+    if (
+      target &&
+      anim !== "sleep" &&
+      anim !== "happy" &&
+      anim !== "wave" &&
+      anim !== "point"
+    ) {
       const d = distXZ(position.x, position.z, target.x, target.z);
       if (d < 0.04) {
         setPosition(target);
@@ -88,6 +95,7 @@ export function PlaceholderChibi() {
     let rotZ = 0;
     let armSwing = 0;
     let headPitch = motion.headDroop;
+    let pointArm = false;
 
     switch (anim) {
       case "walk": {
@@ -108,6 +116,12 @@ export function PlaceholderChibi() {
         bob = 0.04 + breathe;
         armSwing = 0.25 + Math.sin(t * 9) * 0.9;
         rotZ = Math.sin(t * 6) * 0.1;
+        break;
+      case "point":
+        bob = 0.02 + breathe;
+        pointArm = true;
+        headPitch = -0.08;
+        armSwing = 0.1;
         break;
       case "think":
         bob = breathe;
@@ -141,14 +155,19 @@ export function PlaceholderChibi() {
 
     if (leftArm.current) leftArm.current.rotation.x = armSwing;
     if (rightArm.current) {
-      rightArm.current.rotation.x = anim === "wave" ? -0.2 : -armSwing;
-      rightArm.current.rotation.z =
-        anim === "wave" ? -0.5 + Math.sin(t * 9) * 0.55 : -0.4;
+      if (pointArm) {
+        rightArm.current.rotation.x = -1.1;
+        rightArm.current.rotation.z = -0.2;
+      } else {
+        rightArm.current.rotation.x = anim === "wave" ? -0.2 : -armSwing;
+        rightArm.current.rotation.z =
+          anim === "wave" ? -0.5 + Math.sin(t * 9) * 0.55 : -0.4;
+      }
     }
 
     if (head.current) {
-      const lookY = pointer.current.x * 0.25;
-      const lookX = -pointer.current.y * 0.15 + headPitch;
+      const lookY = pointer.current.x * 0.2 + lookBias.x * 0.2;
+      const lookX = -pointer.current.y * 0.12 + headPitch - lookBias.y * 0.12;
       head.current.rotation.y = THREE.MathUtils.lerp(
         head.current.rotation.y,
         lookY,
@@ -161,13 +180,11 @@ export function PlaceholderChibi() {
       );
     }
 
-    // Lantern tip glow tracks happiness/attention
     if (tip.current) {
       const mat = tip.current.material as THREE.MeshStandardMaterial;
       mat.emissiveIntensity = 0.2 + motion.glow * 0.7;
     }
 
-    // Cheek flush with happiness
     const cheekOp = 0.35 + emotions.happiness * 0.4;
     if (cheekL.current) {
       (cheekL.current.material as THREE.MeshStandardMaterial).opacity = cheekOp;
