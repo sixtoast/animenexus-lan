@@ -16,13 +16,26 @@ const FALLBACKS: Quote[] = [
     character: "The Cat",
     anime: "Howl’s Moving Castle",
   },
+  {
+    quote: "If you don’t take risks, you can’t create a future.",
+    character: "Monkey D. Luffy",
+    anime: "One Piece",
+  },
+  {
+    quote: "A lesson without pain is meaningless.",
+    character: "Edward Elric",
+    anime: "Fullmetal Alchemist",
+  },
 ];
 
 async function fetchQuoteChain(): Promise<Quote> {
-  const endpoints = ["https://api.animechan.io/v1/quotes/random"];
+  const endpoints = [
+    "https://api.animechan.io/v1/quotes/random",
+    "https://animechan.xyz/api/random",
+  ];
   for (const url of endpoints) {
     try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+      const res = await fetch(url, { signal: AbortSignal.timeout(3500) });
       if (!res.ok) continue;
       const data = await res.json();
       const q =
