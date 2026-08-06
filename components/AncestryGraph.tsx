@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import type { AnimeRelation } from "@/lib/types";
+import type { AnimeRelation, GraphNode } from "@/lib/types";
 import { AncestrySpace2D } from "@/components/AncestrySpace2D";
 
 type Props = {
@@ -95,10 +95,11 @@ export function AncestryGraph({
     }
     let cancelled = false;
     setLoading(true);
-    fetch(`/api/relations?id=${centerId}`)
+    fetch(`/api/relations?id=${centerId}&deep=0`)
       .then((r) => r.json())
       .then((j) => {
         if (!cancelled && Array.isArray(j.data)) setRelations(j.data);
+        else if (!cancelled && Array.isArray(j.nodes)) setRelations(j.nodes);
       })
       .catch(() => {})
       .finally(() => {
@@ -109,21 +110,15 @@ export function AncestryGraph({
     };
   }, [centerId, initial]);
 
-  const spaceNodes = useMemo(() => {
-    return relations.map((r) => {
-      const t = (r.relationType || "").toUpperCase();
-      const kind =
-        t === "RECOMMENDED" ? ("recommended" as const) : ("official" as const);
-      return {
-        id: r.id,
-        title: r.title,
-        image: r.image,
-        kind,
-        relationType: r.relationType || "RELATED",
-        year: r.year,
-        score: r.score,
-      };
-    });
+  const seedNodes: GraphNode[] = useMemo(() => {
+    return relations.map((r) => ({
+      ...r,
+      depth: 0,
+      layer:
+        (r.relationType || "").toUpperCase() === "RECOMMENDED"
+          ? ("recommended" as const)
+          : ("official" as const),
+    }));
   }, [relations]);
 
   const { timeline, sideOrbit, recommended } = useMemo(() => {
@@ -186,6 +181,8 @@ export function AncestryGraph({
     (r) => (r.relationType || "").toUpperCase() !== "RECOMMENDED",
   ).length;
 
+  const showMap = relations.length > 0 || loading;
+
   return (
     <section className="detail-section ancestry-section" id="ancestry">
       <div className="ab-header">
@@ -196,7 +193,7 @@ export function AncestryGraph({
             {loading
               ? "Charting links…"
               : relations.length
-                ? `${officialCount} official · ${recommended.length} similar — pan, zoom, tap`
+                ? `${officialCount} official · recommendations expand into a chain with physics`
                 : "No linked anime found for this title."}
           </p>
         </div>
@@ -211,17 +208,15 @@ export function AncestryGraph({
         ) : null}
       </div>
 
-      {relations.length > 0 ? (
+      {showMap ? (
         <AncestrySpace2D
           center={{
             id: centerId,
             title: centerTitle,
             image: centerImage,
-            kind: "center",
-            relationType: "CENTER",
             year: centerYear,
           }}
-          nodes={spaceNodes}
+          seedNodes={seedNodes}
         />
       ) : null}
 
