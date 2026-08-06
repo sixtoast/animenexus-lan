@@ -1,0 +1,49 @@
+/* Minimal shell styles for the Next.js entry / migration hub.
+   Full Lantern design system lives in styles/lantern.css and public/index.html */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --color-primary: #0c0a09;
+  --color-secondary: #161210;
+  --color-tertiary: #221c18;
+  --color-accent: #f0a090;
+  --color-accent-hover: #f8c4b8;
+  --color-accent-glow: rgba(240, 160, 144, 0.4);
+  --color-amber: #efc07a;
+  --color-text: #faf4ef;
+  --color-text-muted: #9e8e82;
+  --color-border: rgba(240, 160, 144, 0.12);
+  --radius: 22px;
+  --font: "Outfit", "Noto Sans JP", system-ui, sans-serif;
+  --font-display: "Cormorant Garamond", "Noto Sans JP", Georgia, serif;
+}
+
+html {
+  background: var(--color-primary);
+  color: var(--color-text);
+}
+
+body {
+  font-family: var(--font);
+  min-height: 100vh;
+  line-height: 1.6;
+  background:
+    radial-gradient(ellipse 90% 60% at 10% -10%, rgba(232, 165, 152, 0.14) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 45% at 95% 5%, rgba(232, 184, 109, 0.1) 0%, transparent 50%),
+    var(--color-primary);
+  color: var(--color-text);
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--color-accent-hover);
+}
