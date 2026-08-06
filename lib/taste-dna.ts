@@ -123,13 +123,61 @@ export function computeBadges(entries: WatchlistEntry[]): Badge[] {
   const rated = entries.filter((e) => e.userRating > 0).length;
 
   return [
-    { id: "first", label: "Signal locked", emoji: "📡", unlocked: n >= 1, hint: "Add your first title" },
-    { id: "ten", label: "Queue builder", emoji: "📚", unlocked: n >= 10, hint: "10 titles on the list" },
-    { id: "fifty", label: "Archive mind", emoji: "🗄️", unlocked: n >= 50, hint: "50 titles tracked" },
-    { id: "finisher", label: "Closer", emoji: "✅", unlocked: completed >= 5, hint: "Complete 5 titles" },
-    { id: "multitask", label: "Parallel arcs", emoji: "🔀", unlocked: watching >= 3, hint: "Watching 3 at once" },
-    { id: "palette", label: "Wide band", emoji: "🎨", unlocked: genres.size >= 8, hint: "8+ distinct genres" },
-    { id: "hours", label: "Night shift", emoji: "⏱️", unlocked: hours >= 24, hint: "24+ hours logged" },
-    { id: "critic", label: "Calibrated", emoji: "⭐", unlocked: rated >= 5, hint: "Rate 5 titles" },
+    {
+      id: "first",
+      label: "Signal locked",
+      emoji: "📡",
+      unlocked: n >= 1,
+      hint: "Add your first title",
+    },
+    {
+      id: "ten",
+      label: "Queue builder",
+      emoji: "📚",
+      unlocked: n >= 10,
+      hint: "10 titles on the list",
+    },
+    {
+      id: "fifty",
+      label: "Archive mind",
+      emoji: "🗄️",
+      unlocked: n >= 50,
+      hint: "50 titles tracked",
+    },
+    {
+      id: "finisher",
+      label: "Closer",
+      emoji: "✅",
+      unlocked: completed >= 5,
+      hint: "Complete 5 titles",
+    },
+    {
+      id: "multitask",
+      label: "Parallel arcs",
+      emoji: "🔀",
+      unlocked: watching >= 3,
+      hint: "Watching 3 at once",
+    },
+    {
+      id: "palette",
+      label: "Wide band",
+      emoji: "🎨",
+      unlocked: genres.size >= 8,
+      hint: "8+ distinct genres",
+    },
+    {
+      id: "hours",
+      label: "Night shift",
+      emoji: "⏱️",
+      unlocked: hours >= 24,
+      hint: "24+ hours logged",
+    },
+    {
+      id: "critic",
+      label: "Calibrated",
+      emoji: "⭐",
+      unlocked: rated >= 5,
+      hint: "Rate 5 titles",
+    },
   ];
 }
