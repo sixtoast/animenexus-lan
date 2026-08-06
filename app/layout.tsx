@@ -9,6 +9,7 @@ import { FabMenu } from "@/components/FabMenu";
 import "./globals.css";
 import "./card-link.css";
 import "./nav-polish.css";
+import "./sprint-a.css";
 
 export const metadata: Metadata = {
   title: "AnimeNexus — Lantern",
