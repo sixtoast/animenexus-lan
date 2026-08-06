@@ -8,6 +8,7 @@ import { AddToWatchlist } from "@/components/AddToWatchlist";
 import { BingeCalculator } from "@/components/BingeCalculator";
 import { AnimeNotes } from "@/components/AnimeNotes";
 import { DetailAI } from "@/components/DetailAI";
+import { AncestryGraph } from "@/components/AncestryGraph";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -91,6 +92,8 @@ export default async function AnimeDetailPage({ params }: Props) {
     .map((r) => `${r.relationType}: ${r.title}`)
     .join("\n");
 
+  const vtCover = `cover-${anime.id}`;
+
   return (
     <main>
       {anime.bannerImage ? (
@@ -109,10 +112,15 @@ export default async function AnimeDetailPage({ params }: Props) {
 
         <div className="detail-hero">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="detail-cover" src={anime.image} alt="" />
+          <img
+            className="detail-cover"
+            src={anime.image}
+            alt=""
+            style={{ viewTransitionName: vtCover } as React.CSSProperties}
+          />
 
           <div className="detail-info">
-            <p className="detail-kicker">Parity · detail depth</p>
+            <p className="detail-kicker">Lantern · detail</p>
             <h1>{anime.title}</h1>
             {(anime.titleRomaji || anime.titleNative) &&
             (anime.titleRomaji !== anime.title || anime.titleNative) ? (
@@ -277,6 +285,14 @@ export default async function AnimeDetailPage({ params }: Props) {
               ))}
             </div>
           </section>
+        ) : null}
+
+        {relations.length > 0 ? (
+          <AncestryGraph
+            centerTitle={anime.title}
+            centerId={anime.id}
+            relations={relations}
+          />
         ) : null}
 
         {relations.length > 0 ? (
