@@ -13,6 +13,12 @@ import { useToast } from "@/components/ToastProvider";
 
 type Panel = "tonight" | "break" | "flashback" | null;
 
+function setSessionEnv(mode: "tonight" | "break" | "idle") {
+  if (typeof document === "undefined") return;
+  if (mode === "idle") delete document.documentElement.dataset.session;
+  else document.documentElement.dataset.session = mode;
+}
+
 export function SessionTools() {
   const { entries } = useWatchlist();
   const { showToast } = useToast();
@@ -22,6 +28,11 @@ export function SessionTools() {
   const [breakRunning, setBreakRunning] = useState(false);
   const [flash, setFlash] = useState<TonightItem | null>(null);
 
+  const closePanel = useCallback(() => {
+    setPanel(null);
+    if (!breakRunning) setSessionEnv("idle");
+  }, [breakRunning]);
+
   const openTonight = useCallback(() => {
     let q = readTonightQueue();
     if (!q.length) {
@@ -30,11 +41,15 @@ export function SessionTools() {
     }
     setQueue(q);
     setPanel("tonight");
+    setSessionEnv("tonight");
   }, [entries]);
 
   useEffect(() => {
     const onTonight = () => openTonight();
-    const onBreak = () => setPanel("break");
+    const onBreak = () => {
+      setPanel("break");
+      setSessionEnv("break");
+    };
     const onFlash = () => {
       const pool = entries.filter(
         (e) => e.watchStatus === "completed" || e.watchStatus === "watching",
@@ -68,6 +83,7 @@ export function SessionTools() {
       } else if (k === "b") {
         e.preventDefault();
         setPanel("break");
+        setSessionEnv("break");
       }
     };
     window.addEventListener("keydown", onKey);
@@ -85,6 +101,7 @@ export function SessionTools() {
       setBreakLeft((s) => {
         if (s <= 1) {
           setBreakRunning(false);
+          setSessionEnv("idle");
           showToast("Break over — back to the signal", "⏰");
           try {
             navigator.vibrate?.(200);
@@ -103,6 +120,7 @@ export function SessionTools() {
     setBreakLeft(mins * 60);
     setBreakRunning(true);
     setPanel(null);
+    setSessionEnv("break");
     showToast(`${mins} min break started`, "☕");
   }
 
@@ -128,6 +146,7 @@ export function SessionTools() {
             onClick={() => {
               setBreakRunning(false);
               setBreakLeft(0);
+              setSessionEnv("idle");
             }}
           >
             ×
@@ -139,13 +158,13 @@ export function SessionTools() {
         <div
           className="session-overlay open"
           onClick={(e) => {
-            if (e.target === e.currentTarget) setPanel(null);
+            if (e.target === e.currentTarget) closePanel();
           }}
         >
           <div className="session-panel">
             <div className="session-head">
               <h3>Tonight queue</h3>
-              <button type="button" onClick={() => setPanel(null)}>
+              <button type="button" onClick={closePanel}>
                 ×
               </button>
             </div>
@@ -177,7 +196,7 @@ export function SessionTools() {
                     key={item.id}
                     href={`/anime/${item.id}`}
                     className="tonight-row"
-                    onClick={() => setPanel(null)}
+                    onClick={closePanel}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={item.image} alt="" />
@@ -194,18 +213,18 @@ export function SessionTools() {
         <div
           className="session-overlay open"
           onClick={(e) => {
-            if (e.target === e.currentTarget) setPanel(null);
+            if (e.target === e.currentTarget) closePanel();
           }}
         >
           <div className="session-panel">
             <div className="session-head">
               <h3>Break timer</h3>
-              <button type="button" onClick={() => setPanel(null)}>
+              <button type="button" onClick={closePanel}>
                 ×
               </button>
             </div>
             <p className="tools-hint">
-              Shortcut <kbd>B</kbd>.
+              Shortcut <kbd>B</kbd>. Room dims while you rest.
             </p>
             <div className="daily-actions">
               {[5, 10, 15].map((m) => (
@@ -227,13 +246,13 @@ export function SessionTools() {
         <div
           className="session-overlay open"
           onClick={(e) => {
-            if (e.target === e.currentTarget) setPanel(null);
+            if (e.target === e.currentTarget) closePanel();
           }}
         >
           <div className="session-panel">
             <div className="session-head">
               <h3>Flashback</h3>
-              <button type="button" onClick={() => setPanel(null)}>
+              <button type="button" onClick={closePanel}>
                 ×
               </button>
             </div>
@@ -249,7 +268,7 @@ export function SessionTools() {
                 <Link
                   href={`/anime/${flash.id}`}
                   className="btn btn-accent btn-sm"
-                  onClick={() => setPanel(null)}
+                  onClick={closePanel}
                 >
                   Open detail
                 </Link>
