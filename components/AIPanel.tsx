@@ -11,6 +11,8 @@ import {
   type AISettings,
 } from "@/lib/ai-settings";
 import { streamChatCompletions, testAIConnection } from "@/lib/ai-chat";
+import { memoryDigestForAI } from "@/lib/lantern-memory";
+import { useWatchlist } from "@/components/WatchlistProvider";
 import { useToast } from "@/components/ToastProvider";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
@@ -32,6 +34,7 @@ export function AIPanel() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const { showToast } = useToast();
+  const { entries } = useWatchlist();
 
   useEffect(() => {
     const s = readAISettings();
@@ -98,6 +101,22 @@ export function AIPanel() {
     }
   }
 
+  function systemPrompt() {
+    const watching = entries
+      .filter((e) => e.watchStatus === "watching")
+      .map((e) => e.title);
+    const completedCount = entries.filter(
+      (e) => e.watchStatus === "completed",
+    ).length;
+    const digest = memoryDigestForAI({ watching, completedCount });
+    return [
+      "You are Lantern — host of AnimeNexus, not a generic chatbot.",
+      "Speak warm, concise, anime-literate. No fake ARG codes or invented lists the user doesn't have.",
+      "Use the memory digest when relevant; if memory is empty, say so honestly.",
+      digest,
+    ].join("\n\n");
+  }
+
   async function send(text: string) {
     const v = text.trim();
     if (!v || busy) return;
@@ -113,11 +132,7 @@ export function AIPanel() {
     try {
       await streamChatCompletions(
         [
-          {
-            role: "system",
-            content:
-              "You are the AnimeNexus Lantern assistant — concise, warm, anime-literate. No fake ARG codes.",
-          },
+          { role: "system", content: systemPrompt() },
           ...next.map((m) => ({
             role: m.role as "user" | "assistant" | "system",
             content: m.content,
@@ -282,7 +297,8 @@ export function AIPanel() {
           <div className="ai-messages">
             {messages.length === 0 ? (
               <p className="taste-footnote">
-                Ask anything anime — or use a quick prompt. Press A anytime.
+                Ask anything anime — Lantern uses local memory of titles you
+                open. Press A anytime.
               </p>
             ) : (
               messages.map((m, i) => (
