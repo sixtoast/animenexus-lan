@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Anime } from "@/lib/types";
 import { dailySeed, pickSeeded, seededRandom } from "@/lib/daily-seed";
 import { useToast } from "@/components/ToastProvider";
+import { fireConfetti } from "@/components/ConfettiBurst";
 
 type Mode = "silhouette" | "hard";
 
@@ -74,8 +75,10 @@ export function ChallengeClient() {
     const ok = title === anime.title;
     setResult(ok ? "ok" : "no");
     setStreak((s) => (ok ? s + 1 : 0));
-    if (ok) showToast("Correct frequency!", "✨");
-    else showToast(`It was ${anime.title}`, "😅");
+    if (ok) {
+      showToast("Correct frequency!", "✨");
+      fireConfetti();
+    } else showToast(`It was ${anime.title}`, "😅");
   }
 
   function hardSubmit(e: React.FormEvent) {
@@ -91,6 +94,7 @@ export function ChallengeClient() {
       g === anime.title.toLowerCase();
     setResult(ok ? "ok" : "no");
     setStreak((s) => (ok ? s + 1 : 0));
+    if (ok) fireConfetti();
   }
 
   function nextRound() {
