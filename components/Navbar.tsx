@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useTheme } from "@/components/ThemeProvider";
+import { Button } from "@/components/ui/Button";
 
 const LINKS = [
   { href: "/", label: "Home" },
@@ -58,25 +59,27 @@ export function Navbar() {
         </nav>
 
         <div className="nav-right">
-          <button
-            type="button"
-            className="theme-toggle-btn"
+          <Button
+            variant="icon"
+            size="sm"
             onClick={toggleTheme}
             title="Toggle theme"
             aria-label="Toggle light/dark theme"
+            className="theme-toggle-btn"
           >
             {theme === "dark" ? "☀️" : "🌙"}
-          </button>
+          </Button>
           <span className="sprint-badge">Lantern</span>
-          <button
-            type="button"
+          <Button
+            variant="outline"
+            size="sm"
             className="nav-toggle"
             aria-expanded={open}
             aria-controls="mobile-nav"
             onClick={() => setOpen((v) => !v)}
           >
             {open ? "Close" : "Menu"}
-          </button>
+          </Button>
         </div>
       </div>
 

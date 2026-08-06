@@ -3,6 +3,7 @@
 import type { Anime, WatchStatus } from "@/lib/types";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { useToast } from "@/components/ToastProvider";
+import { Button } from "@/components/ui/Button";
 
 const STATUSES: { value: WatchStatus; label: string }[] = [
   { value: "planning", label: "Planning" },
@@ -28,18 +29,18 @@ export function AddToWatchlist({ anime }: Props) {
 
   if (!ready) {
     return (
-      <button type="button" className="btn btn-outline btn-sm" disabled>
-        …
-      </button>
+      <Button variant="outline" size="sm" loading disabled>
+        Loading
+      </Button>
     );
   }
 
   if (!entry) {
     return (
       <div className="wl-actions">
-        <button
-          type="button"
-          className="btn btn-accent btn-sm"
+        <Button
+          variant="accent"
+          size="sm"
           onClick={() => {
             add(anime, "planning");
             showToast("Sealed to your list", "🕯️", true);
@@ -47,10 +48,10 @@ export function AddToWatchlist({ anime }: Props) {
           }}
         >
           + Add to watchlist
-        </button>
-        <button
-          type="button"
-          className="btn btn-outline btn-sm"
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => {
             add(anime, "watching");
             showToast("Now watching", "▶", true);
@@ -58,7 +59,7 @@ export function AddToWatchlist({ anime }: Props) {
           }}
         >
           Start watching
-        </button>
+        </Button>
       </div>
     );
   }
@@ -79,16 +80,16 @@ export function AddToWatchlist({ anime }: Props) {
           ))}
         </select>
       </label>
-      <button
-        type="button"
-        className="btn btn-outline btn-sm"
+      <Button
+        variant="danger"
+        size="sm"
         onClick={() => {
           remove(anime.id);
           showToast("Removed from list", "·");
         }}
       >
         Remove
-      </button>
+      </Button>
     </div>
   );
 }

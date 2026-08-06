@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useToast } from "@/components/ToastProvider";
+import { Button } from "@/components/ui/Button";
 
 type Quote = { quote: string; character?: string; anime?: string };
 
@@ -101,24 +102,27 @@ export function QuoteBanner() {
           <span className="quote-mark">”</span>
         </p>
         <div className="quote-actions">
-          <button
-            type="button"
-            className="btn-icon"
+          <Button
+            variant="icon"
+            size="sm"
             title="Next quote"
+            aria-label="Next quote"
             onClick={load}
+            loading={busy}
             disabled={busy}
           >
             ↻
-          </button>
-          <button
-            type="button"
-            className="btn-icon"
+          </Button>
+          <Button
+            variant="icon"
+            size="sm"
             title="Copy"
+            aria-label="Copy quote"
             onClick={copy}
             disabled={!q}
           >
             ⎘
-          </button>
+          </Button>
         </div>
       </div>
       {q?.character || q?.anime ? (
