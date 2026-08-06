@@ -17,6 +17,11 @@ const LINKS = [
   { href: "/account", label: "Account" },
 ];
 
+function isActive(pathname: string, href: string) {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(href + "/");
+}
+
 export function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -33,23 +38,33 @@ export function Navbar() {
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
   return (
     <header className="navbar">
       <div className="container navbar-inner">
-        <Link href="/" className="logo">
+        <Link href="/" className="logo" aria-label="AnimeNexus home">
           Anime<span>Nexus</span>
         </Link>
 
         <nav className="nav-desktop" aria-label="Primary">
           <ul className="nav-links">
             {LINKS.map((l) => {
-              const active =
-                l.href === "/"
-                  ? pathname === "/"
-                  : pathname.startsWith(l.href);
+              const active = isActive(pathname, l.href);
               return (
                 <li key={l.label}>
-                  <Link href={l.href} className={active ? "active" : undefined}>
+                  <Link
+                    href={l.href}
+                    className={"nav-link" + (active ? " active" : "")}
+                    aria-current={active ? "page" : undefined}
+                  >
                     {l.label}
                   </Link>
                 </li>
@@ -59,6 +74,10 @@ export function Navbar() {
         </nav>
 
         <div className="nav-right">
+          <span className="nav-signal" title="Lantern broadcast">
+            <span className="nav-signal-dot" aria-hidden />
+            <span className="nav-signal-label">On air</span>
+          </span>
           <Button
             variant="icon"
             size="sm"
@@ -69,7 +88,6 @@ export function Navbar() {
           >
             {theme === "dark" ? "☀️" : "🌙"}
           </Button>
-          <span className="sprint-badge">Lantern</span>
           <Button
             variant="outline"
             size="sm"
@@ -84,27 +102,54 @@ export function Navbar() {
       </div>
 
       {open ? (
-        <nav id="mobile-nav" className="nav-mobile" aria-label="Mobile primary">
-          <ul>
-            {LINKS.map((l) => {
-              const active =
-                l.href === "/"
-                  ? pathname === "/"
-                  : pathname.startsWith(l.href);
-              return (
-                <li key={l.label}>
-                  <Link
-                    href={l.href}
-                    className={active ? "active" : undefined}
-                    onClick={() => setOpen(false)}
-                  >
-                    {l.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
+        <>
+          <button
+            type="button"
+            className="nav-scrim"
+            aria-label="Close menu"
+            onClick={() => setOpen(false)}
+          />
+          <nav
+            id="mobile-nav"
+            className="nav-mobile"
+            aria-label="Mobile primary"
+          >
+            <p className="nav-mobile-kicker">Frequency</p>
+            <ul>
+              {LINKS.map((l) => {
+                const active = isActive(pathname, l.href);
+                return (
+                  <li key={l.label}>
+                    <Link
+                      href={l.href}
+                      className={
+                        "nav-mobile-link" + (active ? " active" : "")
+                      }
+                      aria-current={active ? "page" : undefined}
+                      onClick={() => setOpen(false)}
+                    >
+                      <span>{l.label}</span>
+                      {active ? (
+                        <span className="nav-mobile-here">Here</span>
+                      ) : null}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="nav-mobile-foot">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  toggleTheme();
+                }}
+              >
+                {theme === "dark" ? "☀️ Light frequency" : "🌙 Dark frequency"}
+              </Button>
+            </div>
+          </nav>
+        </>
       ) : null}
     </header>
   );
