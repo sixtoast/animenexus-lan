@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FanzoneClient } from "@/components/FanzoneClient";
 import "../tools.css";
+import "../sauce/sauce.css";
 
 export const metadata = {
   title: "Fan zone · AnimeNexus",
