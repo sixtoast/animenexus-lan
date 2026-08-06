@@ -5,6 +5,7 @@ import { QuoteBanner } from "@/components/QuoteBanner";
 import { ViewModeToggle } from "@/components/ViewModeToggle";
 import { MoodChips } from "@/components/MoodChips";
 import { HomeDashboard } from "@/components/HomeDashboard";
+import { RitualLine } from "@/components/RitualLine";
 import { fetchDiscover } from "@/lib/anilist";
 import "./mood-home.css";
 
@@ -36,6 +37,7 @@ export default async function HomePage() {
             Pick a mood — or browse the full catalog with filters and search.
             Your watchlist stays local to this browser.
           </p>
+          <RitualLine />
           <div className="mood-home-block">
             <p className="mood-home-label">How are you feeling?</p>
             <MoodChips />

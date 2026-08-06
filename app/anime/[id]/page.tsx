@@ -9,6 +9,7 @@ import { BingeCalculator } from "@/components/BingeCalculator";
 import { AnimeNotes } from "@/components/AnimeNotes";
 import { DetailAI } from "@/components/DetailAI";
 import { AncestryGraph } from "@/components/AncestryGraph";
+import { MemoryVisit } from "@/components/MemoryVisit";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -89,6 +90,13 @@ export default async function AnimeDetailPage({ params }: Props) {
 
   return (
     <main>
+      <MemoryVisit
+        id={anime.id}
+        title={anime.title}
+        image={anime.image}
+        genres={anime.tags}
+        studios={anime.studios}
+      />
       {anime.bannerImage ? (
         <div
           className="detail-banner"

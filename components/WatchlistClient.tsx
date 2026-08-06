@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { WatchlistToolbar } from "@/components/WatchlistToolbar";
+import { SignalBars } from "@/components/ui/SignalBars";
 import type { WatchStatus } from "@/lib/types";
 import { WATCH_STATUS_TABS } from "@/lib/watchlist-storage";
 
@@ -35,8 +36,8 @@ export function WatchlistClient() {
   if (!ready) {
     return (
       <div className="state-box">
-        <div className="spinner" />
-        <p>Loading your list…</p>
+        <SignalBars level={3} animated />
+        <p style={{ marginTop: 12 }}>Lantern is opening your shelf…</p>
       </div>
     );
   }
@@ -62,20 +63,32 @@ export function WatchlistClient() {
       <WatchlistToolbar />
 
       {entries.length === 0 ? (
-        <div className="state-box">
-          <p>Your watchlist is empty.</p>
-          <p style={{ marginTop: 8, fontSize: "0.9rem" }}>
-            Open any title and hit <strong>+ Add to watchlist</strong>.
+        <div className="state-box lantern-empty">
+          <h3>The shelf is quiet</h3>
+          <p>
+            Lantern has nothing sealed here yet. When you add a title from any
+            detail page, it becomes part of what the desk remembers.
           </p>
-          <p style={{ marginTop: 16 }}>
+          <p>
+            Start with something trending, a daily pick, or a mood that matches
+            tonight.
+          </p>
+          <p style={{ marginTop: 16, display: "flex", flexWrap: "wrap", gap: 10 }}>
             <Link href="/browse" className="btn btn-accent btn-sm">
               Browse catalog →
+            </Link>
+            <Link href="/daily" className="btn btn-outline btn-sm">
+              Daily pick
             </Link>
           </p>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="state-box">
-          <p>Nothing in this status yet.</p>
+        <div className="state-box lantern-empty">
+          <h3>Nothing on this channel</h3>
+          <p>
+            No titles in “{tab}” yet. Move something from another status, or add
+            a new seal from a detail page.
+          </p>
         </div>
       ) : (
         <ul className="wl-list">
