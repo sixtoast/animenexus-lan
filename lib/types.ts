@@ -113,6 +113,8 @@ export type WatchlistEntry = {
   progress: number;
   userRating: number;
   notes: string;
+  tags?: string[];
+  genres?: string[];
   addedAt: string;
   updatedAt: string;
 };
