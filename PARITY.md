@@ -4,34 +4,23 @@ Repo: **sixtoast/animenexus-lantern** · branch `main`
 
 | Feature | Status | Evidence |
 |--------|--------|----------|
-| Shell / tools / lists / detail | done | prior sprints |
-| Challenge silhouette + confetti | done | dissolve reveal + lantern pulse |
-| Radar / Stats / Home / Session | done | session `data-session` env |
-| Fan zone / Sauce / MAL | done | |
-| Oracle vibe-cast cards | done | |
-| Motion clip room | partial | no upscale |
-| PWA icon.svg | done | |
-| Streaming AI | done | |
-| **Craft elevation** | **in progress** | cards, motion, skeletons, desk, seal |
+| Product features (browse→tools) | done | prior sprints |
+| Challenge + confetti + dissolve | done | |
+| Ancestry vis-network | done | restored on detail |
+| Oracle vibe-cast + card deal | done | |
+| Craft: cards / motion / seal / session env | done | cycle 1 |
+| Craft: DeskShell / VT cover / next/image | done | cycle 2 |
+| Motion upscale | partial | |
 | Night Signal ARG | **declined** | |
 
-## Craft pass (Awwwards elevation — no new features)
+## Craft cycle 2
+- `DeskShell` on all tool routes (shared band + panel)
+- Detail cover `view-transition-name: cover-{id}` (matches cards)
+- `AncestryGraph` restored on detail when relations exist
+- Oracle band flash + vibe-cast **card deal** stagger
+- `AnimeCard` uses `next/image` when host is allowlisted
 
-### Critical (shipped)
-- Elevated **AnimeCard**: on-list flame, hover glow, stagger entrance, view-transition name
-- **motion.css**: easing tokens, reduced-motion, poster skeletons, FAB pulse, session ambient
-- **Watchlist seal**: milestone toast + `animenexus:lantern-pulse` → FAB reacts
-- Browse **PosterSkeleton** while filters pending
-
-### High (shipped)
-- **desk.css** + tools hub stagger cards
-- Challenge silhouette **dissolve → revealed**
-- Session **Tonight/Break** sets `html[data-session]` (sakura speed/alpha + body wash)
-- Sakura respects reduced-motion + low hardware concurrency
-
-### Still open (next craft cycles)
-- Shared-element cover on detail (View Transitions full path)
-- Tool page desk-band on every tool route
-- Oracle band-switch deal animation
-- `next/image` on cards (domains already in next.config)
-- CSS consolidation (merge sprint-* files)
+## Still open
+- Client-side `document.startViewTransition` on link clicks (progressive)
+- CSS file merge (sprint-* → motion/desk/globals)
+- Radar scan motif / Taste editorial portrait
