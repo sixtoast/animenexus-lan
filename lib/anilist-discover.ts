@@ -268,3 +268,53 @@ export async function fetchAiringSchedule(
       media: mapAniListMedia(row.media!),
     }));
 }
+
+export async function fetchUpcoming(
+  opts: {
+    page?: number;
+    perPage?: number;
+    genre?: string;
+  } = {},
+): Promise<AnimePage> {
+  const page = opts.page ?? 1;
+  const perPage = opts.perPage ?? 24;
+  const query = `
+    query ($page: Int, $perPage: Int, $genre: String) {
+      Page(page: $page, perPage: $perPage) {
+        pageInfo { total currentPage lastPage hasNextPage }
+        media(
+          type: ANIME
+          status: NOT_YET_RELEASED
+          sort: [POPULARITY_DESC]
+          isAdult: false
+          genre: $genre
+        ) {
+          ${FIELDS}
+        }
+      }
+    }
+  `;
+  const variables: Record<string, unknown> = { page, perPage };
+  if (opts.genre) variables.genre = opts.genre;
+  const data = await gql<{
+    Page: {
+      pageInfo: {
+        total: number;
+        currentPage: number;
+        lastPage: number;
+        hasNextPage: boolean;
+      };
+      media: Record<string, unknown>[];
+    };
+  }>(query, variables);
+
+  return {
+    data: (data.Page.media || []).map(mapAniListMedia),
+    pagination: {
+      total: data.Page.pageInfo.total ?? 0,
+      currentPage: data.Page.pageInfo.currentPage,
+      lastPage: data.Page.pageInfo.lastPage,
+      hasNextPage: Boolean(data.Page.pageInfo.hasNextPage),
+    },
+  };
+}
