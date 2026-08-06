@@ -3,7 +3,7 @@
 Late-night anime console: moods, watchlist, discovery tools, and AI desk.
 
 **Repo:** https://github.com/sixtoast/animenexus-lantern  
-**Parity status:** see [`PARITY.md`](./PARITY.md)
+**Parity:** [`PARITY.md`](./PARITY.md)
 
 ## Quick start
 
@@ -14,35 +14,25 @@ npm run dev
 
 Open http://localhost:3000
 
-## Features (honest)
+## Features
 
 - Browse, moods, seasonal, daily, airing
-- Detail pages + **vis-network ancestry** (CDN)
-- Local watchlist; **AniList** username sync; **MAL** public list via Jikan
-- Tools: fusion, dislike, completionist, **radar (upcoming)**, **stats**, **silhouette challenge**, sauce, oracle, **fan zone**, motion clip room
-- Home dashboard: continue strip, streak, rails
-- Session tools: Tonight / Break / Flashback (FAB + `Q` / `B`)
-- Shortcuts: `?` · Command palette: `Ctrl/⌘+K`
-- PWA: `start_url: "/"`, SVG icon
-- **Night Signal ARG: declined** (not shipped)
+- Detail + vis-network ancestry (CDN)
+- Local watchlist; AniList + MAL public sync
+- Tools: fusion, dislike, completionist, radar, stats, silhouette challenge, sauce, oracle (vibe-cast cards), fan zone, motion clip room
+- Home: continue strip, streak, rails
+- Session: Tonight / Break / Flashback (FAB, `Q` / `B`)
+- Shortcuts `?` · Cmdk `Ctrl/⌘+K` · AI panel `A`
+- **Streaming AI** in the 🤖 panel when the provider supports SSE
+- PWA: `start_url: "/"`, `/icon.svg`
+- **Night Signal ARG: declined**
 
 ## AI keys
 
-1. Open the **🤖** panel
-2. Set provider base URL (OpenRouter / OpenAI-compatible / Groq) + API key
-3. Keys stay in `localStorage` as `anime_nexus_ai_settings`
-
-**Vibe cast** mode returns structured picks → resolved clickable cards via `/api/search`.
-
-## Account sync
-
-- **AniList:** public username → connect + sync lists into local watchlist
-- **MAL:** public username → Jikan import (rate-limited; private lists fail). MAL ids may not match AniList ids for the same show.
+1. Open **🤖** (or press `A`)
+2. Set OpenRouter / OpenAI-compatible / Groq base URL + key
+3. Stored as `anime_nexus_ai_settings` in localStorage
 
 ## Deploy
 
-Connect the repo to **Vercel**. Node `>=18.18`. Build: `next build`.
-
-## Motion studio
-
-**Option A:** sample clip grid (waifu.pics) + URL preview + recent list. Full upscale is **not** implemented (needs external key).
+Vercel · Node `>=18.18` · `next build`
