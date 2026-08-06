@@ -4,20 +4,16 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useMascotStore, mascotNotify } from "@/lib/mascot/store";
+import { UiAwareness } from "./UiAwareness";
 
 const MascotScene = dynamic(
-  () =>
-    import("./MascotScene").then((m) => m.MascotScene),
+  () => import("./MascotScene").then((m) => m.MascotScene),
   {
     ssr: false,
     loading: () => <div className="mascot-loading" aria-hidden />,
   },
 );
 
-/**
- * Habitat for the companion — lives in the corner of the UI,
- * not a full-screen overlay. Milestone 1: render + idle + click.
- */
 export function MascotHost() {
   const enabled = useMascotStore((s) => s.enabled);
   const setEnabled = useMascotStore((s) => s.setEnabled);
@@ -45,13 +41,11 @@ export function MascotHost() {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
 
-  // Context: route changes → mild curiosity (M8 lite)
   useEffect(() => {
     if (!enabled) return;
     mascotNotify({ type: "route", path: pathname });
   }, [pathname, enabled]);
 
-  // Bridge seal/complete events already used in app
   useEffect(() => {
     const onSeal = (e: Event) => {
       const d = (e as CustomEvent).detail as { mode?: string } | undefined;
@@ -62,7 +56,6 @@ export function MascotHost() {
     return () => window.removeEventListener("animenexus:seal", onSeal);
   }, []);
 
-  // Boredom tick when idle
   useEffect(() => {
     if (!enabled || hiddenTab) return;
     const id = window.setInterval(() => {
@@ -96,34 +89,41 @@ export function MascotHost() {
   }
 
   return (
-    <div className="mascot-habitat" role="complementary" aria-label="Companion">
-      <div className="mascot-stage">
-        {!hiddenTab ? (
-          <MascotScene reducedMotion={reducedMotion} />
-        ) : (
-          <div className="mascot-sleeping" aria-hidden>
-            zzz
-          </div>
-        )}
+    <>
+      <UiAwareness />
+      <div
+        className="mascot-habitat"
+        role="complementary"
+        aria-label="Companion"
+      >
+        <div className="mascot-stage">
+          {!hiddenTab ? (
+            <MascotScene reducedMotion={reducedMotion} />
+          ) : (
+            <div className="mascot-sleeping" aria-hidden>
+              zzz
+            </div>
+          )}
+        </div>
+        <div className="mascot-bar">
+          <span className="mascot-name">Lantern-ko</span>
+          <button
+            type="button"
+            className="mascot-hide"
+            onClick={() => {
+              setEnabled(false);
+              try {
+                localStorage.setItem("anime_nexus_mascot", "off");
+              } catch {
+                /* */
+              }
+            }}
+            aria-label="Hide companion"
+          >
+            Hide
+          </button>
+        </div>
       </div>
-      <div className="mascot-bar">
-        <span className="mascot-name">Lantern-ko</span>
-        <button
-          type="button"
-          className="mascot-hide"
-          onClick={() => {
-            setEnabled(false);
-            try {
-              localStorage.setItem("anime_nexus_mascot", "off");
-            } catch {
-              /* */
-            }
-          }}
-          aria-label="Hide companion"
-        >
-          Hide
-        </button>
-      </div>
-    </div>
+    </>
   );
 }
