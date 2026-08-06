@@ -7,20 +7,21 @@
 | 3 | Detail experience | ✅ |
 | 4 | Watchlist | ✅ |
 | 5 | Mood engine | ✅ |
-| 6 | Auth | next |
-| 7 | Taste profile | |
+| 6 | Auth / AniList link | ✅ |
+| 7 | Taste profile | next |
 | 8 | Discover extras | |
 | 9 | Playful tools | |
 | 10 | AI & sauce | |
 | 11 | Polish | |
 
-## Sprint 5 — Mood engine ✅
+## Sprint 6 — Auth ✅
 
-- [x] Mood definitions (genre + sort + optional min score)
-- [x] Mood chips on home
-- [x] `/mood/[slug]` recommendation feeds
-- [x] Chill, Hype, Cry, Laugh, Romance, Spooky, Fantasy, Mind-bender, Sci-Fi, Masterpiece
+- [x] Public AniList username connect (no OAuth secrets)
+- [x] Session in localStorage
+- [x] Fetch MediaListCollection
+- [x] Sync → merge into local watchlist
+- [x] `/account` UI + navbar link
 
-## Sprint 6 — Preview
+## Sprint 7 — Preview
 
-AniList username login + list sync (OAuth or public username lookup).
+Taste profile: stats from watchlist (hours, genres, status breakdown).

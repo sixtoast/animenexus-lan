@@ -2,14 +2,13 @@
 
 **Repo:** https://github.com/sixtoast/animenexus-lantern
 
-## Current: Sprint 5
+## Current: Sprint 6
 
-Mood chips → `/mood/[slug]` recommendation feeds.
+AniList username connect + public list sync into local watchlist.
 
 ```bash
 npm install && npm run dev
 ```
 
-- http://localhost:3000 — mood chips on home  
-- http://localhost:3000/mood/hype  
-- http://localhost:3000/watchlist  
+- http://localhost:3000/account  
+- Connect a public username → **Sync AniList lists**
