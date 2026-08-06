@@ -1,18 +1,26 @@
 #!/usr/bin/env python3
-"""Rebuild public/index.html and styles/lantern.css from base64 parts."""
+"""Rebuild public/index.html and styles/lantern.css from gzipped base64 parts."""
 from pathlib import Path
-import base64, json, hashlib
+import base64, gzip
+
 root = Path(__file__).resolve().parent
-manifest = json.loads((root / "asset-manifest.json").read_text())
-def join(prefix, n):
-    return base64.b64decode("".join((root / f"{prefix}.part{i:03d}.b64").read_text() for i in range(n)))
-html = join("html", manifest["html_chunks"])
-css = join("css", manifest["css_chunks"])
-assert hashlib.sha256(html).hexdigest() == manifest["html_sha256"]
-assert hashlib.sha256(css).hexdigest() == manifest["css_sha256"]
 out = root.parent
+
+def load_parts(prefix):
+    parts = sorted(root.glob(f"{prefix}*"))
+    return "".join(p.read_text().strip() for p in parts)
+
+# HTML from parts
+html_b64 = load_parts("index.gz.part")
+html = gzip.decompress(base64.b64decode(html_b64))
 (out / "public").mkdir(exist_ok=True)
-(out / "styles").mkdir(exist_ok=True)
 (out / "public" / "index.html").write_bytes(html)
+print(f"Wrote public/index.html ({len(html)} bytes)")
+
+# CSS single blob
+css_b64 = (root / "lantern.css.gz.b64").read_text().strip()
+css = gzip.decompress(base64.b64decode(css_b64))
+(out / "styles").mkdir(exist_ok=True)
 (out / "styles" / "lantern.css").write_bytes(css)
-print("Restored public/index.html and styles/lantern.css")
+print(f"Wrote styles/lantern.css ({len(css)} bytes)")
+print("Done.")
