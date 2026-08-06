@@ -34,6 +34,16 @@ export type AnimeCharacter = {
   image?: string;
 };
 
+export type AnimeRelation = {
+  id: number;
+  title: string;
+  relationType: string;
+  format?: string;
+  status?: string;
+  image?: string;
+};
+
+/** Normalized anime used across the UI */
 export type Anime = {
   id: number;
   title: string;
@@ -62,23 +72,8 @@ export type Anime = {
   favourites?: number;
   trailer?: { id?: string; site?: string; thumbnail?: string };
   characters?: AnimeCharacter[];
-};
-
-export type WatchlistEntry = {
-  id: number;
-  title: string;
-  image: string;
-  format?: string;
-  year?: number | string;
-  episodes?: number | string;
-  duration?: number;
-  score?: number;
-  watchStatus: WatchStatus;
-  progress: number;
-  userRating: number;
-  notes: string;
-  addedAt: string;
-  updatedAt: string;
+  relations?: AnimeRelation[];
+  idMal?: number | null;
 };
 
 export type PageInfo = {
@@ -103,4 +98,21 @@ export type AnimeFilters = {
   source?: string;
   studio?: string;
   search?: string;
+};
+
+export type WatchlistEntry = {
+  id: number;
+  title: string;
+  image: string;
+  format?: string;
+  year?: number | string;
+  episodes?: number | string;
+  duration?: number;
+  score?: number;
+  watchStatus: WatchStatus;
+  progress: number;
+  userRating: number;
+  notes: string;
+  addedAt: string;
+  updatedAt: string;
 };
