@@ -16,10 +16,12 @@ import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 import { LoadingTheater } from "@/components/LoadingTheater";
 import { RoomEnter } from "@/components/RoomEnter";
 import { RouteTune } from "@/components/RouteTune";
+import { LanternMemoryBoot } from "@/components/LanternMemoryBoot";
 import "./globals.css";
 import "./button.css";
 import "./modal.css";
 import "./quote.css";
+import "./ritual.css";
 import "./signal-motion.css";
 import "./nav-polish.css";
 import "./sprint-a.css";
@@ -82,6 +84,7 @@ export default function RootLayout({
           <ToastProvider>
             <WatchlistProvider>
               <SessionProvider>
+                <LanternMemoryBoot />
                 <ScrollProgress />
                 <SakuraCanvas />
                 <PwaRegister />
