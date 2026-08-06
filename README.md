@@ -1,25 +1,16 @@
 # AnimeNexus — Lantern
 
-Migrating the monolith SPA into **Next.js 15**.  
-**Repo:** https://github.com/sixtoast/animenexus-lantern
+**Repo:** https://github.com/sixtoast/animenexus-lantern  
+See **[SPRINTS.md](./SPRINTS.md)**.
 
-See **[SPRINTS.md](./SPRINTS.md)** for the roadmap.
+## Current: Sprint 4
 
-## Current: Sprint 3
-
-- Home trending grid
-- **`/browse`** — feeds, search, filters, load more
-- **`/anime/[id]`** — detail, synopsis, trailer, characters
+- Browse + detail
+- **Watchlist** (localStorage) — status, progress, your score
 
 ```bash
-npm install
-npm run dev
+npm install && npm run dev
 ```
 
-- http://localhost:3000  
-- http://localhost:3000/browse  
-- http://localhost:3000/anime/16498  (example: Attack on Titan)
-
-## Stack
-
-Next.js 15 · React 19 · TypeScript · AniList GraphQL
+- http://localhost:3000/watchlist  
+- Add from any `/anime/[id]` page

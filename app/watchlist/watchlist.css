@@ -1,0 +1,107 @@
+/* ---- Watchlist (Sprint 4) ---- */
+.wl-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+  margin-top: 8px;
+}
+
+.wl-status-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 140px;
+}
+
+.wl-count {
+  margin-left: 6px;
+  opacity: 0.7;
+  font-size: 0.75rem;
+}
+
+.wl-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.wl-row {
+  display: flex;
+  gap: 16px;
+  background: var(--color-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  align-items: flex-start;
+}
+
+.wl-thumb {
+  flex-shrink: 0;
+  width: 72px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.wl-thumb img {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+}
+
+.wl-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.wl-title {
+  font-weight: 600;
+  color: var(--color-text);
+  font-size: 1rem;
+}
+
+.wl-title:hover {
+  color: var(--color-accent);
+}
+
+.wl-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin: 4px 0 10px;
+}
+
+.wl-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.wl-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.wl-controls .filter-input {
+  min-width: 88px;
+  max-width: 120px;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .wl-controls .filter-input {
+    max-width: none;
+  }
+}

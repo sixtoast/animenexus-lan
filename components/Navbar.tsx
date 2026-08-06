@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 const LINKS = [
   { href: "/", label: "Home" },
   { href: "/browse", label: "Browse" },
-  { href: "/watchlist", label: "Watchlist", disabled: true },
+  { href: "/watchlist", label: "Watchlist" },
 ];
 
 export function Navbar() {
@@ -22,29 +22,14 @@ export function Navbar() {
           <ul className="nav-links">
             {LINKS.map((l) => {
               const active =
-                !l.disabled &&
-                (l.href === "/"
+                l.href === "/"
                   ? pathname === "/"
-                  : pathname.startsWith(l.href));
+                  : pathname.startsWith(l.href);
               return (
                 <li key={l.label}>
-                  {l.disabled ? (
-                    <span
-                      style={{
-                        color: "var(--color-text-muted)",
-                        opacity: 0.45,
-                        fontSize: "0.8rem",
-                        fontWeight: 500,
-                      }}
-                      title="Coming in a later sprint"
-                    >
-                      {l.label}
-                    </span>
-                  ) : (
-                    <Link href={l.href} className={active ? "active" : undefined}>
-                      {l.label}
-                    </Link>
-                  )}
+                  <Link href={l.href} className={active ? "active" : undefined}>
+                    {l.label}
+                  </Link>
                 </li>
               );
             })}
@@ -59,7 +44,7 @@ export function Navbar() {
             fontWeight: 600,
           }}
         >
-          Sprint 3
+          Sprint 4
         </span>
       </div>
     </header>
