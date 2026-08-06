@@ -4,18 +4,23 @@
 |--------|--------|--------|
 | A | Shell & CSS | **done** |
 | B | Detail depth | **done** |
-| **C** | Lists & taste | **done** |
-| D | AI | next |
-| E–H | Discovery → ARG/PWA | |
+| C | Lists & taste | **done** |
+| D | AI | **done** |
+| E | Discovery tools | **done** |
+| F–H | CmdK, ancestry, motion, PWA | **done** |
 
-## Sprint C
+## Shipped highlights
 
-- [x] Watchlist export / import JSON
-- [x] Genres on add → heatmap
-- [x] Genre heatmap
-- [x] Badges (list size, completion, genres, hours, ratings)
-- [x] Taste DNA export + soulmate compare
+- Design tokens, theme, toasts, FAB, quotes, view modes
+- Detail: characters, relations, trailer, binge, notes, OP/ED, AI tools, ancestry
+- Watchlist export/import, taste DNA, badges, heatmap
+- AI panel + Night Desk cloud modes
+- Fusion catalog children, dislike reverse, completionist, radar, airing
+- Ctrl/Cmd+K palette, sakura canvas, challenge silhouette, service worker
 
-## Remaining high priority
+## Optional polish still open
 
-Cmd+K, cloud AI/Oracle, silhouette challenge, fusion API recs, dislike, completionist, airing, fanzone, MAL, session tools, ancestry, ARG, PWA SW.
+- Full vis-network physics graph (ancestry is structured map today)
+- Fanzone / ARG mythology (intentionally light — no fake unlock codes)
+- MAL OAuth (public username sync remains)
+- Streaming response for AI chat
