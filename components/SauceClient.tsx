@@ -1,21 +1,47 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import type { SauceHit } from "@/lib/sauce";
 import { formatTime } from "@/lib/sauce";
 
 export function SauceClient() {
   const [url, setUrl] = useState("");
+  const [preview, setPreview] = useState<string | null>(null);
   const [hits, setHits] = useState<SauceHit[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
 
-  async function searchByUrl(e: React.FormEvent) {
-    e.preventDefault();
+  const searchByFile = useCallback(async (file: File) => {
     setLoading(true);
     setError(null);
     setHits([]);
+    setPreview(URL.createObjectURL(file));
+    try {
+      const form = new FormData();
+      form.append("image", file);
+      const res = await fetch("/api/sauce", { method: "POST", body: form });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Search failed");
+      if (json.error) throw new Error(json.error);
+      setHits(json.hits || []);
+      if (!(json.hits || []).length)
+        setError("No matches — try a clearer frame.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Search failed");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  async function searchByUrl(e?: React.FormEvent) {
+    e?.preventDefault();
+    if (!url.trim()) return;
+    setLoading(true);
+    setError(null);
+    setHits([]);
+    setPreview(url.trim());
     try {
       const res = await fetch("/api/sauce", {
         method: "POST",
@@ -35,36 +61,56 @@ export function SauceClient() {
     }
   }
 
-  async function searchByFile(file: File) {
-    setLoading(true);
-    setError(null);
-    setHits([]);
-    try {
-      const form = new FormData();
-      form.append("image", file);
-      const res = await fetch("/api/sauce", { method: "POST", body: form });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Search failed");
-      if (json.error) throw new Error(json.error);
-      setHits(json.hits || []);
-      if (!(json.hits || []).length)
-        setError("No matches — try a clearer frame.");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Search failed");
-    } finally {
-      setLoading(false);
-    }
-  }
+  useEffect(() => {
+    const onPaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const it of items) {
+        if (it.type.startsWith("image/")) {
+          const f = it.getAsFile();
+          if (f) {
+            e.preventDefault();
+            searchByFile(f);
+          }
+          break;
+        }
+      }
+    };
+    window.addEventListener("paste", onPaste);
+    return () => window.removeEventListener("paste", onPaste);
+  }, [searchByFile]);
 
   return (
     <div className="tools-panel">
       <p className="tools-hint" style={{ marginBottom: 16 }}>
-        Drop a screenshot or paste a public image URL. Powered by{" "}
+        Drop, upload, paste (Ctrl+V), or URL. Powered by{" "}
         <a href="https://trace.moe" target="_blank" rel="noreferrer">
           trace.moe
         </a>
         .
       </p>
+
+      <div
+        className={"sauce-drop" + (dragOver ? " over" : "")}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOver(false);
+          const f = e.dataTransfer.files?.[0];
+          if (f && f.type.startsWith("image/")) searchByFile(f);
+        }}
+      >
+        {preview ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={preview} alt="Preview" className="sauce-preview" />
+        ) : (
+          <p>Drop image here or paste from clipboard</p>
+        )}
+      </div>
 
       <form className="sauce-form" onSubmit={searchByUrl}>
         <label className="filter-label" htmlFor="sauce-url">
