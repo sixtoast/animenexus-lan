@@ -1,21 +1,8 @@
-.cmdk-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1400;
-  background: rgba(6, 4, 3, 0.55);
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 12vh 16px 16px;
-}
-
-.cmdk-box {
-  width: min(520px, 100%);
-  background: var(--color-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+/* Command palette content (hosted by Modal) */
+.cmdk-box.nx-modal-panel,
+.nx-modal-cmdk.nx-modal-panel {
   overflow: hidden;
+  padding: 0;
 }
 
 .cmdk-input-row {
@@ -23,7 +10,7 @@
   align-items: center;
   gap: 10px;
   padding: 14px 16px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid rgba(240, 160, 144, 0.14);
 }
 
 .cmdk-input-row input {
@@ -94,4 +81,28 @@
 .challenge-hero img.silhouette {
   filter: brightness(0) contrast(1.1);
   opacity: 0.85;
+}
+
+.shortcuts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.shortcuts-table td {
+  padding: 8px 4px;
+  border-bottom: 1px solid rgba(240, 160, 144, 0.08);
+  vertical-align: top;
+}
+
+.shortcuts-table kbd {
+  font-family: var(--font);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(240, 160, 144, 0.25);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--color-accent);
+  white-space: nowrap;
 }
