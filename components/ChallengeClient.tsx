@@ -76,8 +76,9 @@ export function ChallengeClient() {
     setResult(ok ? "ok" : "no");
     setStreak((s) => (ok ? s + 1 : 0));
     if (ok) {
-      showToast("Correct frequency!", "✨");
+      showToast("Correct frequency!", "✨", true);
       fireConfetti();
+      window.dispatchEvent(new CustomEvent("animenexus:lantern-pulse"));
     } else showToast(`It was ${anime.title}`, "😅");
   }
 
@@ -94,7 +95,11 @@ export function ChallengeClient() {
       g === anime.title.toLowerCase();
     setResult(ok ? "ok" : "no");
     setStreak((s) => (ok ? s + 1 : 0));
-    if (ok) fireConfetti();
+    if (ok) {
+      fireConfetti();
+      showToast("Correct frequency!", "✨", true);
+      window.dispatchEvent(new CustomEvent("animenexus:lantern-pulse"));
+    }
   }
 
   function nextRound() {
@@ -121,6 +126,15 @@ export function ChallengeClient() {
     );
   }
 
+  const imgClass =
+    mode === "silhouette"
+      ? result === null
+        ? "silhouette"
+        : "revealed"
+      : result
+        ? "revealed"
+        : "";
+
   return (
     <div className="tools-panel">
       <div className="feed-tabs" role="tablist">
@@ -142,13 +156,7 @@ export function ChallengeClient() {
 
       <div className="challenge-hero">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={anime.image}
-          alt=""
-          className={
-            mode === "silhouette" && result === null ? "silhouette" : ""
-          }
-        />
+        <img src={anime.image} alt="" className={imgClass} />
         <div>
           <p className="daily-kicker">
             Daily seed {seed} · Streak {streak}
@@ -160,7 +168,7 @@ export function ChallengeClient() {
           </h2>
           <p className="tools-hint" style={{ marginTop: 8 }}>
             {mode === "silhouette"
-              ? "Pick the title. Art reveals after you answer."
+              ? "Pick the title. Art dissolves into color after you answer."
               : "Free-text: year, score (e.g. 8.5), format, or full title."}
           </p>
         </div>
