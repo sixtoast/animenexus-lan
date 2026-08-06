@@ -44,13 +44,6 @@ function statusLabel(s: string) {
   return map[s] || s;
 }
 
-function relLabel(t: string) {
-  return t
-    .replace(/_/g, " ")
-    .toLowerCase()
-    .replace(/^\w/, (c) => c.toUpperCase());
-}
-
 export default async function AnimeDetailPage({ params }: Props) {
   const { id } = await params;
   const num = parseInt(id, 10);
@@ -178,7 +171,7 @@ export default async function AnimeDetailPage({ params }: Props) {
                 Open watchlist
               </Link>
               <a href="#ancestry" className="btn btn-outline btn-sm">
-                Ancestry graph
+                Ancestry
               </a>
             </div>
           </div>
@@ -191,10 +184,11 @@ export default async function AnimeDetailPage({ params }: Props) {
           </p>
         </section>
 
-        {/* Always mount — client can refetch if SSR list empty */}
         <AncestryGraph
           centerTitle={anime.title}
           centerId={anime.id}
+          centerImage={anime.image}
+          centerYear={anime.year}
           relations={relations}
         />
 
@@ -292,37 +286,6 @@ export default async function AnimeDetailPage({ params }: Props) {
                   <div className="char-name">{c.name}</div>
                   <div className="char-role">{c.role.replace(/_/g, " ")}</div>
                 </div>
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        {relations.length > 0 ? (
-          <section className="detail-section">
-            <h2>Relations</h2>
-            <div className="rel-grid">
-              {relations.map((r) => (
-                <Link
-                  key={`${r.id}-${r.relationType}`}
-                  href={`/anime/${r.id}`}
-                  className="rel-card"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={
-                      r.image ||
-                      "https://placehold.co/120x180/1a1a1a/555?text=?"
-                    }
-                    alt=""
-                  />
-                  <div className="rel-body">
-                    <div className="rel-type">{relLabel(r.relationType)}</div>
-                    <div className="rel-title">{r.title}</div>
-                    <div className="rel-meta">
-                      {[r.format, r.status].filter(Boolean).join(" · ")}
-                    </div>
-                  </div>
-                </Link>
               ))}
             </div>
           </section>
