@@ -8,6 +8,7 @@ const LINKS = [
   { href: "/browse", label: "Browse" },
   { href: "/seasonal", label: "Seasonal" },
   { href: "/daily", label: "Daily" },
+  { href: "/tools", label: "Tools" },
   { href: "/watchlist", label: "Watchlist" },
   { href: "/taste", label: "Taste" },
   { href: "/account", label: "Account" },
@@ -48,7 +49,7 @@ export function Navbar() {
             fontWeight: 600,
           }}
         >
-          Sprint 8
+          Sprint 9
         </span>
       </div>
     </header>

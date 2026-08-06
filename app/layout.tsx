@@ -45,7 +45,7 @@ export default function RootLayout({
             {children}
             <footer className="site-footer">
               <div className="container">
-                AnimeNexus · Lantern · Sprint 8 · discover · Data via{" "}
+                AnimeNexus · Lantern · Sprint 9 · tools · Data via{" "}
                 <a href="https://anilist.co" target="_blank" rel="noreferrer">
                   AniList
                 </a>
