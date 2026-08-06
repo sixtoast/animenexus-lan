@@ -7,11 +7,16 @@ import { ToastProvider } from "@/components/ToastProvider";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { FabMenu } from "@/components/FabMenu";
 import { AIPanel } from "@/components/AIPanel";
+import { CommandPalette } from "@/components/CommandPalette";
+import { SakuraCanvas } from "@/components/SakuraCanvas";
+import { PwaRegister } from "@/components/PwaRegister";
 import "./globals.css";
 import "./card-link.css";
 import "./nav-polish.css";
 import "./sprint-a.css";
 import "./ai-panel.css";
+import "./cmdk.css";
+import "./ancestry.css";
 
 export const metadata: Metadata = {
   title: "AnimeNexus — Lantern",
@@ -58,10 +63,13 @@ export default function RootLayout({
             <WatchlistProvider>
               <SessionProvider>
                 <ScrollProgress />
+                <SakuraCanvas />
+                <PwaRegister />
                 <Navbar />
                 {children}
                 <FabMenu />
                 <AIPanel />
+                <CommandPalette />
                 <footer className="site-footer">
                   <div className="container">
                     AnimeNexus · Lantern · Data via{" "}
