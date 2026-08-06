@@ -37,6 +37,13 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setEntries(readWatchlist());
     setReady(true);
+    const onSync = () => setEntries(readWatchlist());
+    window.addEventListener("animenexus:watchlist-synced", onSync);
+    window.addEventListener("storage", onSync);
+    return () => {
+      window.removeEventListener("animenexus:watchlist-synced", onSync);
+      window.removeEventListener("storage", onSync);
+    };
   }, []);
 
   const persist = useCallback((next: WatchlistEntry[]) => {
