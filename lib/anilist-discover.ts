@@ -159,3 +159,112 @@ export async function fetchDailyPool(perPage = 50): Promise<Anime[]> {
   }>(query, { perPage });
   return (data.Page.media || []).map(mapAniListMedia);
 }
+
+export async function fetchByGenres(
+  genres: string[],
+  opts: {
+    page?: number;
+    perPage?: number;
+    sort?: string[];
+    excludeIds?: number[];
+  } = {},
+): Promise<AnimePage> {
+  const page = opts.page ?? 1;
+  const perPage = opts.perPage ?? 24;
+  const sort = opts.sort ?? ["SCORE_DESC", "POPULARITY_DESC"];
+  const genreFilter = genres.slice(0, 5);
+  if (!genreFilter.length) {
+    return {
+      data: [],
+      pagination: { total: 0, hasNextPage: false },
+    };
+  }
+  const query = `
+    query ($page: Int, $perPage: Int, $genres: [String], $sort: [MediaSort]) {
+      Page(page: $page, perPage: $perPage) {
+        pageInfo { total currentPage lastPage hasNextPage }
+        media(
+          type: ANIME
+          genre_in: $genres
+          sort: $sort
+          isAdult: false
+        ) {
+          ${FIELDS}
+        }
+      }
+    }
+  `;
+  const data = await gql<{
+    Page: {
+      pageInfo: {
+        total: number;
+        currentPage: number;
+        lastPage: number;
+        hasNextPage: boolean;
+      };
+      media: Record<string, unknown>[];
+    };
+  }>(query, { page, perPage, genres: genreFilter, sort });
+
+  let list = (data.Page.media || []).map(mapAniListMedia);
+  if (opts.excludeIds?.length) {
+    const ban = new Set(opts.excludeIds);
+    list = list.filter((a) => !ban.has(a.id));
+  }
+  return {
+    data: list,
+    pagination: {
+      total: data.Page.pageInfo.total ?? 0,
+      currentPage: data.Page.pageInfo.currentPage,
+      lastPage: data.Page.pageInfo.lastPage,
+      hasNextPage: Boolean(data.Page.pageInfo.hasNextPage),
+    },
+  };
+}
+
+export async function fetchAiringSchedule(
+  hoursAhead = 48,
+): Promise<
+  {
+    airingAt: number;
+    episode: number;
+    media: Anime;
+  }[]
+> {
+  const now = Math.floor(Date.now() / 1000);
+  const until = now + hoursAhead * 3600;
+  const query = `
+    query ($greater: Int, $lesser: Int) {
+      Page(page: 1, perPage: 50) {
+        airingSchedules(
+          airingAt_greater: $greater
+          airingAt_lesser: $lesser
+          sort: TIME
+        ) {
+          airingAt
+          episode
+          media {
+            ${FIELDS}
+          }
+        }
+      }
+    }
+  `;
+  const data = await gql<{
+    Page: {
+      airingSchedules: {
+        airingAt: number;
+        episode: number;
+        media: Record<string, unknown> | null;
+      }[];
+    };
+  }>(query, { greater: now, lesser: until });
+
+  return (data.Page.airingSchedules || [])
+    .filter((row) => row.media)
+    .map((row) => ({
+      airingAt: row.airingAt,
+      episode: row.episode,
+      media: mapAniListMedia(row.media!),
+    }));
+}
