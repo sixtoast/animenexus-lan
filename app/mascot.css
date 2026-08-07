@@ -1,4 +1,4 @@
-/* Always-on page companion — transparent layer, site stays clickable */
+/* Companion: corner home + occasional UI climbs */
 
 .live-terrain {
   position: fixed;
@@ -13,7 +13,7 @@
   pointer-events: none !important;
 }
 
-/* Tiny dock — hide only */
+/* Home dock — bottom-right corner */
 .mascot-dock {
   position: fixed;
   z-index: 40;
@@ -30,6 +30,11 @@
   -webkit-backdrop-filter: blur(10px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   pointer-events: auto;
+  transition: opacity 0.25s ease;
+}
+
+.mascot-dock--soft {
+  opacity: 0.55;
 }
 
 .mascot-dock-label {
@@ -70,11 +75,6 @@
   font-size: 1.1rem;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   pointer-events: auto;
-}
-
-/* Legacy habitat (unused in always-on mode, keep for safety) */
-.mascot-habitat {
-  display: none;
 }
 
 @media (max-width: 480px) {

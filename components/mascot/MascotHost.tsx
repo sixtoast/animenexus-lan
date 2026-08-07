@@ -50,12 +50,12 @@ export function MascotHost() {
     const check = () => {
       const open = !!(
         document.querySelector(
-          '[role="dialog"][data-open="true"], .modal-root.open, .cmdk-root[data-open="true"], .ai-panel.open',
+          '[role="dialog"]:not([hidden]), .modal-root.open, .cmdk-root[data-open="true"], .ai-panel.open',
         ) || document.body.classList.contains("modal-open")
       );
       setModalOpen(open);
     };
-    const id = window.setInterval(check, 800);
+    const id = window.setInterval(check, 600);
     check();
     return () => window.clearInterval(id);
   }, []);
@@ -107,8 +107,7 @@ export function MascotHost() {
     );
   }
 
-  // Always-on page terrain — site stays clickable (pointer-events: none on layer)
-  const pause = hiddenTab || modalOpen;
+  const pause = hiddenTab;
 
   return (
     <>
@@ -117,7 +116,14 @@ export function MascotHost() {
       {!pause ? (
         <LiveTerrain reducedMotion={reducedMotion} lowPower={lowPower} />
       ) : null}
-      <div className="mascot-dock" role="complementary" aria-label="Companion">
+      {/* Corner home marker — visual dock aligned with home-corner platform */}
+      <div
+        className={
+          "mascot-dock" + (modalOpen ? " mascot-dock--soft" : "")
+        }
+        role="complementary"
+        aria-label="Companion home"
+      >
         <span className="mascot-dock-label">Lantern-ko</span>
         <button
           type="button"

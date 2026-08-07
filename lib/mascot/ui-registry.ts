@@ -1,6 +1,5 @@
 /**
- * UI awareness — landmarks the companion can notice.
- * Screen-space rects map to habitat-relative interest targets.
+ * UI awareness — landmarks the companion can notice / climb.
  */
 
 export type LandmarkType =
@@ -17,7 +16,6 @@ export type Landmark = {
   id: string;
   type: LandmarkType;
   priority: number;
-  /** DOM rect at last scan */
   rect: DOMRect | null;
   el: WeakRef<Element> | null;
 };
@@ -58,7 +56,6 @@ export function listLandmarks(): Landmark[] {
   return [...landmarks.values()].filter((l) => l.rect);
 }
 
-/** Highest priority visible landmark near viewport center bias */
 export function pickInterestingLandmark(): Landmark | null {
   refreshLandmarkRects();
   const vw = window.innerWidth;
@@ -82,30 +79,26 @@ export function pickInterestingLandmark(): Landmark | null {
   return best;
 }
 
-/**
- * Map a screen point to habitat XZ interest.
- * Companion lives bottom-right — left/up on screen → walk left/forward in habitat.
- */
 export function screenToHabitatTarget(
   clientX: number,
   clientY: number,
 ): { x: number; z: number } {
-  const nx = clientX / window.innerWidth; // 0 left → 1 right
+  const nx = clientX / window.innerWidth;
   const ny = clientY / window.innerHeight;
-  // Invert x so left-side UI pulls mascot to left of habitat
   const x = (0.5 - nx) * 1.0;
   const z = (0.55 - ny) * 0.45;
   return { x, z };
 }
 
-export function landmarkToHabitat(lm: Landmark): { x: number; z: number } | null {
+export function landmarkToHabitat(
+  lm: Landmark,
+): { x: number; z: number } | null {
   if (!lm.rect) return null;
   const cx = lm.rect.left + lm.rect.width / 2;
   const cy = lm.rect.top + lm.rect.height / 2;
   return screenToHabitatTarget(cx, cy);
 }
 
-/** Scan DOM for data-mascot-landmark attributes */
 export function scanDomLandmarks() {
   if (typeof document === "undefined") return;
   document.querySelectorAll("[data-mascot-landmark]").forEach((el) => {
