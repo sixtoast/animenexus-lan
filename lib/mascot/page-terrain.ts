@@ -13,117 +13,116 @@ import {
 export type TerrainPlatform = {
   id: string;
   type: string;
-  /** World center X (horizontal) */
   x: number;
-  /** World center Y (vertical — up the page) */
   y: number;
-  /** Half-width / half-height in world units */
   hw: number;
   hh: number;
-  /** Priority for path picks */
   priority: number;
+  /** Original DOM center for scroll-into-view */
+  clientX: number;
+  clientY: number;
 };
 
-/** World units: full viewport width ≈ 2 * aspect */
 export function screenToWorld(
   clientX: number,
   clientY: number,
-  scrollY: number,
+  _scrollY: number,
 ): { x: number; y: number } {
   const vw = window.innerWidth || 1;
   const vh = window.innerHeight || 1;
   const aspect = vw / vh;
-  // x: -aspect … +aspect across the viewport
+  // Use viewport coordinates only (platforms rebuild on scroll)
   const x = ((clientX / vw) * 2 - 1) * aspect;
-  // y: 0 at top of document, increases downward in screen space → flip for 3D up
-  const pageY = clientY + scrollY;
-  const y = -((pageY / vh) * 2 - 1) * 1.0;
+  const y = -((clientY / vh) * 2 - 1);
   return { x, y };
 }
 
 export function rectToPlatform(lm: Landmark, scrollY: number): TerrainPlatform | null {
   const r = lm.rect;
-  if (!r || r.width < 8 || r.height < 8) return null;
+  if (!r || r.width < 12 || r.height < 12) return null;
   const vw = window.innerWidth || 1;
   const vh = window.innerHeight || 1;
-  const aspect = vw / vh;
+  // Only visible-ish rects
+  if (r.bottom < 0 || r.top > vh || r.right < 0 || r.left > vw) return null;
 
+  const aspect = vw / vh;
   const cx = r.left + r.width / 2;
   const cy = r.top + r.height / 2;
   const center = screenToWorld(cx, cy, scrollY);
-
-  // Scale pixel size → world
-  const hw = (r.width / vw) * aspect;
-  const hh = (r.height / vh) * 1.0;
+  const hw = Math.max(0.06, (r.width / vw) * aspect * 0.9);
+  const hh = Math.max(0.03, (r.height / vh) * 0.45);
 
   return {
     id: lm.id,
     type: lm.type,
     x: center.x,
     y: center.y,
-    hw: Math.max(0.08, hw * 0.92),
-    hh: Math.max(0.04, hh * 0.5),
+    hw,
+    hh,
     priority: lm.priority,
+    clientX: cx,
+    clientY: cy,
   };
 }
 
 export function buildTerrain(): TerrainPlatform[] {
   if (typeof window === "undefined") return [];
   scanDomLandmarks();
-  refreshLandmarkRects();
 
-  // Also harvest common surfaces without data attributes
-  document.querySelectorAll(
-    "nav, header, .anime-card, .home-rail-card, .home-panel, .hero, main .container, [role='navigation']",
-  ).forEach((el, i) => {
-    const id = el.id || `auto-surface-${i}`;
-    if (!el.getAttribute("data-mascot-landmark")) {
-      el.setAttribute("data-mascot-landmark", el.classList.contains("anime-card") ? "card" : "generic");
-      el.setAttribute("data-mascot-id", id);
-    }
-  });
+  document
+    .querySelectorAll(
+      "nav, header, .anime-card, .home-rail-card, .home-panel, .hero, main .container, [role='navigation'], .btn, .home-hero-actions",
+    )
+    .forEach((el, i) => {
+      const id = el.getAttribute("data-mascot-id") || el.id || `auto-surface-${i}`;
+      if (!el.getAttribute("data-mascot-landmark")) {
+        const type = el.classList.contains("anime-card")
+          ? "card"
+          : el.tagName === "NAV" || el.getAttribute("role") === "navigation"
+            ? "nav"
+            : el.classList.contains("btn")
+              ? "button"
+              : "generic";
+        el.setAttribute("data-mascot-landmark", type);
+        el.setAttribute("data-mascot-id", id);
+        if (!el.getAttribute("data-mascot-priority")) {
+          el.setAttribute(
+            "data-mascot-priority",
+            type === "card" ? "5" : type === "nav" ? "3" : "2",
+          );
+        }
+      }
+    });
+
   scanDomLandmarks();
   refreshLandmarkRects();
 
   const scrollY = window.scrollY || 0;
   const out: TerrainPlatform[] = [];
+  const seen = new Set<string>();
   for (const lm of listLandmarks()) {
+    if (seen.has(lm.id)) continue;
     const p = rectToPlatform(lm, scrollY);
-    if (p) out.push(p);
+    if (p) {
+      seen.add(lm.id);
+      out.push(p);
+    }
   }
 
-  // Always include a ground strip at bottom of viewport for safety
   const aspect = window.innerWidth / (window.innerHeight || 1);
   out.push({
     id: "viewport-floor",
     type: "floor",
     x: 0,
-    y: -0.85,
+    y: -0.88,
     hw: aspect * 0.95,
-    hh: 0.08,
+    hh: 0.06,
     priority: 0,
+    clientX: window.innerWidth / 2,
+    clientY: window.innerHeight - 20,
   });
 
   return out;
-}
-
-export function nearestPlatform(
-  platforms: TerrainPlatform[],
-  x: number,
-  y: number,
-): TerrainPlatform | null {
-  let best: TerrainPlatform | null = null;
-  let bestD = Infinity;
-  for (const p of platforms) {
-    const dx = Math.max(Math.abs(x - p.x) - p.hw, 0);
-    const dy = Math.max(Math.abs(y - p.y) - p.hh, 0);
-    const d = Math.hypot(dx, dy);
-    if (d < bestD) {
-      bestD = d;
-      best = p;
-    }
-  }
-  return best;
 }
 
 export function pickWanderPlatform(
@@ -133,8 +132,47 @@ export function pickWanderPlatform(
   const candidates = platforms.filter(
     (p) => p.id !== fromId && p.type !== "floor" && p.priority >= 1,
   );
-  if (!candidates.length) return platforms[0] ?? null;
-  // Prefer higher priority + a little randomness
-  candidates.sort((a, b) => b.priority - a.priority + (Math.random() - 0.5));
-  return candidates[Math.floor(Math.random() * Math.min(4, candidates.length))];
+  if (!candidates.length) return platforms.find((p) => p.type !== "floor") ?? null;
+  candidates.sort((a, b) => b.priority - a.priority + (Math.random() - 0.5) * 2);
+  return candidates[Math.floor(Math.random() * Math.min(5, candidates.length))];
+}
+
+/** Simple hop chain: prefer intermediate platforms when far. */
+export function planHops(
+  from: TerrainPlatform | null,
+  to: TerrainPlatform,
+  platforms: TerrainPlatform[],
+): TerrainPlatform[] {
+  if (!from || from.id === to.id) return [to];
+  const dist = Math.hypot(to.x - from.x, to.y - from.y);
+  if (dist < 0.9) return [to];
+
+  // Find a midpoint platform
+  let mid: TerrainPlatform | null = null;
+  let best = Infinity;
+  for (const p of platforms) {
+    if (p.id === from.id || p.id === to.id || p.type === "floor") continue;
+    const d1 = Math.hypot(p.x - from.x, p.y - from.y);
+    const d2 = Math.hypot(p.x - to.x, p.y - to.y);
+    const score = d1 + d2;
+    if (score < dist * 1.15 && score < best) {
+      best = score;
+      mid = p;
+    }
+  }
+  return mid ? [mid, to] : [to];
+}
+
+export function scrollLandmarkIntoView(p: TerrainPlatform) {
+  if (typeof document === "undefined") return;
+  const el =
+    document.querySelector(`[data-mascot-id="${CSS.escape(p.id)}"]`) ||
+    document.getElementById(p.id);
+  if (el && "scrollIntoView" in el) {
+    (el as HTMLElement).scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+      inline: "nearest",
+    });
+  }
 }

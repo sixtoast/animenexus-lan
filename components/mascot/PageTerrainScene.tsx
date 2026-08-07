@@ -1,9 +1,15 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import { buildTerrain, pickWanderPlatform, type TerrainPlatform } from "@/lib/mascot/page-terrain";
+import {
+  buildTerrain,
+  pickWanderPlatform,
+  planHops,
+  scrollLandmarkIntoView,
+  type TerrainPlatform,
+} from "@/lib/mascot/page-terrain";
 import {
   createTerrainBody,
   jumpToward,
@@ -15,141 +21,41 @@ import {
 import { useMascotStore } from "@/lib/mascot/store";
 import { motionFromEmotions } from "@/lib/mascot/emotions";
 
-function TerrainChibi({
-  platforms,
-}: {
-  platforms: TerrainPlatform[];
-}) {
-  const root = useRef<THREE.Group>(null);
-  const pose = useRef<THREE.Group>(null);
-  const body = useRef<TerrainBody>(createTerrainBody());
-  const target = useRef<TerrainPlatform | null>(null);
-  const nextPick = useRef(0);
-  const emotions = useMascotStore((s) => s.emotions);
-  const anim = useMascotStore((s) => s.anim);
-  const setAnim = useMascotStore((s) => s.setAnim);
-  const requestAnim = useMascotStore((s) => s.requestAnim);
-
-  useFrame((state, delta) => {
-    const dt = Math.min(delta, 0.05);
-    const t = state.clock.elapsedTime;
-    const motion = motionFromEmotions(emotions);
-    const g = root.current;
-    const p = pose.current;
-    if (!g || !p || !platforms.length) return;
-
-    // Periodic wander to another UI platform
-    if (Date.now() > nextPick.current && body.current.onGround) {
-      const next = pickWanderPlatform(platforms, body.current.platformId ?? undefined);
-      if (next) {
-        target.current = next;
-        const higher = next.y + next.hh > body.current.y + 0.15;
-        if (higher || Math.random() < 0.35) {
-          body.current = jumpToward(body.current, next);
-          setAnim("jump");
-        } else {
-          setAnim("walk");
-        }
-      }
-      nextPick.current = Date.now() + 3500 + Math.random() * 2500;
-    }
-
-    if (target.current) {
-      const tg = target.current;
-      const goalY = tg.y + tg.hh;
-      if (body.current.onGround) {
-        body.current = steerTerrain(
-          body.current,
-          tg.x,
-          goalY,
-          Math.max(0.4, motion.walkSpeed * 1.2),
-        );
-      }
-      if (
-        Math.abs(body.current.x - tg.x) < tg.hw * 0.6 &&
-        Math.abs(body.current.y - goalY) < 0.15
-      ) {
-        body.current = snapToPlatform(body.current, tg);
-        target.current = null;
-        setAnim("idle");
-        if (Math.random() < 0.3) requestAnim({ anim: "wave", holdMs: 800 });
-      }
-    }
-
-    body.current = stepTerrain(body.current, platforms, dt);
-
-    g.position.x = body.current.x;
-    g.position.y = body.current.y + 0.12;
-    g.position.z = 0.15;
-
-    // Face movement
-    if (Math.abs(body.current.vx) > 0.05) {
-      g.rotation.y = body.current.vx > 0 ? 0.4 : -0.4;
-    }
-
-    const breathe = Math.sin(t * 2) * 0.015;
-    let bob = body.current.onGround ? Math.sin(t * 8) * 0.02 * (anim === "walk" ? 1 : 0.3) : 0.05;
-    p.position.y = bob + breathe;
-    p.scale.setScalar(0.55 + breathe);
-  });
-
-  return (
-    <group ref={root}>
-      <group ref={pose}>
-        <mesh position={[0, -0.15, 0]}>
-          <capsuleGeometry args={[0.12, 0.14, 4, 8]} />
-          <meshStandardMaterial color="#e8a598" roughness={0.45} />
-        </mesh>
-        <mesh position={[0, 0.18, 0]}>
-          <sphereGeometry args={[0.2, 20, 20]} />
-          <meshStandardMaterial color="#f5d0c8" roughness={0.4} />
-        </mesh>
-        <mesh position={[0, 0.32, 0]}>
-          <sphereGeometry args={[0.045, 10, 10]} />
-          <meshStandardMaterial
-            color="#f0a090"
-            emissive="#f0a090"
-            emissiveIntensity={0.6}
-          />
-        </mesh>
-      </group>
-    </group>
-  );
-}
-
 function PlatformMeshes({
   platforms,
+  highlightId,
   onSelect,
 }: {
   platforms: TerrainPlatform[];
+  highlightId: string | null;
   onSelect: (p: TerrainPlatform) => void;
 }) {
   return (
     <group>
-      {platforms.map((p) => (
-        <mesh
-          key={p.id}
-          position={[p.x, p.y, 0]}
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelect(p);
-          }}
-        >
-          <boxGeometry args={[p.hw * 2, p.hh * 2, 0.04]} />
-          <meshStandardMaterial
-            color={
-              p.type === "card"
-                ? "#4a3a32"
-                : p.type === "floor"
-                  ? "#2a2220"
-                  : "#3d322c"
-            }
-            transparent
-            opacity={p.type === "floor" ? 0.25 : 0.4}
-            roughness={0.9}
-          />
-        </mesh>
-      ))}
+      {platforms.map((p) => {
+        const active = p.id === highlightId;
+        const isFloor = p.type === "floor";
+        return (
+          <mesh
+            key={p.id}
+            position={[p.x, p.y, isFloor ? -0.05 : 0]}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!isFloor) onSelect(p);
+            }}
+          >
+            <boxGeometry args={[p.hw * 2, p.hh * 2, active ? 0.06 : 0.03]} />
+            <meshStandardMaterial
+              color={active ? "#f0a090" : p.type === "card" ? "#5a4a40" : "#3a302c"}
+              transparent
+              opacity={isFloor ? 0.12 : active ? 0.55 : 0.28}
+              roughness={0.85}
+              emissive={active ? "#f0a090" : "#000000"}
+              emissiveIntensity={active ? 0.35 : 0}
+            />
+          </mesh>
+        );
+      })}
     </group>
   );
 }
@@ -158,81 +64,27 @@ function CameraFit() {
   const { camera, size } = useThree();
   useEffect(() => {
     const cam = camera as THREE.PerspectiveCamera;
-    cam.position.set(0, 0, 3.2);
+    cam.position.set(0, 0, 3.1);
     cam.lookAt(0, 0, 0);
-    cam.fov = 50;
+    cam.fov = 48;
     cam.aspect = size.width / size.height;
     cam.updateProjectionMatrix();
   }, [camera, size]);
   return null;
 }
 
-type Props = {
-  onClose: () => void;
-  reducedMotion?: boolean;
-};
-
-export function PageTerrainScene({ onClose, reducedMotion }: Props) {
-  const [platforms, setPlatforms] = useState<TerrainPlatform[]>([]);
-  const bodyRef = useRef<TerrainBody | null>(null);
-  const targetRef = useRef<TerrainPlatform | null>(null);
-
-  useEffect(() => {
-    const rebuild = () => setPlatforms(buildTerrain());
-    rebuild();
-    const id = window.setInterval(rebuild, 1200);
-    window.addEventListener("resize", rebuild);
-    window.addEventListener("scroll", rebuild, { passive: true });
-    return () => {
-      window.clearInterval(id);
-      window.removeEventListener("resize", rebuild);
-      window.removeEventListener("scroll", rebuild);
-    };
-  }, []);
-
-  const onSelect = (p: TerrainPlatform) => {
-    // Store selection for next frame via custom event on window
-    window.dispatchEvent(
-      new CustomEvent("mascot:terrain-goto", { detail: p }),
-    );
-  };
-
-  return (
-    <div className="page-terrain-overlay" role="dialog" aria-label="Page terrain">
-      <div className="page-terrain-chrome">
-        <span className="page-terrain-title">Terrain mode</span>
-        <span className="page-terrain-hint">Tap platforms · scroll updates map</span>
-        <button type="button" className="page-terrain-close" onClick={onClose}>
-          Exit
-        </button>
-      </div>
-      <Canvas
-        className="page-terrain-canvas"
-        dpr={[1, 1.5]}
-        gl={{
-          alpha: true,
-          antialias: true,
-          powerPreference: "low-power",
-        }}
-        frameloop={reducedMotion ? "demand" : "always"}
-        camera={{ position: [0, 0, 3.2], fov: 50 }}
-      >
-        <CameraFit />
-        <ambientLight intensity={0.7} />
-        <directionalLight position={[2, 3, 4]} intensity={0.9} />
-        <PlatformMeshes platforms={platforms} onSelect={onSelect} />
-        <TerrainActor platforms={platforms} />
-      </Canvas>
-    </div>
-  );
-}
-
-function TerrainActor({ platforms }: { platforms: TerrainPlatform[] }) {
+function TerrainActor({
+  platforms,
+  onPlatform,
+}: {
+  platforms: TerrainPlatform[];
+  onPlatform: (id: string | null) => void;
+}) {
   const root = useRef<THREE.Group>(null);
   const pose = useRef<THREE.Group>(null);
   const body = useRef<TerrainBody>(createTerrainBody());
-  const target = useRef<TerrainPlatform | null>(null);
-  const nextPick = useRef(Date.now() + 2000);
+  const queue = useRef<TerrainPlatform[]>([]);
+  const nextPick = useRef(Date.now() + 2500);
   const emotions = useMascotStore((s) => s.emotions);
   const setAnim = useMascotStore((s) => s.setAnim);
   const requestAnim = useMascotStore((s) => s.requestAnim);
@@ -241,15 +93,19 @@ function TerrainActor({ platforms }: { platforms: TerrainPlatform[] }) {
   useEffect(() => {
     const onGoto = (e: Event) => {
       const p = (e as CustomEvent).detail as TerrainPlatform;
-      target.current = p;
-      if (body.current.onGround) {
-        body.current = jumpToward(body.current, p);
+      const current =
+        platforms.find((x) => x.id === body.current.platformId) ?? null;
+      queue.current = planHops(current, p, platforms);
+      const first = queue.current[0];
+      if (first && body.current.onGround) {
+        body.current = jumpToward(body.current, first);
         setAnim("jump");
+        onPlatform(first.id);
       }
     };
     window.addEventListener("mascot:terrain-goto", onGoto);
     return () => window.removeEventListener("mascot:terrain-goto", onGoto);
-  }, [setAnim]);
+  }, [platforms, setAnim, onPlatform]);
 
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.05);
@@ -259,48 +115,76 @@ function TerrainActor({ platforms }: { platforms: TerrainPlatform[] }) {
     const p = pose.current;
     if (!g || !p || !platforms.length) return;
 
-    if (Date.now() > nextPick.current && body.current.onGround && !target.current) {
-      const next = pickWanderPlatform(platforms, body.current.platformId ?? undefined);
+    // Auto-wander when queue empty
+    if (
+      Date.now() > nextPick.current &&
+      body.current.onGround &&
+      queue.current.length === 0
+    ) {
+      const next = pickWanderPlatform(
+        platforms,
+        body.current.platformId ?? undefined,
+      );
       if (next) {
-        target.current = next;
-        if (next.y + next.hh > body.current.y + 0.12 || Math.random() < 0.4) {
-          body.current = jumpToward(body.current, next);
-          setAnim("jump");
-        } else setAnim("walk");
+        const current =
+          platforms.find((x) => x.id === body.current.platformId) ?? null;
+        queue.current = planHops(current, next, platforms);
+        const first = queue.current[0];
+        if (first) {
+          if (first.y + first.hh > body.current.y + 0.1 || Math.random() < 0.45) {
+            body.current = jumpToward(body.current, first);
+            setAnim("jump");
+          } else setAnim("walk");
+          onPlatform(first.id);
+        }
       }
-      nextPick.current = Date.now() + 4000 + Math.random() * 3000;
+      nextPick.current = Date.now() + 4500 + Math.random() * 3500;
     }
 
-    if (target.current) {
-      const tg = target.current;
-      const goalY = tg.y + tg.hh;
+    const goal = queue.current[0];
+    if (goal) {
+      const goalY = goal.y + goal.hh;
       if (body.current.onGround) {
         body.current = steerTerrain(
           body.current,
-          tg.x,
+          goal.x,
           goalY,
-          Math.max(0.45, motion.walkSpeed * 1.3),
+          Math.max(0.5, motion.walkSpeed * 1.35),
         );
       }
       if (
-        Math.abs(body.current.x - tg.x) < Math.max(0.12, tg.hw * 0.7) &&
-        Math.abs(body.current.y - goalY) < 0.18
+        Math.abs(body.current.x - goal.x) < Math.max(0.1, goal.hw * 0.65) &&
+        Math.abs(body.current.y - goalY) < 0.2
       ) {
-        body.current = snapToPlatform(body.current, tg);
-        target.current = null;
-        setAnim("idle");
-        if (Math.random() < 0.35) requestAnim({ anim: "wave", holdMs: 900 });
+        body.current = snapToPlatform(body.current, goal);
+        queue.current.shift();
+        onPlatform(goal.id);
+        scrollLandmarkIntoView(goal);
+
+        if (queue.current.length === 0) {
+          setAnim("idle");
+          if (Math.random() < 0.4) requestAnim({ anim: "wave", holdMs: 900 });
+          else if (Math.random() < 0.25)
+            requestAnim({ anim: "point", holdMs: 1000 });
+        } else {
+          // Continue hop chain
+          const next = queue.current[0];
+          body.current = jumpToward(body.current, next);
+          setAnim("jump");
+          onPlatform(next.id);
+        }
       }
     }
 
     body.current = stepTerrain(body.current, platforms, dt);
+    if (body.current.platformId) onPlatform(body.current.platformId);
 
-    g.position.set(body.current.x, body.current.y + 0.1, 0.2);
+    g.position.set(body.current.x, body.current.y + 0.1, 0.25);
     if (Math.abs(body.current.vx) > 0.04) {
       g.rotation.y = THREE.MathUtils.lerp(
         g.rotation.y,
         body.current.vx > 0 ? 0.5 : -0.5,
-        0.1,
+        0.12,
       );
     }
 
@@ -308,9 +192,11 @@ function TerrainActor({ platforms }: { platforms: TerrainPlatform[] }) {
     const walkBob =
       anim === "walk" && body.current.onGround
         ? Math.abs(Math.sin(t * 10)) * 0.03
-        : 0;
+        : anim === "jump"
+          ? 0.04
+          : 0;
     p.position.y = walkBob + breathe;
-    p.scale.setScalar(0.5 * (anim === "jump" ? 1.05 : 1));
+    p.scale.setScalar(0.52 * (anim === "jump" ? 1.06 : 1));
   });
 
   return (
@@ -335,10 +221,73 @@ function TerrainActor({ platforms }: { platforms: TerrainPlatform[] }) {
           <meshStandardMaterial
             color="#f0a090"
             emissive="#f0a090"
-            emissiveIntensity={0.7}
+            emissiveIntensity={0.75}
           />
         </mesh>
       </group>
     </group>
+  );
+}
+
+type Props = {
+  onClose: () => void;
+  reducedMotion?: boolean;
+};
+
+export function PageTerrainScene({ onClose, reducedMotion }: Props) {
+  const [platforms, setPlatforms] = useState<TerrainPlatform[]>([]);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const rebuild = () => setPlatforms(buildTerrain());
+    rebuild();
+    const id = window.setInterval(rebuild, 1000);
+    window.addEventListener("resize", rebuild);
+    window.addEventListener("scroll", rebuild, { passive: true });
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener("resize", rebuild);
+      window.removeEventListener("scroll", rebuild);
+    };
+  }, []);
+
+  const onSelect = (p: TerrainPlatform) => {
+    window.dispatchEvent(new CustomEvent("mascot:terrain-goto", { detail: p }));
+    setHighlightId(p.id);
+  };
+
+  return (
+    <div className="page-terrain-overlay" role="dialog" aria-label="Page terrain">
+      <div className="page-terrain-chrome">
+        <span className="page-terrain-title">Terrain</span>
+        <span className="page-terrain-hint">
+          Ghost slabs = UI · tap to path · they hop on their own
+        </span>
+        <button type="button" className="page-terrain-close" onClick={onClose}>
+          Exit
+        </button>
+      </div>
+      <Canvas
+        className="page-terrain-canvas"
+        dpr={[1, 1.5]}
+        gl={{
+          alpha: true,
+          antialias: true,
+          powerPreference: "low-power",
+        }}
+        frameloop={reducedMotion ? "demand" : "always"}
+        camera={{ position: [0, 0, 3.1], fov: 48 }}
+      >
+        <CameraFit />
+        <ambientLight intensity={0.75} />
+        <directionalLight position={[2, 3, 4]} intensity={0.85} />
+        <PlatformMeshes
+          platforms={platforms}
+          highlightId={highlightId}
+          onSelect={onSelect}
+        />
+        <TerrainActor platforms={platforms} onPlatform={setHighlightId} />
+      </Canvas>
+    </div>
   );
 }
