@@ -24,6 +24,8 @@ import {
   type MotionProfile,
 } from "./emotions";
 import { screenToHabitatTarget } from "./ui-registry";
+import { decide, decideAmbient } from "./decision";
+import { executeDecision } from "./execute";
 
 type MascotState = {
   enabled: boolean;
@@ -34,6 +36,7 @@ type MascotState = {
   nextThinkAt: number;
   emotions: MascotEmotions;
   lastInteractionAt: number;
+  lastThought: string | null;
   position: NavTarget;
   target: NavTarget | null;
   lookBias: { x: number; y: number };
@@ -56,6 +59,14 @@ type MascotState = {
 
 const clamp = (n: number) => Math.max(0, Math.min(1, n));
 
+function ctxFromStore() {
+  const s = useMascotStore.getState();
+  return {
+    emotions: s.emotions,
+    msSinceInteract: Date.now() - s.lastInteractionAt,
+  };
+}
+
 export const useMascotStore = create<MascotState>((set, get) => ({
   enabled: true,
   anim: "idle",
@@ -65,6 +76,7 @@ export const useMascotStore = create<MascotState>((set, get) => ({
   nextThinkAt: 0,
   emotions: defaultEmotions(),
   lastInteractionAt: Date.now(),
+  lastThought: null,
   position: { x: 0, z: 0 },
   target: null,
   lookBias: { x: 0, y: 0 },
@@ -160,6 +172,18 @@ export const useMascotStore = create<MascotState>((set, get) => ({
     const s = get();
     if (!s.enabled) return;
     if (Date.now() < s.nextThinkAt) return;
+
+    // Decision layer ambient pass
+    if (!s.loadingSince && Date.now() > s.busyUntil) {
+      const ambient = decideAmbient(ctxFromStore());
+      if (ambient && Math.random() < 0.45) {
+        set({ lastThought: ambient.thought.text });
+        executeDecision(ambient);
+        set({ nextThinkAt: Date.now() + 8000 });
+        return;
+      }
+    }
+
     if (s.loadingSince) {
       const waited = Date.now() - s.loadingSince;
       if (waited > 12_000 && s.anim !== "sleep") {
@@ -195,6 +219,16 @@ export const useMascotStore = create<MascotState>((set, get) => ({
   },
   dispatch: (e) => {
     const { bumpEmotion, requestAnim, applyGoal } = get();
+
+    const runDecision = (
+      kind: "pet" | "drag" | "seal" | "complete" | "idle-long" | "route",
+    ) => {
+      const d = decide(kind, ctxFromStore());
+      set({ lastThought: d.thought.text, lastInteractionAt: Date.now() });
+      executeDecision(d);
+      set({ nextThinkAt: Date.now() + 3500 });
+    };
+
     switch (e.type) {
       case "tick": {
         const { busyUntil, anim, emotions } = get();
@@ -294,45 +328,19 @@ export const useMascotStore = create<MascotState>((set, get) => ({
       }
       case "click":
       case "pet":
-        set({ lastInteractionAt: Date.now(), goal: "celebrate" });
-        bumpEmotion("happiness", 0.14);
-        bumpEmotion("attention", 0.25);
-        bumpEmotion("boredom", -0.2);
-        bumpEmotion("sleepiness", -0.25);
-        bumpEmotion("energy", 0.1);
-        bumpEmotion("confidence", 0.08);
-        bumpEmotion("stress", -0.12);
-        set({ target: null, jumpQueued: true });
+        runDecision("pet");
         if (get().anim === "sleep") {
-          requestAnim({ anim: "surprised", holdMs: 600, force: true });
-          window.setTimeout(() => {
-            requestAnim({ anim: "happy", holdMs: 1100, force: true });
-          }, 500);
-        } else {
-          requestAnim({ anim: "jump", holdMs: 400, force: true });
-          window.setTimeout(() => {
-            requestAnim({ anim: "happy", holdMs: 1000, force: true });
-          }, 380);
+          requestAnim({ anim: "surprised", holdMs: 500, force: true });
         }
-        set({ nextThinkAt: Date.now() + 3000 });
+        set({ jumpQueued: true });
         break;
       case "seal":
+        runDecision("seal");
+        set({ jumpQueued: true });
+        break;
       case "complete":
-        set({ lastInteractionAt: Date.now(), goal: "celebrate" });
-        bumpEmotion("happiness", 0.24);
-        bumpEmotion("energy", 0.14);
-        bumpEmotion("confidence", 0.12);
-        bumpEmotion("sleepiness", -0.15);
-        bumpEmotion("stress", -0.1);
-        set({ target: null, jumpQueued: true });
-        requestAnim({ anim: "jump", holdMs: 400, force: true });
-        window.setTimeout(() => {
-          requestAnim({ anim: "happy", holdMs: 900, force: true });
-          window.setTimeout(() => {
-            requestAnim({ anim: "wave", holdMs: 800, force: true });
-          }, 850);
-        }, 380);
-        set({ nextThinkAt: Date.now() + 4000 });
+        runDecision("complete");
+        set({ jumpQueued: true });
         break;
       case "go-to": {
         if (get().anim === "sleep") {
@@ -350,40 +358,19 @@ export const useMascotStore = create<MascotState>((set, get) => ({
         requestAnim({ anim: "jump", holdMs: 500, force: true });
         bumpEmotion("energy", 0.08);
         bumpEmotion("curiosity", 0.06);
-        window.setTimeout(() => {
-          requestAnim({ anim: "walk", force: true });
-        }, 450);
         break;
       }
       case "drag": {
         const t = clampToHabitat(e.x, e.z);
         set({ position: t, target: null });
-        bumpEmotion("stress", 0.05);
-        bumpEmotion("attention", 0.1);
-        requestAnim({ anim: "surprised", holdMs: 400, force: true });
+        runDecision("drag");
         break;
       }
       case "idle-long":
-        bumpEmotion("sleepiness", 0.1);
-        bumpEmotion("boredom", 0.08);
-        bumpEmotion("energy", -0.05);
-        bumpEmotion("stress", 0.03);
-        set({ nextThinkAt: 0 });
-        get().runBehaviourTick();
+        runDecision("idle-long");
         break;
       case "route":
-        set({ lastInteractionAt: Date.now() });
-        bumpEmotion("curiosity", 0.1);
-        bumpEmotion("attention", 0.12);
-        bumpEmotion("sleepiness", -0.06);
-        bumpEmotion("stress", 0.04);
-        if (get().anim === "sleep") {
-          requestAnim({ anim: "wave", holdMs: 800, force: true });
-          set({ goal: "seek-attention" });
-        } else if (Date.now() > get().busyUntil) {
-          applyGoal("seek-attention");
-        }
-        set({ nextThinkAt: Date.now() + 5000 });
+        runDecision("route");
         break;
       default:
         break;

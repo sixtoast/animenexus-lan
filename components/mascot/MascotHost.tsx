@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useMascotStore, mascotNotify } from "@/lib/mascot/store";
 import { UiAwareness } from "./UiAwareness";
 import { ContextBridge } from "./ContextBridge";
+import { ThoughtBubble } from "./ThoughtBubble";
 
 const LiveTerrain = dynamic(
   () => import("./LiveTerrain").then((m) => m.LiveTerrain),
@@ -116,7 +117,7 @@ export function MascotHost() {
       {!pause ? (
         <LiveTerrain reducedMotion={reducedMotion} lowPower={lowPower} />
       ) : null}
-      {/* Corner home marker — visual dock aligned with home-corner platform */}
+      <ThoughtBubble />
       <div
         className={
           "mascot-dock" + (modalOpen ? " mascot-dock--soft" : "")

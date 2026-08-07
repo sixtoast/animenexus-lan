@@ -1,4 +1,4 @@
-/* Companion: corner home + occasional UI climbs + drag */
+/* Companion: corner home + occasional climbs + thoughts */
 
 .live-terrain {
   position: fixed;
@@ -13,7 +13,6 @@
   pointer-events: none !important;
 }
 
-/* Drag hit target — follows the 3D body in screen space */
 .mascot-drag-handle {
   position: fixed;
   z-index: 36;
@@ -34,6 +33,37 @@
   cursor: grabbing;
   background: rgba(240, 160, 144, 0.12);
   box-shadow: 0 0 0 2px rgba(240, 160, 144, 0.35);
+}
+
+.mascot-thought {
+  position: fixed;
+  z-index: 41;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(112px, calc(env(safe-area-inset-bottom) + 100px));
+  max-width: min(220px, 70vw);
+  padding: 8px 12px;
+  border-radius: 14px 14px 4px 14px;
+  border: 1px solid rgba(240, 160, 144, 0.3);
+  background: rgba(22, 16, 14, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #f5ebe6;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  animation: mascot-thought-in 0.35s ease;
+}
+
+@keyframes mascot-thought-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .mascot-dock {
@@ -109,11 +139,17 @@
     margin-left: -28px;
     margin-top: -28px;
   }
+  .mascot-thought {
+    bottom: max(104px, calc(env(safe-area-inset-bottom) + 92px));
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .live-terrain,
   .mascot-drag-handle {
     display: none;
+  }
+  .mascot-thought {
+    animation: none;
   }
 }
