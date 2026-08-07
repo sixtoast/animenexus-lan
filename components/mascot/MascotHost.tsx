@@ -15,6 +15,11 @@ const MascotScene = dynamic(
   },
 );
 
+const PageTerrainScene = dynamic(
+  () => import("./PageTerrainScene").then((m) => m.PageTerrainScene),
+  { ssr: false },
+);
+
 export function MascotHost() {
   const enabled = useMascotStore((s) => s.enabled);
   const setEnabled = useMascotStore((s) => s.setEnabled);
@@ -24,6 +29,7 @@ export function MascotHost() {
   const [reducedMotion, setReducedMotion] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [lowPower, setLowPower] = useState(false);
+  const [terrainMode, setTerrainMode] = useState(false);
 
   useEffect(() => {
     setReady(true);
@@ -49,7 +55,6 @@ export function MascotHost() {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
 
-  // Pause presence under modals / command palette
   useEffect(() => {
     const check = () => {
       const open = !!(
@@ -67,6 +72,8 @@ export function MascotHost() {
   useEffect(() => {
     if (!enabled) return;
     mascotNotify({ type: "route", path: pathname });
+    // Leave terrain on route change so map rebuilds cleanly
+    setTerrainMode(false);
   }, [pathname, enabled]);
 
   useEffect(() => {
@@ -90,6 +97,16 @@ export function MascotHost() {
     return () => window.clearInterval(id);
   }, [enabled, hiddenTab]);
 
+  // Escape exits terrain
+  useEffect(() => {
+    if (!terrainMode) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setTerrainMode(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [terrainMode]);
+
   if (!ready || !enabled) {
     return (
       <button
@@ -108,6 +125,19 @@ export function MascotHost() {
       >
         🕯️
       </button>
+    );
+  }
+
+  if (terrainMode) {
+    return (
+      <>
+        <UiAwareness />
+        <ContextBridge />
+        <PageTerrainScene
+          reducedMotion={reducedMotion}
+          onClose={() => setTerrainMode(false)}
+        />
+      </>
     );
   }
 
@@ -136,21 +166,32 @@ export function MascotHost() {
         </div>
         <div className="mascot-bar">
           <span className="mascot-name">Lantern-ko</span>
-          <button
-            type="button"
-            className="mascot-hide"
-            onClick={() => {
-              setEnabled(false);
-              try {
-                localStorage.setItem("anime_nexus_mascot", "off");
-              } catch {
-                /* */
-              }
-            }}
-            aria-label="Hide companion"
-          >
-            Hide
-          </button>
+          <div className="mascot-bar-actions">
+            <button
+              type="button"
+              className="mascot-terrain-btn"
+              onClick={() => setTerrainMode(true)}
+              title="Page as terrain"
+              aria-label="Open page terrain mode"
+            >
+              Map
+            </button>
+            <button
+              type="button"
+              className="mascot-hide"
+              onClick={() => {
+                setEnabled(false);
+                try {
+                  localStorage.setItem("anime_nexus_mascot", "off");
+                } catch {
+                  /* */
+                }
+              }}
+              aria-label="Hide companion"
+            >
+              Hide
+            </button>
+          </div>
         </div>
       </div>
     </>
