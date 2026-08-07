@@ -8,6 +8,7 @@ import { UiAwareness } from "./UiAwareness";
 import { ContextBridge } from "./ContextBridge";
 import { ThoughtBubble } from "./ThoughtBubble";
 import { UiTheatreBridge } from "./UiTheatreBridge";
+import { MemoryBoot } from "./MemoryBoot";
 
 const LiveTerrain = dynamic(
   () => import("./LiveTerrain").then((m) => m.LiveTerrain),
@@ -113,6 +114,7 @@ export function MascotHost() {
 
   return (
     <>
+      <MemoryBoot />
       <UiAwareness />
       <ContextBridge />
       <UiTheatreBridge />
