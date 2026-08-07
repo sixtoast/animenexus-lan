@@ -1,8 +1,7 @@
 "use client";
 
 /**
- * Corner home + occasional UI climbs.
- * Faces the camera; drag via an HTML handle that tracks the 3D body.
+ * Corner home + occasional climbs + Sprint 3 procedural living motion.
  */
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
@@ -26,6 +25,8 @@ import {
 } from "@/lib/mascot/terrain-physics";
 import { useMascotStore } from "@/lib/mascot/store";
 import { motionFromEmotions } from "@/lib/mascot/emotions";
+import { worldMood, outingIntervalMs, lingerMs } from "@/lib/mascot/living-world";
+import { sampleProcedural } from "@/lib/mascot/procedural-motion";
 
 type Phase = "home" | "outing" | "returning";
 
@@ -61,16 +62,21 @@ function Actor({
 }) {
   const root = useRef<THREE.Group>(null);
   const pose = useRef<THREE.Group>(null);
+  const head = useRef<THREE.Group>(null);
   const tip = useRef<THREE.Mesh>(null);
+  const eyeL = useRef<THREE.Mesh>(null);
+  const eyeR = useRef<THREE.Mesh>(null);
   const queue = useRef<TerrainPlatform[]>([]);
   const phase = useRef<Phase>("home");
-  const nextOuting = useRef(Date.now() + 8000 + Math.random() * 6000);
+  const mood = useRef(worldMood());
+  const nextOuting = useRef(Date.now() + outingIntervalMs(mood.current, lowPower));
   const homeUntil = useRef(0);
-  const facing = useRef(Math.PI); // face camera by default (meshes built toward +Z)
+  const facing = useRef(0);
   const emotions = useMascotStore((s) => s.emotions);
   const setAnim = useMascotStore((s) => s.setAnim);
   const requestAnim = useMascotStore((s) => s.requestAnim);
   const anim = useMascotStore((s) => s.anim);
+  const lookBias = useMascotStore((s) => s.lookBias);
   const { camera, size } = useThree();
 
   useEffect(() => {
@@ -81,6 +87,15 @@ function Actor({
       bodyRef.current = createTerrainBody(0.9, -0.7);
     }
   }, [platforms.length, bodyRef]);
+
+  // Refresh world mood every minute
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      mood.current = worldMood();
+    }, 60_000);
+    mood.current = worldMood();
+    return () => window.clearInterval(id);
+  }, []);
 
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.05);
@@ -93,8 +108,8 @@ function Actor({
     const body = bodyRef.current;
     const home = getHomePlatform(platforms);
     const now = Date.now();
+    const m = mood.current;
 
-    // —— Drag override ——
     if (dragging && dragWorld) {
       body.x = dragWorld.x;
       body.y = dragWorld.y;
@@ -113,7 +128,8 @@ function Actor({
         now > nextOuting.current &&
         now > homeUntil.current &&
         body.onGround &&
-        queue.current.length === 0
+        queue.current.length === 0 &&
+        !m.preferNap
       ) {
         const dest = pickWanderPlatform(
           platforms,
@@ -127,17 +143,31 @@ function Actor({
           queue.current = planHops(current, dest, platforms);
           const first = queue.current[0];
           if (first) {
-            bodyRef.current = jumpToward(body, first);
-            setAnim("jump");
+            // Anticipation: brief crouch feel via anim
+            setAnim("think");
+            window.setTimeout(() => {
+              if (bodyRef.current) {
+                bodyRef.current = jumpToward(bodyRef.current, first);
+                setAnim("jump");
+              }
+            }, 120);
           }
         }
         nextOuting.current =
           now +
           (modalOpen
             ? 4000 + Math.random() * 3000
-            : lowPower
-              ? 18000 + Math.random() * 12000
-              : 12000 + Math.random() * 16000);
+            : outingIntervalMs(m, lowPower));
+      }
+
+      // Late night: more naps at home
+      if (
+        phase.current === "home" &&
+        m.preferNap &&
+        anim !== "sleep" &&
+        Math.random() < 0.002
+      ) {
+        setAnim("sleep");
       }
 
       if (
@@ -148,7 +178,7 @@ function Actor({
       ) {
         if (body.platformId !== "home-corner") {
           if (homeUntil.current === 0) {
-            homeUntil.current = now + 2000 + Math.random() * 2000;
+            homeUntil.current = now + lingerMs(m);
             if (Math.random() < 0.35)
               requestAnim({ anim: "wave", holdMs: 700 });
             else if (Math.random() < 0.25)
@@ -159,7 +189,7 @@ function Actor({
               platforms.find((x) => x.id === body.platformId) ?? null;
             queue.current = planHops(current, home, platforms);
             const first = queue.current[0];
-            if (first) {
+            if (first && bodyRef.current) {
               bodyRef.current = jumpToward(bodyRef.current, first);
               setAnim("jump");
             }
@@ -174,7 +204,7 @@ function Actor({
         body.platformId === "home-corner"
       ) {
         phase.current = "home";
-        setAnim("idle");
+        setAnim(m.preferNap ? "sleep" : "idle");
         homeUntil.current = 0;
       }
 
@@ -196,6 +226,7 @@ function Actor({
           Math.abs(bodyRef.current.y - goalY) < 0.2
         ) {
           bodyRef.current = snapToPlatform(bodyRef.current, goal);
+          // Landing squash is handled in procedural sample via vy
           queue.current.shift();
           if (queue.current.length > 0) {
             const nxt = queue.current[0];
@@ -204,7 +235,7 @@ function Actor({
           } else {
             setAnim("idle");
             if (phase.current === "outing") {
-              homeUntil.current = Date.now() + 2000 + Math.random() * 2000;
+              homeUntil.current = Date.now() + lingerMs(m);
             }
           }
         }
@@ -214,49 +245,56 @@ function Actor({
     }
 
     const b = bodyRef.current;
+    const proc = sampleProcedural(t, anim, motion, {
+      onGround: b.onGround,
+      vy: b.vy,
+      lookX: lookBias.x,
+      lookY: lookBias.y,
+      phase: dragging ? "drag" : phase.current,
+    });
 
-    // —— Facing: always mostly toward camera; lean into movement ——
-    // Camera looks from +Z; face (+Z side of mesh) needs y = Math.PI in three default?
-    // Our sphere face details are on +Z local → to face camera at +Z world, rotation.y = 0
-    // (local +Z aligns with world +Z). Previous code used ±0.5 which showed the back.
-    const baseFace = 0; // face camera
-    let targetYaw = baseFace;
+    // Face camera + slight movement lean
+    let targetYaw = 0;
     if (Math.abs(b.vx) > 0.04) {
-      // Slight turn toward movement (not full profile / back)
-      targetYaw = baseFace + (b.vx > 0 ? -0.35 : 0.35);
+      targetYaw = b.vx > 0 ? -0.35 : 0.35;
     }
-    if (dragging) targetYaw = baseFace;
+    if (dragging) targetYaw = 0;
     facing.current = THREE.MathUtils.lerp(facing.current, targetYaw, 0.12);
     g.rotation.y = facing.current;
 
-    g.position.set(b.x, b.y + 0.08, 0.3);
+    g.position.set(b.x, b.y + 0.08 + proc.bob, 0.3);
+    p.scale.set(proc.scaleX * 0.5, proc.scaleY * 0.5, 0.5);
 
-    const breathe = Math.sin(t * 2.2) * 0.01;
-    const walkBob =
-      anim === "walk" && b.onGround
-        ? Math.abs(Math.sin(t * 10)) * 0.022
-        : anim === "jump"
-          ? 0.035
-          : phase.current === "home"
-            ? Math.sin(t * 1.5) * 0.012
-            : 0;
-    p.position.y = walkBob + breathe;
-    p.scale.setScalar(0.5 * (anim === "jump" ? 1.07 : dragging ? 1.1 : 1));
+    if (head.current) {
+      head.current.rotation.x = THREE.MathUtils.lerp(
+        head.current.rotation.x,
+        proc.headPitch,
+        0.1,
+      );
+      head.current.rotation.y = THREE.MathUtils.lerp(
+        head.current.rotation.y,
+        proc.headYaw,
+        0.1,
+      );
+    }
+
+    // Blink scales eye meshes on Y
+    const eyeScaleY = 1 - proc.blink * 0.92;
+    if (eyeL.current) eyeL.current.scale.y = eyeScaleY;
+    if (eyeR.current) eyeR.current.scale.y = eyeScaleY;
 
     if (tip.current) {
       const mat = tip.current.material as THREE.MeshStandardMaterial;
-      mat.emissiveIntensity =
-        0.3 + motion.glow * 0.45 + (phase.current === "home" ? 0.1 : 0);
+      mat.color.set(m.tipColor);
+      mat.emissive.set(m.tipColor);
+      mat.emissiveIntensity = proc.tipPulse * m.emissive;
     }
 
-    // Project to screen for drag handle
     const world = new THREE.Vector3(b.x, b.y + 0.12, 0.3);
     world.project(camera);
-    const sx = (world.x * 0.5 + 0.5) * size.width;
-    const sy = (-world.y * 0.5 + 0.5) * size.height;
     onScreenPos({
-      x: sx,
-      y: sy,
+      x: (world.x * 0.5 + 0.5) * size.width,
+      y: (-world.y * 0.5 + 0.5) * size.height,
       visible: world.z < 1 && world.z > -1,
     });
   });
@@ -264,43 +302,40 @@ function Actor({
   return (
     <group ref={root}>
       <group ref={pose}>
-        {/* Body */}
         <mesh position={[0, -0.1, 0]}>
           <capsuleGeometry args={[0.09, 0.11, 4, 8]} />
           <meshStandardMaterial color="#e8a598" roughness={0.45} />
         </mesh>
-        {/* Head — face features on +Z (toward camera when rotation.y = 0) */}
-        <mesh position={[0, 0.13, 0]}>
-          <sphereGeometry args={[0.14, 16, 16]} />
-          <meshStandardMaterial color="#f5d0c8" roughness={0.4} />
-        </mesh>
-        {/* Eyes */}
-        <mesh position={[-0.045, 0.14, 0.12]}>
-          <sphereGeometry args={[0.022, 10, 10]} />
-          <meshStandardMaterial color="#2a1810" />
-        </mesh>
-        <mesh position={[0.045, 0.14, 0.12]}>
-          <sphereGeometry args={[0.022, 10, 10]} />
-          <meshStandardMaterial color="#2a1810" />
-        </mesh>
-        {/* Cheeks */}
-        <mesh position={[-0.07, 0.11, 0.1]}>
-          <sphereGeometry args={[0.025, 8, 8]} />
-          <meshStandardMaterial color="#f0a090" transparent opacity={0.5} />
-        </mesh>
-        <mesh position={[0.07, 0.11, 0.1]}>
-          <sphereGeometry args={[0.025, 8, 8]} />
-          <meshStandardMaterial color="#f0a090" transparent opacity={0.5} />
-        </mesh>
-        {/* Lantern tip */}
-        <mesh ref={tip} position={[0, 0.24, 0]}>
-          <sphereGeometry args={[0.035, 8, 8]} />
-          <meshStandardMaterial
-            color="#f0a090"
-            emissive="#f0a090"
-            emissiveIntensity={0.55}
-          />
-        </mesh>
+        <group ref={head} position={[0, 0.13, 0]}>
+          <mesh>
+            <sphereGeometry args={[0.14, 16, 16]} />
+            <meshStandardMaterial color="#f5d0c8" roughness={0.4} />
+          </mesh>
+          <mesh ref={eyeL} position={[-0.045, 0.01, 0.12]}>
+            <sphereGeometry args={[0.022, 10, 10]} />
+            <meshStandardMaterial color="#2a1810" />
+          </mesh>
+          <mesh ref={eyeR} position={[0.045, 0.01, 0.12]}>
+            <sphereGeometry args={[0.022, 10, 10]} />
+            <meshStandardMaterial color="#2a1810" />
+          </mesh>
+          <mesh position={[-0.07, -0.02, 0.1]}>
+            <sphereGeometry args={[0.025, 8, 8]} />
+            <meshStandardMaterial color="#f0a090" transparent opacity={0.5} />
+          </mesh>
+          <mesh position={[0.07, -0.02, 0.1]}>
+            <sphereGeometry args={[0.025, 8, 8]} />
+            <meshStandardMaterial color="#f0a090" transparent opacity={0.5} />
+          </mesh>
+          <mesh ref={tip} position={[0, 0.11, 0]}>
+            <sphereGeometry args={[0.035, 8, 8]} />
+            <meshStandardMaterial
+              color="#f0a090"
+              emissive="#f0a090"
+              emissiveIntensity={0.55}
+            />
+          </mesh>
+        </group>
       </group>
     </group>
   );
@@ -347,8 +382,7 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
     (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
     dragMoved.current = false;
     setDragging(true);
-    const w = screenToWorld(e.clientX, e.clientY);
-    setDragWorld(w);
+    setDragWorld(screenToWorld(e.clientX, e.clientY));
   }, []);
 
   const onPointerMove = useCallback(
@@ -367,16 +401,11 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
       setDragging(false);
       const w = screenToWorld(e.clientX, e.clientY);
       setDragWorld(null);
-
       if (!bodyRef.current) return;
-
       if (!dragMoved.current) {
-        // Tap = pet / celebrate
         useMascotStore.getState().dispatch({ type: "click" });
         return;
       }
-
-      // Snap to nearest platform if close, else free-fall onto path
       let best: TerrainPlatform | null = null;
       let bestD = 0.35;
       for (const p of platforms) {
@@ -432,18 +461,14 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
           />
         </Canvas>
       </div>
-
-      {/* HTML drag handle — only this captures pointers, rest of UI stays free */}
       {screenPos.visible ? (
         <button
           type="button"
           className={
-            "mascot-drag-handle" + (dragging ? " mascot-drag-handle--active" : "")
+            "mascot-drag-handle" +
+            (dragging ? " mascot-drag-handle--active" : "")
           }
-          style={{
-            left: screenPos.x,
-            top: screenPos.y,
-          }}
+          style={{ left: screenPos.x, top: screenPos.y }}
           aria-label="Drag Lantern-ko"
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
