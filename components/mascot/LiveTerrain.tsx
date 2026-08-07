@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Corner home + occasional climbs + Sprint 3 procedural living motion.
+ * Corner home + UI theatre climbs (Sprint 4).
  */
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
@@ -27,8 +27,13 @@ import { useMascotStore } from "@/lib/mascot/store";
 import { motionFromEmotions } from "@/lib/mascot/emotions";
 import { worldMood, outingIntervalMs, lingerMs } from "@/lib/mascot/living-world";
 import { sampleProcedural } from "@/lib/mascot/procedural-motion";
+import {
+  poseOnPlatform,
+  theatreForPlatform,
+  type TheatreBeat,
+} from "@/lib/mascot/ui-theatre";
 
-type Phase = "home" | "outing" | "returning";
+type Phase = "home" | "outing" | "returning" | "perform";
 
 export type MascotScreenPos = { x: number; y: number; visible: boolean };
 
@@ -71,6 +76,8 @@ function Actor({
   const mood = useRef(worldMood());
   const nextOuting = useRef(Date.now() + outingIntervalMs(mood.current, lowPower));
   const homeUntil = useRef(0);
+  const performUntil = useRef(0);
+  const beat = useRef<TheatreBeat | null>(null);
   const facing = useRef(0);
   const emotions = useMascotStore((s) => s.emotions);
   const setAnim = useMascotStore((s) => s.setAnim);
@@ -88,7 +95,6 @@ function Actor({
     }
   }, [platforms.length, bodyRef]);
 
-  // Refresh world mood every minute
   useEffect(() => {
     const id = window.setInterval(() => {
       mood.current = worldMood();
@@ -96,6 +102,34 @@ function Actor({
     mood.current = worldMood();
     return () => window.clearInterval(id);
   }, []);
+
+  // Modal / forced theatre beats
+  useEffect(() => {
+    const onTheatre = (e: Event) => {
+      const b = (e as CustomEvent).detail as TheatreBeat;
+      beat.current = b;
+      // Prefer modal platform if any
+      const modal = platforms.find((p) => p.type === "modal");
+      const dest =
+        modal ||
+        pickWanderPlatform(platforms, bodyRef.current?.platformId ?? undefined);
+      if (dest && bodyRef.current) {
+        phase.current = "outing";
+        queue.current = planHops(
+          platforms.find((x) => x.id === bodyRef.current!.platformId) ?? null,
+          dest,
+          platforms,
+        );
+        const first = queue.current[0];
+        if (first) {
+          bodyRef.current = jumpToward(bodyRef.current, first);
+          setAnim("jump");
+        }
+      }
+    };
+    window.addEventListener("animenexus:mascot-theatre", onTheatre);
+    return () => window.removeEventListener("animenexus:mascot-theatre", onTheatre);
+  }, [platforms, setAnim, bodyRef]);
 
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.05);
@@ -120,7 +154,16 @@ function Actor({
       queue.current = [];
       phase.current = "outing";
       setAnim("surprised");
+    } else if (phase.current === "perform" && now < performUntil.current) {
+      // Hold performance pose — light idle physics
+      bodyRef.current = stepTerrain(bodyRef.current, platforms, dt);
     } else {
+      if (phase.current === "perform" && now >= performUntil.current) {
+        phase.current = "outing";
+        beat.current = null;
+        homeUntil.current = now + 400;
+      }
+
       const modalOpen = platforms.some((x) => x.type === "modal");
 
       if (
@@ -138,12 +181,12 @@ function Actor({
         );
         if (dest && dest.id !== "home-corner") {
           phase.current = "outing";
+          beat.current = theatreForPlatform(dest);
           const current =
             platforms.find((x) => x.id === body.platformId) ?? home;
           queue.current = planHops(current, dest, platforms);
           const first = queue.current[0];
           if (first) {
-            // Anticipation: brief crouch feel via anim
             setAnim("think");
             window.setTimeout(() => {
               if (bodyRef.current) {
@@ -156,11 +199,10 @@ function Actor({
         nextOuting.current =
           now +
           (modalOpen
-            ? 4000 + Math.random() * 3000
+            ? 3500 + Math.random() * 2500
             : outingIntervalMs(m, lowPower));
       }
 
-      // Late night: more naps at home
       if (
         phase.current === "home" &&
         m.preferNap &&
@@ -171,20 +213,39 @@ function Actor({
       }
 
       if (
-        phase.current === "outing" &&
+        (phase.current === "outing" || phase.current === "perform") &&
         queue.current.length === 0 &&
         body.onGround &&
         home
       ) {
         if (body.platformId !== "home-corner") {
-          if (homeUntil.current === 0) {
+          // Arrive → perform theatre beat
+          if (beat.current && phase.current === "outing") {
+            const tb = beat.current;
+            const at = platforms.find((x) => x.id === body.platformId);
+            if (at) {
+              const pos = poseOnPlatform(at, tb.pose);
+              body.x = pos.x;
+              body.y = pos.y;
+              body.vx = 0;
+              body.vy = 0;
+              body.onGround = true;
+            }
+            setAnim(tb.anim);
+            if (tb.thought) {
+              window.dispatchEvent(
+                new CustomEvent("animenexus:mascot-thought", {
+                  detail: { text: tb.thought, intent: tb.intent },
+                }),
+              );
+            }
+            phase.current = "perform";
+            performUntil.current = now + tb.holdMs;
+          } else if (homeUntil.current === 0) {
             homeUntil.current = now + lingerMs(m);
-            if (Math.random() < 0.35)
-              requestAnim({ anim: "wave", holdMs: 700 });
-            else if (Math.random() < 0.25)
-              requestAnim({ anim: "point", holdMs: 800 });
           } else if (now > homeUntil.current) {
             phase.current = "returning";
+            beat.current = null;
             const current =
               platforms.find((x) => x.id === body.platformId) ?? null;
             queue.current = planHops(current, home, platforms);
@@ -206,6 +267,7 @@ function Actor({
         phase.current = "home";
         setAnim(m.preferNap ? "sleep" : "idle");
         homeUntil.current = 0;
+        beat.current = null;
       }
 
       const goal = queue.current[0];
@@ -226,12 +288,13 @@ function Actor({
           Math.abs(bodyRef.current.y - goalY) < 0.2
         ) {
           bodyRef.current = snapToPlatform(bodyRef.current, goal);
-          // Landing squash is handled in procedural sample via vy
           queue.current.shift();
           if (queue.current.length > 0) {
             const nxt = queue.current[0];
             bodyRef.current = jumpToward(bodyRef.current, nxt);
             setAnim("jump");
+          } else if (beat.current && phase.current === "outing") {
+            // will enter perform next frame
           } else {
             setAnim("idle");
             if (phase.current === "outing") {
@@ -241,7 +304,9 @@ function Actor({
         }
       }
 
-      bodyRef.current = stepTerrain(bodyRef.current, platforms, dt);
+      if (phase.current !== "perform") {
+        bodyRef.current = stepTerrain(bodyRef.current, platforms, dt);
+      }
     }
 
     const b = bodyRef.current;
@@ -250,19 +315,36 @@ function Actor({
       vy: b.vy,
       lookX: lookBias.x,
       lookY: lookBias.y,
-      phase: dragging ? "drag" : phase.current,
+      phase:
+        dragging
+          ? "drag"
+          : phase.current === "perform"
+            ? "outing"
+            : phase.current === "returning"
+              ? "returning"
+              : phase.current === "outing"
+                ? "outing"
+                : "home",
     });
 
-    // Face camera + slight movement lean
     let targetYaw = 0;
-    if (Math.abs(b.vx) > 0.04) {
-      targetYaw = b.vx > 0 ? -0.35 : 0.35;
-    }
+    if (Math.abs(b.vx) > 0.04) targetYaw = b.vx > 0 ? -0.35 : 0.35;
     if (dragging) targetYaw = 0;
+    // Sit/lean poses face camera more
+    if (phase.current === "perform") targetYaw = 0;
     facing.current = THREE.MathUtils.lerp(facing.current, targetYaw, 0.12);
     g.rotation.y = facing.current;
 
-    g.position.set(b.x, b.y + 0.08 + proc.bob, 0.3);
+    // Sit-edge: slight lean
+    let leanZ = 0;
+    if (phase.current === "perform" && beat.current?.move === "sit-edge") {
+      leanZ = 0.08;
+    }
+    if (phase.current === "perform" && beat.current?.move === "lean") {
+      leanZ = 0.12;
+    }
+
+    g.position.set(b.x, b.y + 0.08 + proc.bob, 0.3 + leanZ);
     p.scale.set(proc.scaleX * 0.5, proc.scaleY * 0.5, 0.5);
 
     if (head.current) {
@@ -278,7 +360,6 @@ function Actor({
       );
     }
 
-    // Blink scales eye meshes on Y
     const eyeScaleY = 1 - proc.blink * 0.92;
     if (eyeL.current) eyeL.current.scale.y = eyeScaleY;
     if (eyeR.current) eyeR.current.scale.y = eyeScaleY;
@@ -416,9 +497,8 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
           best = p;
         }
       }
-      if (best) {
-        bodyRef.current = snapToPlatform(bodyRef.current, best);
-      } else {
+      if (best) bodyRef.current = snapToPlatform(bodyRef.current, best);
+      else {
         bodyRef.current.x = w.x;
         bodyRef.current.y = w.y;
         bodyRef.current.vy = 0;

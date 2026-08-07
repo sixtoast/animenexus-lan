@@ -7,6 +7,7 @@ import { useMascotStore, mascotNotify } from "@/lib/mascot/store";
 import { UiAwareness } from "./UiAwareness";
 import { ContextBridge } from "./ContextBridge";
 import { ThoughtBubble } from "./ThoughtBubble";
+import { UiTheatreBridge } from "./UiTheatreBridge";
 
 const LiveTerrain = dynamic(
   () => import("./LiveTerrain").then((m) => m.LiveTerrain),
@@ -114,6 +115,7 @@ export function MascotHost() {
     <>
       <UiAwareness />
       <ContextBridge />
+      <UiTheatreBridge />
       {!pause ? (
         <LiveTerrain reducedMotion={reducedMotion} lowPower={lowPower} />
       ) : null}
