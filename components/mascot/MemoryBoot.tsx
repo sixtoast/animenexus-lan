@@ -2,13 +2,13 @@
 
 import { useEffect } from "react";
 import {
-  getMemory,
+  bondGreeting,
   memoryEmotionBias,
   noteSessionStart,
 } from "@/lib/mascot/memory";
 import { useMascotStore } from "@/lib/mascot/store";
 
-/** Boot relationship memory once per mount */
+/** Boot relationship memory once per mount (Sprint M9) */
 export function MemoryBoot() {
   useEffect(() => {
     noteSessionStart();
@@ -19,16 +19,15 @@ export function MemoryBoot() {
         store.bumpEmotion(k as keyof typeof store.emotions, v);
       }
     }
-    // Soft greet thought for returning friends
-    const m = getMemory();
-    if (m.totalSessions > 1 && m.trust > 0.5) {
+    const greet = bondGreeting();
+    if (greet) {
       window.setTimeout(() => {
         window.dispatchEvent(
           new CustomEvent("animenexus:mascot-thought", {
-            detail: { text: "You’re back." },
+            detail: { text: greet },
           }),
         );
-      }, 1200);
+      }, 1400);
     }
   }, []);
 
