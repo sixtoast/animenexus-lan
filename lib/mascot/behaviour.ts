@@ -1,6 +1,5 @@
 /**
- * Behaviour facade — Utility AI under the hood (Sprint 6).
- * Keeps the same chooseBehaviour API for the store.
+ * Behaviour facade — Utility AI under the hood (Sprint M9).
  */
 
 import type { MascotEmotions } from "./types";
