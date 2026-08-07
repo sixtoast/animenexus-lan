@@ -5,7 +5,7 @@
 import type { MascotEmotions } from "./types";
 import type { MascotGoal } from "./behaviour";
 import { bondStage, getMemory } from "./memory";
-import { hourBucket } from "./personality";
+import { dayPart } from "./personality";
 
 export type UtilityContext = {
   emotions: MascotEmotions;
@@ -26,7 +26,7 @@ type Scorer = (ctx: UtilityContext) => ScoredGoal;
 const scorers: Scorer[] = [
   (ctx) => {
     const { sleepiness, energy } = ctx.emotions;
-    const night = hourBucket() === "night";
+    const night = ["night", "late"].includes(dayPart());
     let score = sleepiness * 0.7 + (1 - energy) * 0.4;
     if (night) score += 0.2;
     if (sleepiness < 0.4) score *= 0.3;

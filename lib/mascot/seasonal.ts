@@ -2,7 +2,7 @@
  * Seasonal + time-of-day cosmetics for Lantern-ko (Sprint M8).
  */
 
-import { hourBucket } from "./personality";
+import { dayPart } from "./personality";
 
 export type CosmeticId =
   | "default"
@@ -92,9 +92,9 @@ function monthSeason(m: number): CosmeticId {
 }
 
 export function getCosmetic(d = new Date()): Cosmetic {
-  const bucket = hourBucket(d);
-  if (bucket === "night") return COSMETICS["lantern-night"];
-  if (bucket === "morning") return COSMETICS.dawn;
+  const p = dayPart(d);
+  if (p === "night" || p === "late") return COSMETICS["lantern-night"];
+  if (p === "morning" || p === "dawn") return COSMETICS.dawn;
   return COSMETICS[monthSeason(d.getMonth())];
 }
 
