@@ -7,28 +7,37 @@
 | Sprint | Focus | Status |
 |--------|--------|--------|
 | 1 | Identity, tastes, routine | Done |
-| **2** | Thought → decision → emotion → action | **Done** |
-| 3 | Living world / locomotion polish | Next |
+| 2 | Thought → decision → action | Done |
+| 3 | Living world / procedural motion | Done |
+| 4 | UI theatre | Done |
+| 5 | Relationship memory | Done |
+| **6** | Utility AI goals | **Done** |
+| 7 | Proactive anime guide | Next |
 
-## Decision pipeline (Sprint 2)
+## Decision stack
 
 ```
-Event → decide() → Thought + ReactionPlan
-                 → executeDecision()
-                 → emotions + anim + optional goal
-                 → optional thought bubble
+Personality + Memory + World mood
+        ↓
+Utility AI (score goals)
+        ↓
+decide() thoughts on events
+        ↓
+execute → anim / emotion / terrain
 ```
 
-| File | Role |
-|------|------|
-| `personality.ts` | Who they are |
-| `decision.ts` | Think + choose intent |
-| `reactions.ts` | Intent → anim / emotion deltas |
-| `execute.ts` | Apply plan to store |
-| `ThoughtBubble.tsx` | Rare soft speech |
+## Utility scores (examples)
 
-Events routed through the layer: **pet, drag, seal, complete, idle-long, route**, plus ambient ticks.
+| Goal | Driven by |
+|------|-----------|
+| nap | sleepiness, energy, late-night routine |
+| ponder | stress, shyness |
+| seek-attention | time alone, bond stage |
+| wander | boredom, curiosity, modals |
+| idle | soft baseline |
 
-## Character
+Noise + hold margins stop robotic flipping.
 
-Shy-curious desk spirit. Hides from horror, softens for romance, celebrates seals, returns to the corner after exploring.
+## Memory key
+
+`localStorage.anime_nexus_mascot_memory_v1`
