@@ -1,4 +1,4 @@
-/* Companion: corner home + occasional UI climbs */
+/* Companion: corner home + occasional UI climbs + drag */
 
 .live-terrain {
   position: fixed;
@@ -13,7 +13,29 @@
   pointer-events: none !important;
 }
 
-/* Home dock — bottom-right corner */
+/* Drag hit target — follows the 3D body in screen space */
+.mascot-drag-handle {
+  position: fixed;
+  z-index: 36;
+  width: 52px;
+  height: 52px;
+  margin-left: -26px;
+  margin-top: -26px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mascot-drag-handle--active {
+  cursor: grabbing;
+  background: rgba(240, 160, 144, 0.12);
+  box-shadow: 0 0 0 2px rgba(240, 160, 144, 0.35);
+}
+
 .mascot-dock {
   position: fixed;
   z-index: 40;
@@ -81,10 +103,17 @@
   .mascot-dock {
     bottom: max(60px, calc(env(safe-area-inset-bottom) + 52px));
   }
+  .mascot-drag-handle {
+    width: 56px;
+    height: 56px;
+    margin-left: -28px;
+    margin-top: -28px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .live-terrain {
+  .live-terrain,
+  .mascot-drag-handle {
     display: none;
   }
 }
