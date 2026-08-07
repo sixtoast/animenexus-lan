@@ -1,7 +1,6 @@
 /** 2.5D terrain locomotion for page-as-terrain mode */
 
 import type { TerrainPlatform } from "./page-terrain";
-import { nearestPlatform } from "./page-terrain";
 
 export type TerrainBody = {
   x: number;
@@ -19,13 +18,31 @@ export function createTerrainBody(x = 0, y = -0.7): TerrainBody {
   return { x, y, vx: 0, vy: 0, onGround: true, platformId: "viewport-floor" };
 }
 
+export function nearestPlatform(
+  platforms: TerrainPlatform[],
+  x: number,
+  y: number,
+): TerrainPlatform | null {
+  let best: TerrainPlatform | null = null;
+  let bestD = Infinity;
+  for (const p of platforms) {
+    const dx = Math.max(Math.abs(x - p.x) - p.hw, 0);
+    const dy = Math.max(Math.abs(y - p.y) - p.hh, 0);
+    const d = Math.hypot(dx, dy);
+    if (d < bestD) {
+      bestD = d;
+      best = p;
+    }
+  }
+  return best;
+}
+
 function supportY(body: TerrainBody, platforms: TerrainPlatform[]): number | null {
   let best: number | null = null;
   let bestId: string | null = null;
   for (const p of platforms) {
     if (Math.abs(body.x - p.x) <= p.hw + 0.02) {
       const top = p.y + p.hh;
-      // Standing on or slightly above the top surface
       if (body.y <= top + 0.06 && body.y >= top - 0.25) {
         if (best === null || top > best) {
           best = top;
@@ -65,7 +82,6 @@ export function stepTerrain(
     b.vx *= 0.88;
   } else if (support === null) {
     b.onGround = false;
-    // Soft floor so they never fall forever
     if (b.y < -2.5) {
       b.y = -0.85;
       b.vy = 0;
@@ -91,7 +107,6 @@ export function steerTerrain(
   return {
     ...body,
     vx: body.vx * 0.6 + (dx / d) * speed * 0.4,
-    // vertical only if jumping toward higher platform
     vy: body.onGround ? body.vy : body.vy,
   };
 }
@@ -110,7 +125,10 @@ export function jumpToward(
   };
 }
 
-export function snapToPlatform(body: TerrainBody, p: TerrainPlatform): TerrainBody {
+export function snapToPlatform(
+  body: TerrainBody,
+  p: TerrainPlatform,
+): TerrainBody {
   return {
     ...body,
     x: p.x,
@@ -132,5 +150,3 @@ export function isNearPlatform(
     Math.abs(body.y - (p.y + p.hh)) <= pad + 0.1
   );
 }
-
-export { nearestPlatform };
