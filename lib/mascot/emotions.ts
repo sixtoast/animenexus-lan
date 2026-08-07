@@ -1,18 +1,11 @@
 import type { MascotEmotions } from "./types";
+import { personalityEmotionSeed } from "./personality";
 
 const clamp = (n: number) => Math.max(0, Math.min(1, n));
 
+/** Baseline from Lantern-ko traits + time of day */
 export function defaultEmotions(): MascotEmotions {
-  return {
-    curiosity: 0.55,
-    energy: 0.62,
-    happiness: 0.55,
-    boredom: 0.18,
-    sleepiness: 0.12,
-    attention: 0.5,
-    confidence: 0.55,
-    stress: 0.15,
-  };
+  return personalityEmotionSeed();
 }
 
 /** Continuous drift toward a calm living baseline. */
@@ -27,13 +20,11 @@ export function decayEmotions(
   d.energy = clamp(d.energy - 0.005 * dtSec);
   d.happiness = clamp(d.happiness - 0.004 * dtSec);
   d.curiosity = clamp(d.curiosity - 0.003 * dtSec);
-  // Confidence slowly recovers; stress eases
   d.confidence = clamp(d.confidence + 0.002 * dtSec);
   d.stress = clamp(d.stress - 0.008 * dtSec);
   return d;
 }
 
-/** Derived motion modifiers for the renderer. */
 export type MotionProfile = {
   walkSpeed: number;
   bobAmp: number;
@@ -46,7 +37,6 @@ export type MotionProfile = {
 
 export function motionFromEmotions(e: MascotEmotions): MotionProfile {
   const tired = e.sleepiness * 0.6 + (1 - e.energy) * 0.4;
-  const bright = e.happiness * 0.5 + e.energy * 0.3 + e.confidence * 0.2;
   return {
     walkSpeed: 0.35 + e.energy * 0.55 - e.stress * 0.1,
     bobAmp: 0.7 + e.energy * 0.5 - tired * 0.35,

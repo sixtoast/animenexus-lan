@@ -1,4 +1,5 @@
 import type { MascotEmotions } from "./types";
+import { dayPart, routineBias, COMPANION } from "./personality";
 
 export type MascotGoal =
   | "idle"
@@ -35,6 +36,19 @@ export function chooseBehaviour(
     stress,
   } = emotions;
 
+  const part = dayPart();
+  const routine = routineBias(part);
+  const shy = COMPANION.traits.shyness;
+
+  // Late night / dawn — personality prefers rest
+  if (routine.preferNap && sleepiness > 0.55 && energy < 0.45) {
+    return {
+      goal: "nap",
+      reason: `routine ${part} — lantern dimming`,
+      cooldownMs: 14_000,
+    };
+  }
+
   if (sleepiness > 0.75 && energy < 0.4) {
     return {
       goal: "nap",
@@ -46,23 +60,25 @@ export function chooseBehaviour(
   if (stress > 0.7) {
     return {
       goal: "ponder",
-      reason: "stressed — settle",
+      reason: "stressed — settle (shy spirit)",
       cooldownMs: 8_000,
     };
   }
 
-  if (opts.msSinceInteract > 50_000 && attention < 0.35) {
+  // Shy: wait longer before seeking attention
+  const lonelyMs = 40_000 + shy * 25_000;
+  if (opts.msSinceInteract > lonelyMs && attention < 0.4) {
     return {
       goal: "seek-attention",
-      reason: "user quiet, attention low",
-      cooldownMs: 8_000,
+      reason: "quiet desk — soft check-in",
+      cooldownMs: 10_000,
     };
   }
 
-  if (boredom > 0.55 && curiosity > 0.45 && confidence > 0.35) {
+  if (boredom > 0.55 && curiosity > 0.45 && confidence > 0.3) {
     return {
       goal: "wander",
-      reason: "bored but curious",
+      reason: "bored but curious — look for signals",
       cooldownMs: 5_000,
     };
   }
@@ -75,11 +91,16 @@ export function chooseBehaviour(
     };
   }
 
-  if (energy > 0.65 && curiosity > 0.55 && opts.currentGoal !== "wander") {
+  if (
+    routine.preferExplore &&
+    energy > 0.55 &&
+    curiosity > 0.5 &&
+    opts.currentGoal !== "wander"
+  ) {
     return {
       goal: "wander",
-      reason: "energetic and curious",
-      cooldownMs: 4_500,
+      reason: `routine ${part} — explore desk`,
+      cooldownMs: 5_000,
     };
   }
 
@@ -91,7 +112,7 @@ export function chooseBehaviour(
     };
   }
 
-  if (opts.currentGoal === "idle" && Math.random() < 0.4) {
+  if (opts.currentGoal === "idle" && Math.random() < 0.35 * (1 - shy * 0.3)) {
     return {
       goal: "wander",
       reason: "ambient roam",
